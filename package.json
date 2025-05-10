@@ -5,12 +5,12 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite --host",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
-    "lint:fix": "eslint . --ext ts,tsx --fix",
-    "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "dev": "bunx --bun vite --host",
+    "build": "bunx --bun tsc && bunx --bun vite build",
+    "lint": "bunx --bun eslint . --ext ts,tsx --report-unused-disable-directives",
+    "lint:fix": "bunx --bun eslint . --ext ts,tsx --fix",
+    "typecheck": "bunx --bun tsc --noEmit",
+    "preview": "bunx --bun vite preview"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",

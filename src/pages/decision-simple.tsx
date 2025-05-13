@@ -409,6 +409,7 @@ export const DecisionSimplePage: React.FC = () => {
                                 result: null,
                                 trace: e.response?.data?.trace,
                                 performance: '',
+                                snapshot: graph
                               },
                               error: {
                                 message: e.response?.data?.source,

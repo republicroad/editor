@@ -1,0 +1,3 @@
+[submodule "jdm-editor"]
+	path = jdm-editor
+	url = https://github.com/gorules/jdm-editor.git

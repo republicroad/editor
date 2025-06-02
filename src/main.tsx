@@ -6,7 +6,8 @@ import ReactDOM from 'react-dom/client';
 
 import './main.css';
 
-import '@gorules/jdm-editor/dist/style.css';
+// import '@gorules/jdm-editor/dist/style.css';
+import '@jdm-editor/src/styles.scss';
 
 import 'react-ace';
 

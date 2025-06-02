@@ -16,7 +16,11 @@
 
     /* Linting */
     "strict": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@jdm-editor/*": ["jdm-editor/packages/jdm-editor/*"], 
+    }
   },
   "include": [
     "src"

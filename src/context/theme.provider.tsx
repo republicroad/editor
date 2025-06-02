@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { JdmConfigProvider } from '@gorules/jdm-editor';
+// import { JdmConfigProvider } from '@gorules/jdm-editor/src/index';
+import { JdmConfigProvider } from '@jdm-editor/src/theme';
 import { ConfigProvider, theme } from 'antd';
 import { match } from 'ts-pattern';
 

@@ -1,3 +1,4 @@
 [submodule "jdm-editor"]
 	path = jdm-editor
-	url = https://github.com/gorules/jdm-editor.git
+	url = https://github.com/republicroad/jdm-editor.git
+	branch = jdmworkspace

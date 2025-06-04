@@ -1,4 +1,4 @@
 [submodule "jdm-editor"]
 	path = jdm-editor
 	url = https://github.com/republicroad/jdm-editor.git
-	branch = jdmworkspace
+	branch = workspace_v1

@@ -12,6 +12,18 @@ docker run -p 3000:3000 --platform=linux/amd64 gorules/editor
 Repository:
 https://hub.docker.com/r/gorules/editor
 
+## run with rust
+
+也可以编译 rust 后端来运行程序.
+```bash
+# 构建rust后端
+$ cargo build
+# 运行rust后端
+$ target/debug/editor
+
+2025-06-04T03:32:03.231397Z  INFO editor: 🚀 Listening on http://127.0.0.1:3000
+```
+
 ## Quickstart
 
 Run rust backend:
@@ -29,28 +41,6 @@ pnpm dev
 ### run with bun
 
 使用 bun 启动 node vite 开发服务器.
-```bash
-bunx --node vite --host
-```
-
-使用 bun 启动 vite 开发服务器.
-```bash
-bunx --bun vite --host
-```
-
-package.json 中的运行脚本如下:
-```json
-...
-  "scripts": {
-    "dev": "bunx --bun vite --host",
-    "build": "bunx --bun tsc && bunx --bun vite build",
-    "lint": "bunx --bun eslint . --ext ts,tsx --report-unused-disable-directives",
-    "lint:fix": "bunx --bun eslint . --ext ts,tsx --fix",
-    "typecheck": "bunx --bun tsc --noEmit",
-    "preview": "bunx --bun vite preview"
-  },
-...
-```
 
 打开测试服务器:
 

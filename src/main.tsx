@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom/client';
 import './main.css';
 
 // import '@gorules/jdm-editor/dist/style.css';
-import '@jdm-editor/src/styles.scss';
+import '@gorules/jdm-editor/src';  // index.ts 中导入了 './styles.scss';
 
 import 'react-ace';
 

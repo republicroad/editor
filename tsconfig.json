@@ -17,13 +17,16 @@
     /* Linting */
     "strict": true,
     "noFallthroughCasesInSwitch": true,
+
+    /* module references  */
     "baseUrl": ".",
     "paths": {
-      "@jdm-editor/*": ["jdm-editor/packages/jdm-editor/*"], 
-    }
+      "@gorules/jdm-editor/*": ["jdm-editor/packages/jdm-editor/*"], 
+    },
   },
   "include": [
-    "src"
+    "src",
+    // "node_modules/@gorules/jdm-editor"
   ],
   "references": [{ "path": "./tsconfig.node.json"}]
 }

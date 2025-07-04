@@ -2,10 +2,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import wasm from 'vite-plugin-wasm';
 import * as path from 'path';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), wasm()],
+  plugins: [react(), wasm(), tsconfigPaths()],
   build: {
     outDir: path.join(__dirname, 'static'),
     target: 'esnext',

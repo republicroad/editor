@@ -6,6 +6,13 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
+    "noImplicitAny": false,
+    /* module references  */
+    "baseUrl": ".",
+    "paths": {
+      "@gorules/jdm-editor": ["jdm-editor/packages/jdm-editor/src"],
+    },
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

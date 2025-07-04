@@ -37,10 +37,14 @@ make watch
 
 Run frontend:
 ```bash
+$ git clone https://github.com/republicroad/editor.git
 $ bun i
 $ cd jdm-editor/
 jdm-editor$ bun i
-jdm-editor$ rm -r packages/jdm-editor/node_modules'
+jdm-editor$ rm -r packages/jdm-editor/node_modules
+$ cd ..
+# 启动开发服务器
+$ bun run build
 ```
 `bun i` 安装当前 editor 项目的依赖. 而在 jdm-editor 中 `bun i` 是安装 jdm-editor 的依赖, 但是需要把 workspace 下的 jdm-editor 的 node_modules
 包中的 @types/react 会导致构建冲突, 所以删除这个文件夹.
@@ -80,7 +84,11 @@ pnpm dev
 
 To create a local HTTPS certificate:
 ```bash
+# mac
 brew install mkcert
+
+# ubunut linux
+apt install -y mkcert
 
 mkcert --install
 cd cert && mkcert localhost

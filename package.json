@@ -1,6 +1,9 @@
 {
   "name": "@gorules/editor",
   "private": true,
+  "workspaces": [
+    "jdm-editor/packages/*"
+  ],
   "version": "1.15.0",
   "type": "module",
   "license": "MIT",
@@ -14,7 +17,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
-    "@gorules/jdm-editor": "^1.41.0",
+    "@gorules/jdm-editor": "workspace:*",
     "@gorules/zen-engine-wasm": "^0.18.0",
     "ace-builds": "^1.41.0",
     "antd": "^5.25.2",
@@ -57,6 +60,7 @@
     "prettier": "^3.5.3",
     "semantic-release": "^24.2.4",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vite-tsconfig-paths": "^5.1.4"
   }
 }

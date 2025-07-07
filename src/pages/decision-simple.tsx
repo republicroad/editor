@@ -15,6 +15,7 @@ import { match, P } from 'ts-pattern';
 import classes from './decision-simple.module.css';
 import axios from 'axios';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
+import { customNodes } from '../context/customnode.tsx'
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
@@ -362,6 +363,7 @@ export const DecisionSimplePage: React.FC = () => {
         <div className={classes.contentWrapper}>
           <div className={classes.content}>
             <DecisionGraph
+              customNodes={customNodes}
               ref={graphRef}
               value={graph}
               onChange={(value) => setGraph(value)}

@@ -9,10 +9,28 @@ import axios, { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
 import Cookies from 'js-cookie';
 import { isEmpty } from 'ramda';
 
-import { t } from '@/locales/i18n';
+// import { t } from '@/locales/i18n';
 
-import { Result } from '#/api';
-import { ResultEnum, StorageEnum } from '#/enum';
+interface Result<T = any> {
+  status: number;
+  message: string;
+  data?: T;
+}
+enum ResultEnum {
+  SUCCESS = 0,
+  ERROR = -1,
+  TIMEOUT = 401,
+}
+
+enum StorageEnum {
+  User = 'user',
+  Token = 'token',
+  Settings = 'settings',
+  I18N = 'i18nextLng',
+  Project = 'project',
+  List = 'list',
+  BRDE_SESSION = 'Brde_session',
+}
 
 // 创建 axios 实例
 const axiosInstance = axios.create({
@@ -40,15 +58,15 @@ axiosInstance.interceptors.request.use(
 // 响应拦截
 axiosInstance.interceptors.response.use(
   (res: AxiosResponse<Result>) => {
-    if (!res.data) throw new Error(t('sys.api.apiRequestFailed'));
+    if (!res.data) throw new Error(('请求出错，请稍候重试'));
     const { status, data, message } = res.data;
     // 业务请求成功
     const hasSuccess = data && Reflect.has(res.data, 'status') && status === ResultEnum.SUCCESS;
     if (hasSuccess) {
       return data;
     }
-    message ? Message.error(message) : Message.error(t('sys.api.apiRequestFailed'));
-    const err: any = new Error(message || t('sys.api.apiRequestFailed'));
+    message ? Message.error(message) : Message.error(('请求出错，请稍候重试'));
+    const err: any = new Error(message || ('请求出错，请稍候重试'));
     err.data = data;
     throw err;
     // 业务请求错误
@@ -66,7 +84,7 @@ axiosInstance.interceptors.response.use(
     if (isEmpty(errMsg)) {
       // checkStatus
       // errMsg = checkStatus(response.data.status);
-      errMsg = t('sys.api.errorMessage');
+      errMsg = ('操作失败,系统异常!');
     }
     Message.error(errMsg);
     if (error.response && error.response.status === 401) {

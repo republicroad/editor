@@ -7,8 +7,22 @@
 // 通知管理
 import apiClient from '../apiClient';
 
-import { EmailData, EmailSearchData } from '#/entity';
+ interface EmailData {
+  id?: string;
+  email: string;
+  user_id: string;
+  email_name: string;
+  tag: string;
+}
 
+ interface EmailSearchData {
+  user_id?: string;
+  email_name?: string;
+  email?: string;
+  current: number;
+  tag?: string;
+  page_size: number;
+}
 export enum NoticeApi {
   email = '/email_info',
   feishu = '/feishu_info',

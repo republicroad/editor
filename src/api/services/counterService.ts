@@ -2,8 +2,12 @@
 
 import apiClient from '../apiClient';
 
-import { CounterListData } from '#/entity';
-
+interface CounterListData {
+  counter_name: string;
+  counter_type: string;
+  counter_time?: string;
+  user_id: string;
+}
 export enum DataApi {
   counterAPI = '/counter_info',
   counterValueAPI = '/counter_value',

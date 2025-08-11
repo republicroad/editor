@@ -35,15 +35,20 @@ import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
 import { customNodes } from '../context/customnode.tsx'
 import { useLocation } from 'react-router-dom';
 // import { useRouter } from '@/router/hooks/use-router';
-import counterService from '@/api/services/counterService';
-import listService from '@/api/services/listService';
-import noticeService from '@/api/services/noticeService';
-import ruleService from '@/api/services/ruleService';
-import workbench from '@/api/services/workbench';
+import counterService from '../api/services/counterService';
+import listService from '../api/services/listService';
+import noticeService from '../api/services/noticeService';
+import ruleService from '../api/services/ruleService';
+import workbench from '../api/services/workbench';
 // 文档文件类型枚举，定义支持的文件MIME类型
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
 }
+interface GraphDesc {
+  rule_name: string;
+  rule_desc: string;
+}
+
 
 // 检查浏览器是否支持文件系统访问API（File System Access API）
 // 这个API允许Web应用直接读写用户设备上的文件

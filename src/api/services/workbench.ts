@@ -4,8 +4,8 @@
  * @LastEditTime: 2025-01-08 09:38:55
  * @FilePath: /custom-rules/src/api/services/workbench.ts
  */
-import { DecisionGraphType } from '@jdm/src/components/decision-graph/context/dg-store.context';
-import { Simulation } from '@jdm/src/components/decision-graph/types/simulation.types';
+import { DecisionGraphType } from '@gorules/jdm-editor';
+import { Simulation } from '@gorules/jdm-editor';
 
 import apiClient from '../apiClient';
 

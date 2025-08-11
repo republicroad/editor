@@ -6,15 +6,57 @@
  */
 import apiClient from '../apiClient';
 
-import { RuleData, RuleDataType, ruleChartQueryData, ProjectListData } from '#/entity';
+ interface RuleDataType {
+  create_time: string;
+  id: string;
+  proj_detail: string;
+  proj_id: string;
+  proj_name: string;
+  rule_id: string;
+  rule_name: string;
+  rule_score: number;
+  rule_suggest: string;
+  rule_switch: boolean;
+  rule_online: boolean;
+  rule_desc: string;
+  update_time: Date;
+  username: string;
+  rule_status: string;
+  rule_graph: { context: unknown; content: unknown };
+}
 
-export enum RuleApi {
+ interface Pagination {
+  current: number;
+  pageSize: number;
+  total?: number; // 添加可选的 total 属性
+  showSizeChanger?: boolean;
+}
+
+ interface RuleData {
+  metadata: RuleDataType[];
+  pagination: Pagination;
+}
+
+ interface ProjectListData {
+  current: number;
+  user_id: string;
+  page_size?: number;
+  search?: string;
+}
+ enum RuleApi {
   getRule = '/rule',
   getProject = '/proj',
   getRuleView = '/rule_view',
   log = '/rule_log',
   runTest = '/run',
 }
+interface ruleChartQueryData {
+  proj_id: string;
+  user_id: string;
+  start_time: string;
+  end_time: string;
+}
+
 
 const getRule = (user_id, proj_id, rule_name, current, page_size, rule_id) =>
   apiClient.get<RuleData>({

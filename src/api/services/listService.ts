@@ -7,8 +7,12 @@
 // 名单管理
 import apiClient from '../apiClient';
 
-import { ListData } from '#/entity';
-
+interface ListData {
+  current: number;
+  user_id: string;
+  page_size?: number;
+  search?: string;
+}
 export enum ListApi {
   list = '/list',
   listData = '/list_data',

@@ -776,13 +776,18 @@ export const DecisionSimplePage: React.FC = () => {
                       onRun={async ({ graph, context }) => {
                         try {
                           // 向后端发送模拟请求
-                          const { data } = await axios.post('/api/simulate', {
+                          if (!user_id) {
+                            message.error('用户ID不能为空');
+                            return;
+                          }
+                          
+                          const result = await workbench.runRule({
                             context,
                             content: graph,
+                            user_id,
                           });
-
                           // 设置模拟成功的结果
-                          setGraphTrace({ result: { ...data, snapshot: graph } });
+                          setGraphTrace(result);
                         } catch (e) {
                           // 使用模式匹配处理不同类型的错误
                           const errorMessage = match(e)

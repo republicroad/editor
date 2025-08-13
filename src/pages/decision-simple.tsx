@@ -1,7 +1,7 @@
 // React核心库和必要的hooks
 import React, { useEffect, useRef, useState } from 'react';
 // Ant Design UI组件库
-import { Button, Form, Divider, Dropdown, message, Modal, theme, Typography } from 'antd';
+import { Button, Form, Divider, Dropdown, message, Modal, theme, Typography,Input,Select } from 'antd';
 // Ant Design图标组件
 import { BulbOutlined, CheckOutlined, PlayCircleOutlined } from '@ant-design/icons';
 // 决策模板数据
@@ -52,7 +52,9 @@ interface GraphDesc {
 
 // 检查浏览器是否支持文件系统访问API（File System Access API）
 // 这个API允许Web应用直接读写用户设备上的文件
-const supportFSApi = Object.hasOwn(window, 'showSaveFilePicker');
+// const supportFSApi = Object.hasOwn(window, 'showSaveFilePicker');
+const supportFSApi = false;
+
 
 /**
  * 决策编辑器简单页面组件
@@ -185,6 +187,7 @@ export const DecisionSimplePage: React.FC = () => {
     });
   };
 
+  // 获取计数器列表
   const getCounterDetail = (type, data) => {
     console.log(type);
     // getCounterList
@@ -291,8 +294,8 @@ export const DecisionSimplePage: React.FC = () => {
       }
     });
   };
-   // 处理组件中事件点击事件 通过type 来区分点击事件类型
-   const handleCompClick = (type: string, data: any) => {
+  // 处理组件中事件点击事件 通过type 来区分点击事件类型
+  const handleCompClick = (type: string, data: any) => {
     console.log('点击事件', type, data);
     switch (type) {
       case 'link':
@@ -406,7 +409,7 @@ export const DecisionSimplePage: React.FC = () => {
 
       // 序列化图数据为JSON格式
       const json = JSON.stringify({ contentType: DocumentFileTypes.Decision, ...graph }, null, 2);
-      const newFileName = `${fileName.replaceAll('.json', '')}.json`;
+      const newFileName = `${formValue.rule_name.replaceAll('.json', '')}.json`;
 
       // 显示保存文件对话框
       const handle = await window.showSaveFilePicker({
@@ -466,19 +469,16 @@ export const DecisionSimplePage: React.FC = () => {
 
   /**
    * 创建新决策图的处理函数
-   * 会弹出确认对话框，避免用户意外丢失当前工作
+   * 会弹出确认对话框，刷新页面
    */
-  const handleNew = async () => {
+  const resetGraph = async () => {
     Modal.confirm({
-      title: 'New decision',
+      title: '重新编辑',
       icon: false,
-      content: <div>Are you sure you want to create new blank decision, your current work might be lost?</div>,
+      content: <div>确定要重新编辑吗？</div>,
       onOk: async () => {
         // 重置图状态为空
-        setGraph({
-          nodes: [],
-          edges: [],
-        });
+        window.location.reload();
       },
     });
   };
@@ -543,7 +543,7 @@ export const DecisionSimplePage: React.FC = () => {
       checkCyclic();
 
       // 在浏览器中创建文件
-      const newFileName = `${fileName.replaceAll('.json', '')}.json`;
+      const newFileName = `${formValue.rule_name.replaceAll('.json', '')}.json`;
       const json = JSON.stringify({ contentType: DocumentFileTypes.Decision, ...graph }, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const href = URL.createObjectURL(blob);
@@ -643,21 +643,75 @@ export const DecisionSimplePage: React.FC = () => {
               />
               <Divider type="vertical" style={{ margin: 0 }} />
               <div className={classes.headingContent}>
-                {/* 可编辑的文件名标题 */}
-                <Typography.Title
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', height: '32px' }}>
+                  {/* 可编辑的文件名标题 */}
+                  {/* <Typography.Title
                   level={4}
-                  style={{ margin: 0, fontWeight: 400 }}
+                  style={{ margin: 0, fontWeight: 400,width: '100px' }}
                   className={classes.headingTitle}
                   editable={{
-                    text: fileName,
-                    maxLength: 24,
+                    text: formValue.rule_name,
+                    maxLength: 12,
                     autoSize: { maxRows: 1 },
                     onChange: (value) => setFileName(value.trim()),
                     triggerType: ['text'],
                   }}
                 >
-                  {fileName}
+                  {formValue.rule_name}
                 </Typography.Title>
+                <Typography.Title
+                  level={4}
+                  style={{ margin: 0, fontWeight: 400 }}
+                  className={classes.headingTitle}
+                >
+                  | {formValue.rule_desc}
+                </Typography.Title>
+                <Typography.Title
+                  level={4}
+                  style={{ margin: 0, fontWeight: 400 }}
+                  className={classes.headingTitle}
+                >
+                  | {id}
+                </Typography.Title> */}
+                  <Form layout="inline" form={form} name="myForm" initialValues={formValue}>
+                    <Form.Item
+                      label={('版本名称')}
+                      name="rule_name"
+                      required
+                      rules={[{ required: true, message: ('请输入版本名称！') }]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      label={('版本描述')}
+                      name="rule_desc"
+                      required
+                      rules={[{ required: true, message: ('请输入版本描述！') }]}
+                    >
+                      <Input style={{ width: '400px' }} />
+                    </Form.Item>
+                    {!id ? (
+                      <Form.Item
+                        label={('模版选择')}
+                        tooltip={{
+                          title: ('默认为新规则，可选择已有规则修改后另存'),
+                          // icon: <InfoCircleOutlined />,
+                        }}
+                      >
+                        <Select
+                          value={modelID}
+                          options={mdoleList}
+                          placeholder={('点击选择模版')}
+                          onChange={handleModleChange}
+                          style={{ width: '200px' }}
+                        />
+                      </Form.Item>
+                    ) : (
+                      ''
+                    )}
+                  </Form>
+                </div>
+
                 {/* 工具栏按钮组 */}
                 <Stack horizontal verticalAlign="center" gap={8}>
                   {/* 新建按钮 */}
@@ -694,18 +748,15 @@ export const DecisionSimplePage: React.FC = () => {
                       打开模版
                     </Button>
                   </Dropdown>
-                  {/* 保存按钮（仅在支持文件系统API时显示） */}
-                  {supportFSApi && (
-                    <Button onClick={saveFile} type={'text'} size={'small'}>
+                    <Button onClick={handleConfirm} type={'text'} size={'small'}>
                       保存
                     </Button>
-                  )}
                   {/* 另存为按钮 */}
                   <Button onClick={saveFileAs} type={'text'} size={'small'}>
                     另存为
                   </Button>
-                  <Button onClick={handleNew} type={'text'} size={'small'}>
-                    清空
+                  <Button onClick={resetGraph} type={'text'} size={'small'}>
+                    重新编辑
                   </Button>
                 </Stack>
               </div>
@@ -763,6 +814,8 @@ export const DecisionSimplePage: React.FC = () => {
               value={graph}              // 图数据
               onChange={(value) => setGraph(value)}  // 图数据变化回调
               reactFlowProOptions={{ hideAttribution: true }}  // React Flow配置
+              userId={user_id}
+              projectId={projectId}
               simulate={graphTrace}      // 模拟执行结果
               panels={[
                 {

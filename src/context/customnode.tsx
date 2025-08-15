@@ -6,39 +6,23 @@ import { createJdmNode } from '@gorules/jdm-editor';
 export const customNodes = [
     createJdmNode({
     kind: 'counter',
-    displayName: 'counter',
+    displayName: '计数器',
+    group: 'counter',
+    icon: <ApartmentOutlined />,
+    shortDescription: 'Used for counter',
+  }),
+  createJdmNode({
+    kind: 'counter',
+    displayName: '共享计数器',
     group: 'counter',
     icon: <ApartmentOutlined />,
     shortDescription: 'Used for counter',
   }),
     createJdmNode({
     kind: 'http_request',
-    displayName: 'http_request',
+    displayName: 'HTTP请求',
     group: 'http_request',
-    shortDescription: 'Used for http_request',
-  }),
-  createJdmNode({
-    kind: 'inputsNode',
-    group: 'inputs',
-    displayName: 'Inputs Form',
-    shortDescription: 'With inputs map form',
     icon: <ApiOutlined />,
-    inputs: [
-      {
-        control: 'text',
-        name: 'hello.nested.something',
-        label: 'First',
-      },
-      {
-        control: 'text',
-        name: 'second',
-        label: 'Second',
-      },
-      {
-        control: 'bool',
-        name: 'checkbox',
-        label: 'Checkbox',
-      },
-    ],
+    shortDescription: 'Used for http_request',
   }),
 ];

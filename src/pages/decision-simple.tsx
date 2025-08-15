@@ -643,7 +643,7 @@ export const DecisionSimplePage: React.FC = () => {
               />
               <Divider type="vertical" style={{ margin: 0 }} />
               <div className={classes.headingContent}>
-                <div style={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', height: '32px' }}>
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                   {/* 可编辑的文件名标题 */}
                   {/* <Typography.Title
                   level={4}
@@ -673,7 +673,7 @@ export const DecisionSimplePage: React.FC = () => {
                 >
                   | {id}
                 </Typography.Title> */}
-                  <Form layout="inline" form={form} name="myForm" initialValues={formValue}>
+                  <Form layout="inline" form={form} name="myForm" initialValues={formValue} style={{ marginBottom: '10px' }}>
                     <Form.Item
                       label={('版本名称')}
                       name="rule_name"
@@ -716,8 +716,8 @@ export const DecisionSimplePage: React.FC = () => {
                 <Stack horizontal verticalAlign="center" gap={8}>
                   {/* 新建按钮 */}
 
-                  {/* 打开文件下拉菜单 */}
-                  <Dropdown
+                  {/* 打开文件下拉菜单 暂时先隐藏*/}
+                  {/* <Dropdown
                     menu={{
                       onClick: handleOpenMenu,
                       items: [
@@ -747,7 +747,7 @@ export const DecisionSimplePage: React.FC = () => {
                     <Button type={'text'} size={'small'}>
                       打开模版
                     </Button>
-                  </Dropdown>
+                  </Dropdown> */}
                     <Button onClick={handleConfirm} type={'text'} size={'small'}>
                       保存
                     </Button>

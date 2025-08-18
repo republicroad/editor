@@ -7,9 +7,19 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), wasm(), tsconfigPaths()],
+  base: './', // 使用相对路径，支持任意目录部署
   build: {
     outDir: path.join(__dirname, 'static'),
     target: 'esnext',
+    assetsDir: 'assets', // 资源文件目录
+    rollupOptions: {
+      output: {
+        // 确保文件名一致性
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   },
   resolve: {
     dedupe: ['react', 'react-dom'],

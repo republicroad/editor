@@ -7,7 +7,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), wasm(), tsconfigPaths()],
-  // base: './', // 使用相对路径，支持任意目录部署
+  base: './', // 使用相对路径，支持任意目录部署
   build: {
     outDir: path.join(__dirname, 'static/rules/newflowchart'),
     target: 'esnext',

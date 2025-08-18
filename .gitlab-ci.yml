@@ -1,0 +1,156 @@
+stages:
+  - build
+  - deploy
+
+
+variables:
+  namecb: "custom-rules-editor"
+#   svcport: "3001"
+#   replicanum: "1"
+#   ingress: "custom-rule-dev.geevisit.com"
+#   certname: "geevisit-com-tls"
+
+
+
+
+
+# .deploy_k8s: &deploy_k8s |
+#   if [ $CANARY_CB -eq 1 ];then cp -arf .project-name-canary.yaml ${namecb}-${CI_COMMIT_TAG}.yaml;else cp -arf .project-name.yaml ${namecb}-${CI_COMMIT_TAG}.yaml;fi
+#   sed -ri "s+projectnamecb.gtapp.xyz+${ingress}+g" ${namecb}-${CI_COMMIT_TAG}.yaml
+#   sed -ri "s+projectnamecb+${namecb}+g" ${namecb}-${CI_COMMIT_TAG}.yaml
+#   sed -ri "s+5000+${svcport}+g" ${namecb}-${CI_COMMIT_TAG}.yaml
+#   sed -ri "s+replicanum+${replicanum}+g" ${namecb}-${CI_COMMIT_TAG}.yaml
+#   sed -ri "s+gtapp-xyz-tls+${certname}+g" ${namecb}-${CI_COMMIT_TAG}.yaml
+#   sed -ri "s+mytagcb+${CI_COMMIT_TAG}+g" ${namecb}-${CI_COMMIT_TAG}.yaml
+#   sed -ri "s+harbor.gtapp.xyz/library+${IMG_URL}+g" ${namecb}-${CI_COMMIT_TAG}.yaml
+#   [ -d ~/.kube ] || mkdir ~/.kube
+#   echo "$KUBE_CONFIG" > ~/.kube/config
+#   if [ $NORMAL_CB -eq 1 ];then if kubectl get deployments.|grep -w ${namecb}-canary &>/dev/null;then kubectl delete deployments.,svc ${namecb}-canary ;fi;fi
+#   kubectl apply -f ${namecb}-${CI_COMMIT_TAG}.yaml --record
+#   kubectl rollout history deployment ${namecb}|tail -5|awk -F"[/ -.]+" '{print $1"\t"$6"."$7"."$8}'|sed '$d'|sed '$d'|sort -r|awk '{print $NF}'|awk '$0=""NR".   "$0'
+
+
+
+
+
+
+#------------------------- 北京DEV测试环境发布start
+dev-build:
+  stage: build
+  variables:
+    DOCKER_HOST: tcp://172.22.65.53:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+    #GIT_SUBMODULE_STRATEGY: recursive
+  before_script:
+    - docker login ${REGISTRY_URL} -u "$DOCKER_USER" -p "$DOCKER_PASS"
+    # - which git || (apk --no-cache add git)
+    # - if [ -d ./jdm-editor ];then git rm -r ./jdm-editor;fi
+    # - git submodule add -b jdm-editor-restyle ../../public/jdm-editor.git
+    # - cat .gitmodules
+    # - ls -ltra ./jdm-editor
+  script:
+    - CI_COMMIT_TAG=$(cat version)
+    - docker build --network host --build-arg PYPI_IP=172.16.30.51 --cache-from ${REGISTRY_URL}/${REGISTRY_NS}/${namecb}:latest --tag ${REGISTRY_URL}/${REGISTRY_NS}/${namecb}:dev .
+    #- sleep 999999
+    - docker push ${REGISTRY_URL}/${REGISTRY_NS}/${namecb}:dev
+  after_script:
+    - docker logout ${REGISTRY_URL}
+  tags:
+    - "docker"
+  only:
+    changes:
+      - version
+    refs:
+      - enhance_v2
+  except:
+    - tags
+
+
+
+dev-deploy:
+  stage: deploy
+  image: registry.cn-qingdao.aliyuncs.com/geetest_cb/kubectl:v1.27.5
+  variables:
+    KUBE_CONFIG: "$KUBE_CONFIG_HSBJ_DEV"
+    ingress: "custom-rules-editor-dev.geevisit.com"
+  before_script:
+    - mkdir -p ~/.kube && cat "$KUBE_CONFIG" > ~/.kube/config
+    - echo '101.126.27.179 hsbj-dev-cn-k8s.gtapp.xyz' >> /etc/hosts
+  script:
+    - CI_COMMIT_REF_NAME=dev-$(cat version)
+    - echo $CI_COMMIT_REF_NAME
+    - if kubectl get deployments.apps ${namecb} -o yaml|grep image:|grep "${namecb}:dev" &>/dev/null;then kubectl set env deployments ${namecb} DEPLOY_DATE="$(date)" ;else kubectl set image deployment/${namecb} ${namecb}=registry.cn-hangzhou.aliyuncs.com/kae/${namecb}:dev --record;fi
+    - sed -ri 's+dl-cdn.alpinelinux.org+mirrors.aliyun.com+g' /etc/apk/repositories
+    - apk add --no-cache curl ca-certificates
+    - update-ca-certificates
+    - echo 'Y3VybCAtcyAtWCBQT1NUIC1IICdDb250ZW50LXR5cGU6IGFwcGxpY2F0aW9uL2pzb24nIC1kICd7Im1zZ190eXBlIjogInRleHQiLCJjb250ZW50IjogeyJ0ZXh0IjogIici6aG555uu54q25oCB77yaJDFcbumhueebruWQjeensO+8miR7Q0lfUFJPSkVDVF9OQU1FfVxu6aG555uu5Y+R54mI77yaJHtDSV9DT01NSVRfUkVGX05BTUV9XG7pobnnm67lnLDlnYDvvJoke0NJX0pPQl9VUkx9XG7pobnnm67mj5DkuqTvvJoke0dJVExBQl9VU0VSX05BTUV9IicifX0nIGh0dHBzOi8vb3Blbi5mZWlzaHUuY24vb3Blbi1hcGlzL2JvdC92Mi9ob29rLyQyCg=='|base64 -d|sh -s "${namecb}测试环境发布完成${ingress}" "c42aa6ed-809d-4e8b-995d-90e7077804ec"
+  after_script:
+    - rm -f ~/.kube/config
+  only:
+    changes:
+      - version
+    refs:
+      - enhance_v2
+  except:
+    - tags
+#------------------------- 北京DEV测试环境发布end
+
+
+
+build:
+  stage: build
+  variables:
+    DOCKER_HOST: tcp://172.22.65.53:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - docker login ${REGISTRY_URL} -u "$DOCKER_USER" -p "$DOCKER_PASS"
+  script:
+    - docker build --network host --build-arg PYPI_IP=172.16.30.51 --cache-from ${REGISTRY_URL}/${REGISTRY_NS}/${namecb}:latest --tag ${REGISTRY_URL}/${REGISTRY_NS}/${namecb}:$CI_COMMIT_TAG --tag ${REGISTRY_URL}/${REGISTRY_NS}/${namecb}:latest .
+    - docker push ${REGISTRY_URL}/${REGISTRY_NS}/${namecb}:$CI_COMMIT_TAG
+  after_script:
+    - docker logout ${REGISTRY_URL}
+  tags:
+    - "docker"
+  only:
+    - tags
+
+
+#--------------------------ALIYUN-shanghai-production-------------------------------------------------------------------
+
+# 2ALI-pro-deploy:
+#   stage: deploy
+#   image: registry.cn-qingdao.aliyuncs.com/geetest_cb/kubectl:v1.20.4-aliyun.1
+#   variables:
+#     KUBE_CONFIG: "$KUBE_CONFIG_ALI"
+#     IMG_URL: "${REGISTRY_URL}/${REGISTRY_NS}"
+#     NORMAL_CB: 1
+#   script:
+#     - *deploy_k8s
+#     - sed -ri 's+dl-cdn.alpinelinux.org+mirrors.aliyun.com+g' /etc/apk/repositories
+#     - apk add --no-cache curl
+#     - echo 'Y3VybCAtcyAtWCBQT1NUIC1IICdDb250ZW50LXR5cGU6IGFwcGxpY2F0aW9uL2pzb24nIC1kICd7Im1zZ190eXBlIjogInRleHQiLCJjb250ZW50IjogeyJ0ZXh0IjogIici6aG555uu54q25oCB77yaJDFcbumhueebruWQjeensO+8miR7Q0lfUFJPSkVDVF9OQU1FfVxu6aG555uu5Y+R54mI77yaJHtDSV9CVUlMRF9SRUZfTkFNRX1cbumhueebruWcsOWdgO+8miR7Q0lfSk9CX1VSTH1cbumhueebruaPkOS6pO+8miR7R0lUTEFCX1VTRVJfTkFNRX0iJyJ9fScgaHR0cHM6Ly9vcGVuLmZlaXNodS5jbi9vcGVuLWFwaXMvYm90L3YyL2hvb2svJDIKCg=='|base64 -d|sh -s "官网正式环境发布完成" "c42aa6ed-809d-4e8b-995d-90e7077804ec"
+#   when: manual
+#   only:
+#     - tags
+
+
+
+#--------------------------ALIYUN-BJ-backup-------------------------------------------------------------------
+
+# 3BJ-bak-deploy:
+#   stage: deploy
+#   image: registry.cn-qingdao.aliyuncs.com/geetest_cb/kubectl:latest
+#   variables:
+#     KUBE_CONFIG: "$KUBE_CONFIG_HSBJ"
+#     IMG_URL: "${REGISTRY_URL}/${REGISTRY_NS}"
+#     NORMAL_CB: 1
+#   script:
+#     - *deploy_k8s
+#     - sed -ri 's+dl-cdn.alpinelinux.org+mirrors.aliyun.com+g' /etc/apk/repositories
+#     - apk add --update curl && rm /var/cache/apk/*
+#     - echo 'Y3VybCAtcyAtWCBQT1NUIC1IICdDb250ZW50LXR5cGU6IGFwcGxpY2F0aW9uL2pzb24nIC1kICd7Im1zZ190eXBlIjogInRleHQiLCJjb250ZW50IjogeyJ0ZXh0IjogIici6aG555uu54q25oCB77yaJDFcbumhueebruWQjeensO+8miR7Q0lfUFJPSkVDVF9OQU1FfVxu6aG555uu5Y+R54mI77yaJHtDSV9CVUlMRF9SRUZfTkFNRX1cbumhueebruWcsOWdgO+8miR7Q0lfSk9CX1VSTH1cbumhueebruaPkOS6pO+8miR7R0lUTEFCX1VTRVJfTkFNRX0iJyJ9fScgaHR0cHM6Ly9vcGVuLmZlaXNodS5jbi9vcGVuLWFwaXMvYm90L3YyL2hvb2svJDIKCg=='|base64 -d|sh -s "官网灾备环境发布完成" "c42aa6ed-809d-4e8b-995d-90e7077804ec"
+#   when: manual
+#   only:
+#     - tags

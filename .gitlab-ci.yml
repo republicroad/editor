@@ -73,7 +73,7 @@ dev-deploy:
   image: registry.cn-qingdao.aliyuncs.com/geetest_cb/kubectl:v1.27.5
   variables:
     KUBE_CONFIG: "$KUBE_CONFIG_HSBJ_DEV"
-    ingress: "custom-rules-editor-dev.geevisit.com"
+    ingress: "custom-rule-dev.geevisit.com/rules/newflowchart"
   before_script:
     - mkdir -p ~/.kube && cat "$KUBE_CONFIG" > ~/.kube/config
     - echo '101.126.27.179 hsbj-dev-cn-k8s.gtapp.xyz' >> /etc/hosts

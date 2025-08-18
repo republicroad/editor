@@ -28,7 +28,7 @@ await zenWasm.default(zenWasmUrl);
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: '/rules/newflowchart',
     element: <DecisionSimplePage />,
   },
   {

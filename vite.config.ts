@@ -11,7 +11,7 @@ export default defineConfig({
   build: {
     outDir: path.join(__dirname, 'static'),
     target: 'esnext',
-    assetsDir: 'assets', // 资源文件目录
+    assetsDir: 'plugins', // 资源文件目录
   },
   resolve: {
     dedupe: ['react', 'react-dom'],

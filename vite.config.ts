@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [react(), wasm(), tsconfigPaths()],
   // base: './', // 使用相对路径，支持任意目录部署
   build: {
-    outDir: path.join(__dirname, 'static'),
+    outDir: path.join(__dirname, 'static/rules/newflowchart'),
     target: 'esnext',
     assetsDir: 'plugins', // 资源文件目录
   },

@@ -24,7 +24,7 @@ export enum ListApi {
  * @param ListData 获取名单名称列表
  * @returns
  */
-const getListData = (params: ListData) => apiClient.get({ url: ListApi.list, params });
+const getListData = (params: any) => apiClient.get({ url: ListApi.list, params });
 /**
  *
  * @param user_id

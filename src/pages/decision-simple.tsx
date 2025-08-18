@@ -146,7 +146,7 @@ export const DecisionSimplePage: React.FC = () => {
   //  获取自定义函数
   const functionCustom = (kind) => {
     // 获取自定义函数数据
-    workbench.getCustomFunction(user_id, kind).then((res) => {
+    workbench.getCustomFunction(user_id).then((res) => {
       if (res.length > 0) {
         setCustomFunctions(res);
       }
@@ -155,7 +155,7 @@ export const DecisionSimplePage: React.FC = () => {
 
   // 获取名单列表
   const getMenuList = () => {
-    listService.getListData({ user_id: user_id }).then((res) => {
+    listService.getListData({ user_id }).then((res) => {
       if (res.metadata.length > 0) {
         setMenu(res.metadata);
       }
@@ -638,7 +638,6 @@ export const DecisionSimplePage: React.FC = () => {
               <Button
                 type="text"
                 target="_blank"
-                href="https://gorules.io"
                 icon={<img height={24} width={24} src={'/favicon.svg'} />}
               />
               <Divider type="vertical" style={{ margin: 0 }} />
@@ -814,7 +813,7 @@ export const DecisionSimplePage: React.FC = () => {
               value={graph}              // 图数据
               onChange={(value) => setGraph(value)}  // 图数据变化回调
               reactFlowProOptions={{ hideAttribution: true }}  // React Flow配置
-              userId={user_id}
+              userId={user_id!}
               projectId={projectId}
               simulate={graphTrace}      // 模拟执行结果
               panels={[

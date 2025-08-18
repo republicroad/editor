@@ -1,27 +1,12 @@
-FROM rust:1.86 AS rust-builder
+FROM registry.cn-qingdao.aliyuncs.com/geetest_cb/nginx:1.21.3
+MAINTAINER boge <chengbo@geetest.com>
 
-WORKDIR /app
-
-COPY . .
-
-RUN cargo build --release
-
-FROM node:lts-slim AS react-builder
-
-WORKDIR /app
+RUN mkdir -p /mnt/nginx/conf.d \
+    && mkdir /mnt/nginx/www
+WORKDIR /mnt/nginx/www
 
 COPY . .
 
-RUN npm install -g pnpm
-RUN pnpm i
-RUN pnpm run build
+EXPOSE 80
 
-FROM debian:stable-slim AS runner
-
-WORKDIR /app
-
-COPY --from=rust-builder /app/target/release/editor ./editor
-COPY --from=react-builder /app/static ./static
-
-EXPOSE 3000
-CMD ["./editor"]
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

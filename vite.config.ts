@@ -12,7 +12,11 @@ export default defineConfig({
     outDir: path.join(__dirname, 'static/rules/newflowchart'),
     target: 'esnext',
     assetsDir: 'plugins', // 资源文件目录
+    rollupOptions: {
+      // 移除external配置，让Vite正常处理所有依赖
+    }
   },
+  publicDir: 'public', // 指定静态资源目录
   resolve: {
     dedupe: ['react', 'react-dom'],
   },

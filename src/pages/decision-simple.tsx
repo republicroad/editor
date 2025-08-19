@@ -638,7 +638,7 @@ export const DecisionSimplePage: React.FC = () => {
               <Button
                 type="text"
                 target="_blank"
-                icon={<img height={24} width={24} src={'/favicon.svg'} />}
+                icon={<img height={24} width={24} src={'./favicon.svg'} />}
               />
               <Divider type="vertical" style={{ margin: 0 }} />
               <div className={classes.headingContent}>

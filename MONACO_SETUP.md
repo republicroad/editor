@@ -26,6 +26,15 @@ editor/
 ```typescript
 import { loader } from '@monaco-editor/react';
 
+// 配置Monaco环境，处理worker加载
+self.MonacoEnvironment = {
+  getWorkerUrl: function (workerId: string, label: string) {
+    const baseUrl = './monaco/min/vs';
+    // Monaco min版本使用统一的workerMain.js
+    return `${baseUrl}/base/worker/workerMain.js`;
+  }
+};
+
 // 配置Monaco使用本地静态文件（相对路径）
 loader.config({
   paths: {
@@ -34,7 +43,10 @@ loader.config({
 });
 ```
 
-> **路径说明**: 使用相对路径 `'./monaco/min/vs'` 而不是绝对路径 `'/monaco/min/vs'`，这样可以支持在任意子目录下部署应用。
+> **路径说明**: 
+> - 使用相对路径 `'./monaco/min/vs'` 而不是绝对路径 `'/monaco/min/vs'`，这样可以支持在任意子目录下部署应用
+> - 配置 `MonacoEnvironment.getWorkerUrl` 来处理worker文件的加载，Monaco min版本使用统一的 `workerMain.js`
+> - 这解决了 "Failed to execute 'importScripts'" 的worker加载错误
 
 **vite.config.ts** - Vite配置支持静态文件：
 ```typescript

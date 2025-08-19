@@ -28,13 +28,13 @@ await zenWasm.default(zenWasmUrl);
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: '*',
     element: <DecisionSimplePage />,
   },
-  {
-    path: '*',
-    element: <NotFoundPage />,
-  },
+//   {
+//     path: '*',
+//     element: <NotFoundPage />,
+//   },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

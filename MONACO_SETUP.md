@@ -26,13 +26,15 @@ editor/
 ```typescript
 import { loader } from '@monaco-editor/react';
 
-// 配置Monaco使用本地静态文件
+// 配置Monaco使用本地静态文件（相对路径）
 loader.config({
   paths: {
-    vs: '/monaco/min/vs'
+    vs: './monaco/min/vs'
   }
 });
 ```
+
+> **路径说明**: 使用相对路径 `'./monaco/min/vs'` 而不是绝对路径 `'/monaco/min/vs'`，这样可以支持在任意子目录下部署应用。
 
 **vite.config.ts** - Vite配置支持静态文件：
 ```typescript

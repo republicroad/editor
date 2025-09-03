@@ -1,0 +1,13 @@
+{
+  "name": "bun",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@gorules/zen-engine": "^0.47.1"
+  }
+}

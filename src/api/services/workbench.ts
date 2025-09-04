@@ -24,8 +24,8 @@ export enum Workbench {
 const runRule = (data: RuleReq) => apiClient.post<Simulation>({ url: Workbench.getGraph, data });
 const getFunction = (user_id) =>
   apiClient.get<[]>({ url: Workbench.getFunction, params: { user_id } });
-const getCustomFunction = (user_id) =>
-  apiClient.get<[]>({ url: Workbench.getCustomFunction, params: { user_id } });
+const getCustomFunction = (user_id, kind) =>
+  apiClient.get<[]>({ url: Workbench.getCustomFunction, params: { user_id, kind } });
 const getGraph = (user_id, rule_id) =>
   apiClient.get<{ context; content }>({ url: Workbench.getGraph, params: { user_id, rule_id } });
 

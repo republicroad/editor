@@ -272,7 +272,7 @@ export const DecisionSimplePage: React.FC = () => {
                   id: expr.id,
                   key: expr.key,
                   value: expr.value || '',
-                  type: expr.type
+                  type: expr.type || 'function'
                 }));
                 
                 // 生成或更新expr_asts

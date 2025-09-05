@@ -157,11 +157,11 @@ export const DecisionSimplePage: React.FC = () => {
   }, [projectId]);
 
   // // 获取自定义函数
-  // useEffect(() => {
-  //   if (user_id) {
-  //     functionCustom('');
-  //   }
-  // }, [user_id]);
+  useEffect(() => {
+    if (user_id &&  customfunctions.length === 0) {  // 添加防重复调用检查
+      functionCustom('');
+    }
+  }, [user_id]);  // 依赖user_id而不是空数组
 
   //  获取自定义函数
   const functionCustom = (kind) => {

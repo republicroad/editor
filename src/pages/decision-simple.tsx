@@ -137,7 +137,6 @@ export const DecisionSimplePage: React.FC = () => {
 
   // 获取规则图数据
   useEffect(() => {
-    console.log('useEffect triggered with:', { id, projectId, user_id });
     if (id && projectId && user_id && !isLoadingGraph) {
       getGraphData(projectId, id);
       // functionCustom('');
@@ -150,7 +149,6 @@ export const DecisionSimplePage: React.FC = () => {
 
   // 获取模版list
   useEffect(() => {
-    console.log('Model list useEffect triggered with:', { projectId, user_id, isLoadingModelList });
     if (projectId && user_id && !isLoadingModelList) {
       getModlehDataList(projectId);
     }
@@ -167,7 +165,6 @@ export const DecisionSimplePage: React.FC = () => {
   const functionCustom = (kind) => {
     // 获取自定义函数数据
     workbench.getCustomFunction(user_id,kind).then((res) => {
-      console.log('Custom functions API response:', res);
       if (res && res.length > 0) {
         setCustomFunctions(res);
       } else {
@@ -215,7 +212,6 @@ export const DecisionSimplePage: React.FC = () => {
 
   // 获取计数器列表
   const getCounterDetail = (type, data) => {
-    console.log(type);
     functionCustom(type);
     // getCounterList
     // counterService
@@ -244,11 +240,9 @@ export const DecisionSimplePage: React.FC = () => {
 
   const getGraphData = (projectId, id) => {
     const requestKey = `${projectId}-${id}-${user_id}`;
-    console.log('getGraphData called with:', { projectId, id, user_id, isLoadingGraph, lastRequest: lastRequestRef.current });
     
     // 防重复请求 - 检查是否正在加载或者是相同的请求
     if (isLoadingGraph || lastRequestRef.current === requestKey) {
-      console.log('Duplicate request detected, skipping');
       return;
     }
 
@@ -440,11 +434,9 @@ export const DecisionSimplePage: React.FC = () => {
 
   const getModlehDataList = (projectId) => {
     const requestKey = `${projectId}-${user_id}`;
-    console.log('getModlehDataList called with:', { projectId, user_id, isLoadingModelList, lastRequest: lastModelRequestRef.current });
     
     // 防重复请求
     if (isLoadingModelList || lastModelRequestRef.current === requestKey) {
-      console.log('Duplicate model list request detected, skipping');
       return;
     }
 
@@ -504,41 +496,14 @@ export const DecisionSimplePage: React.FC = () => {
         //  跳转链接 新开页面直接用window.open
         window.open(`/menu/detail?id=${data}`, '_blank');
         break;
-      case 'function':
-        functionCustom('');
-        break;
-      case 'menu':
-        functionCustom('list');
-        break;
-      case 'list':
-        getMenuList();
-        break;
-      case 'notify':
-        functionCustom('notify');
-        break;
-      case 'email':
-        getNoticeDetail(type);
-        break;
-      case 'feishu':
-        getNoticeDetail(type);
-        break;
-      case 'dingtalk':
-        getNoticeDetail(type);
-        break;
-      case 'webhook':
-        getNoticeDetail(type);
-        break;
       case 'counter':
-        getCounterDetail('rate_limit_module', data);
+        getCounterDetail('counter', data);
         break;
-      case 'sharedcounter':
-        getCounterDetail('shared_counter_module', data);
-        break;
-      case 'http':
-        functionCustom('http_module');
+      case 'shared_counter':
+        getCounterDetail('shared_counter', data);
         break;
       default:
-        functionCustom('');
+        functionCustom(type);
         break;
     }
   };

@@ -496,6 +496,9 @@ export const DecisionSimplePage: React.FC = () => {
         //  跳转链接 新开页面直接用window.open
         window.open(`/menu/detail?id=${data}`, '_blank');
         break;
+      case 'UDF':
+        functionCustom('');
+        break;
       case 'counter':
         getCounterDetail('counter', data);
         break;

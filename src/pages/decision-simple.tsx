@@ -212,15 +212,15 @@ export const DecisionSimplePage: React.FC = () => {
 
   // 获取计数器列表
   const getCounterDetail = (type, data) => {
-    functionCustom(type);
+    // functionCustom(type);
     // getCounterList
-    // counterService
-    //   .getCounterList({ counter_func: data, user_id: user_id })
-    //   .then((res: any) => {
-    //     if (res.metadata.length > 0) {
-    //       setMenu(res.metadata);
-    //     }
-    //   });
+    counterService
+      .getCounterList({ counter_func: data, user_id: user_id })
+      .then((res: any) => {
+        if (res.metadata.length > 0) {
+          setMenu(res.metadata);
+        }
+      });
   };
 
   /**
@@ -499,11 +499,23 @@ export const DecisionSimplePage: React.FC = () => {
       case 'UDF':
         functionCustom('');
         break;
-      case 'counter':
+      case 'counterDetail':
         getCounterDetail('counter', data);
         break;
-      case 'shared_counter':
-        getCounterDetail('shared_counter', data);
+      case 'list':
+        getMenuList();
+        break;
+      case 'email':
+        getNoticeDetail(type);
+        break;
+      case 'feishu':
+        getNoticeDetail(type);
+        break;
+      case 'dingtalk':
+        getNoticeDetail(type);
+        break;
+      case 'webhook':
+        getNoticeDetail(type);
         break;
       default:
         functionCustom(type);
@@ -989,6 +1001,7 @@ export const DecisionSimplePage: React.FC = () => {
               value={graph}              // 图数据
               onChange={(value) => setGraph(value)}  // 图数据变化回调
               reactFlowProOptions={{ hideAttribution: true }}  // React Flow配置
+              autoFitView={true}         // 启用自动适应视图
               userId={user_id!}
               projectId={projectId}
               menuList={menu}

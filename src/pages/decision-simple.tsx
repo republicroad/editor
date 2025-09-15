@@ -411,7 +411,14 @@ export const DecisionSimplePage: React.FC = () => {
             rule_graph: JSON.stringify({ content: graph }),
           })
           .then((res) => {
+            if (res) {
+              message.success('规则更新成功！');
+            }
             // res && router.push(`/rules/rulelist`);
+          })
+          .catch((error) => {
+            console.error('更新规则失败:', error);
+            message.error('规则更新失败，请重试！');
           });
       } else {
         ruleService
@@ -422,7 +429,14 @@ export const DecisionSimplePage: React.FC = () => {
             rule_graph: JSON.stringify({ content: graph }),
           })
           .then((res) => {
+            if (res) {
+              message.success('规则创建成功！');
+            }
             // res && router.push(`/rules/rulelist`);
+          })
+          .catch((error) => {
+            console.error('创建规则失败:', error);
+            message.error('规则创建失败，请重试！');
           });
       }
     } catch (error) {
@@ -939,9 +953,9 @@ export const DecisionSimplePage: React.FC = () => {
                       保存
                     </Button>
                   {/* 另存为按钮 */}
-                  <Button onClick={saveFileAs} type={'text'} size={'small'}>
+                  {/* <Button onClick={saveFileAs} type={'text'} size={'small'}>
                     另存为
-                  </Button>
+                  </Button> */}
                   <Button onClick={resetGraph} type={'text'} size={'small'}>
                     重新编辑
                   </Button>

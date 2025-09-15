@@ -36,7 +36,10 @@ enum StorageEnum {
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_APP_BASE_API as string,
   timeout: 50000,
-  headers: { 'Content-Type': 'application/json;charset=utf-8' },
+  headers: { 
+    'Content-Type': 'application/json;charset=utf-8',
+    'Udf-Spec': 'v3'
+  },
 });
 let token: any = '';
 // 请求拦截

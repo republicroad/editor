@@ -1044,8 +1044,18 @@ export const DecisionSimplePage: React.FC = () => {
                             content: graph,
                             user_id,
                           });
+                          
+                          // 确保结果包含 snapshot 字段（后端可能不返回）
+                          const enhancedResult = {
+                            ...result,
+                            result: {
+                              ...result.result,
+                              snapshot: result.result?.snapshot || graph, // 如果后端没有返回snapshot，使用当前图作为snapshot
+                            }
+                          };
+                          
                           // 设置模拟成功的结果
-                          setGraphTrace(result);
+                          setGraphTrace(enhancedResult as any);
                         } catch (e) {
                           // 使用模式匹配处理不同类型的错误
                           const errorMessage = match(e)

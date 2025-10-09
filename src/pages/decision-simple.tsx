@@ -103,6 +103,12 @@ export const DecisionSimplePage: React.FC = () => {
   // 极验开发参数
   const [menu, setMenu] = useState([]); // 获取名单列表
   const [customfunctions, setCustomFunctions] = useState([]);
+  
+  // 为每个标签页维护独立的数据
+  const [tabSpecificData, setTabSpecificData] = useState<Record<string, { menuList?: any[], customFunctions?: any[] }>>({});
+  
+  // 跟踪当前活动的标签页
+  const [currentActiveTab, setCurrentActiveTab] = useState<string>('graph');
   const [formValue, setFormValue] = useState<GraphDesc>({
     rule_name: '',
     rule_desc: '',
@@ -221,6 +227,114 @@ export const DecisionSimplePage: React.FC = () => {
           setMenu(res.metadata);
         }
       });
+  };
+
+
+  // ========== 为特定标签页的数据获取函数 ==========
+  
+  // 为特定标签页获取自定义函数
+  const functionCustomForTab = (kind: string, tabId: string) => {
+    workbench.getCustomFunction(user_id, kind).then((res) => {
+      const customFunctions = res && res.length > 0 ? res : [];
+      setTabSpecificData(prev => ({
+        ...prev,
+        [tabId]: {
+          ...prev[tabId],
+          customFunctions
+        }
+      }));
+    }).catch((error) => {
+      console.error('Failed to fetch custom functions for tab:', tabId, error);
+      setTabSpecificData(prev => ({
+        ...prev,
+        [tabId]: {
+          ...prev[tabId],
+          customFunctions: []
+        }
+      }));
+    });
+  };
+
+  // 为特定标签页获取菜单列表
+  const getMenuListForTab = (tabId: string) => {
+    listService.getListData({ user_id }).then((res) => {
+      const menuList = res.metadata.length > 0 ? res.metadata : [];
+      setTabSpecificData(prev => ({
+        ...prev,
+        [tabId]: {
+          ...prev[tabId],
+          menuList
+        }
+      }));
+    }).catch((error) => {
+      console.error('Failed to fetch menu list for tab:', tabId, error);
+    });
+  };
+
+  // 为特定标签页获取通知详情
+  const getNoticeDetailForTab = (type: string, tabId: string) => {
+    const serviceMap = {
+      email: noticeService.getEmailData,
+      feishu: noticeService.getFeishuData,
+      dingtalk: noticeService.getDingtalkData,
+      webhook: noticeService.getWebhookData,
+    };
+
+    // 判断 type 是否有效
+    if (!serviceMap[type]) {
+      console.error(`Invalid type: ${type}`);
+      return;
+    }
+
+    // 调用对应的服务方法
+    serviceMap[type]({ user_id })
+      .then((res) => {
+        const menuList = res.metadata.length > 0 ? res.metadata : [];
+        setTabSpecificData(prev => ({
+          ...prev,
+          [tabId]: {
+            ...prev[tabId],
+            menuList
+          }
+        }));
+      })
+      .catch((error) => {
+        console.error(`Failed to fetch ${type} data for tab:`, tabId, error);
+      });
+  };
+
+  // 为特定标签页获取计数器详情
+  const getCounterDetailForTab = (type: string, data: any, tabId: string) => {
+    counterService
+      .getCounterList({ counter_func: data, user_id: user_id })
+      .then((res: any) => {
+        const menuList = res.metadata.length > 0 ? res.metadata : [];
+        setTabSpecificData(prev => ({
+          ...prev,
+          [tabId]: {
+            ...prev[tabId],
+            menuList
+          }
+        }));
+      });
+  };
+
+  // 获取当前活动标签页的数据
+  const getCurrentTabData = () => {
+    const tabData = tabSpecificData[currentActiveTab];
+    return {
+      menuList: tabData?.menuList || menu, // 如果标签页没有数据，回退到全局数据
+      customFunctions: tabData?.customFunctions || customfunctions
+    };
+  };
+
+  // 获取指定标签页的数据
+  const getTabData = (tabId: string) => {
+    const tabData = tabSpecificData[tabId];
+    return {
+      menuList: tabData?.menuList || menu,
+      customFunctions: tabData?.customFunctions || customfunctions
+    };
   };
 
   /**
@@ -503,36 +617,38 @@ export const DecisionSimplePage: React.FC = () => {
     });
   };
   // 处理组件中事件点击事件 通过type 来区分点击事件类型
-  const handleCompClick = (type: string, data: any) => {
-    console.log('点击事件', type, data);
+  const handleCompClick = (type: string, data: any, tabId?: string) => {
+    // 使用当前活动标签页或提供的tabId
+    const currentTabId = tabId || currentActiveTab;
+    
     switch (type) {
       case 'link':
         //  跳转链接 新开页面直接用window.open
         window.open(`/menu/detail?id=${data}`, '_blank');
         break;
       case 'UDF':
-        functionCustom('');
+        functionCustomForTab('', currentTabId);
         break;
       case 'counterDetail':
-        getCounterDetail('counter', data);
+        getCounterDetailForTab('counter', data, currentTabId);
         break;
       case 'list':
-        getMenuList();
+        getMenuListForTab(currentTabId);
         break;
       case 'email':
-        getNoticeDetail(type);
+        getNoticeDetailForTab(type, currentTabId);
         break;
       case 'feishu':
-        getNoticeDetail(type);
+        getNoticeDetailForTab(type, currentTabId);
         break;
       case 'dingtalk':
-        getNoticeDetail(type);
+        getNoticeDetailForTab(type, currentTabId);
         break;
       case 'webhook':
-        getNoticeDetail(type);
+        getNoticeDetailForTab(type, currentTabId);
         break;
       default:
-        functionCustom(type);
+        functionCustomForTab(type, currentTabId);
         break;
     }
   };
@@ -1018,9 +1134,11 @@ export const DecisionSimplePage: React.FC = () => {
               autoFitView={true}         // 启用自动适应视图
               userId={user_id!}
               projectId={projectId}
-              menuList={menu}
-              customFunctions={customfunctions}
-              onEventClickHandle={(type, data) => handleCompClick(type, data)}
+              menuList={getCurrentTabData().menuList}
+              customFunctions={getCurrentTabData().customFunctions}
+              getTabData={getTabData}    // 传递获取标签页数据的函数
+              onEventClickHandle={(type, data, tabId) => handleCompClick(type, data, tabId)}
+              onTabChange={(tabId) => setCurrentActiveTab(tabId)} // 监听标签页变化
               simulate={graphTrace}      // 模拟执行结果
               panels={[
                 {

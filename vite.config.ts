@@ -15,10 +15,10 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   server: {
-    https: {
-      cert: path.join(__dirname, 'cert', 'localhost.pem'),
-      key: path.join(__dirname, 'cert', 'localhost-key.pem'),
-    },
+    // https: {
+    //   cert: path.join(__dirname, 'cert', 'localhost.pem'),
+    //   key: path.join(__dirname, 'cert', 'localhost-key.pem'),
+    // },
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

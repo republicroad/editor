@@ -72,6 +72,17 @@ $ bun run build   # 构建项目静态文件
 $ bun run preview # 模拟静态文件服务器加载静态文件(需要在 bun run build 之后执行)
 ```
 
+### 商业版本
+
+使用 **brde分支**
+
+http:  
+> git clone --recurse-submodules --branch brde http://git.gtapp.xyz/frontend/backend/custom-rules-editor.git
+
+ssh:  
+> git clone --recurse-submodules --branch brde git@git.gtapp.xyz:frontend/backend/custom-rules-editor.git
+
+
 ### 开发
 
 ```bash

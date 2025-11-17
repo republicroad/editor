@@ -6,6 +6,8 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
+    "@elysiajs/openapi": "^1.4.11",
+    "@gorules/zen-engine": "^0.51.0",
     "elysia": "latest"
   },
   "devDependencies": {

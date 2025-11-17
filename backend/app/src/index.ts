@@ -114,6 +114,7 @@ const app = new Elysia()
 console.log(
 `Elysia is running at ${app.server.url.href}`
 ); 
+console.log(`openapi is running at ${app.server.url.href}/openapi`)
 // `Elysia is running at ${app.server.url.href}`
 // `🦊 Elysia is running at ${app.server?.protocol}://${app.server?.hostname}:${app.server?.port}`
 

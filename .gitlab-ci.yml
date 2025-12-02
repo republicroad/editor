@@ -62,7 +62,7 @@ dev-build:
     changes:
       - version
     refs:
-      - enhance_v2
+      - brde
   except:
     - tags
 
@@ -91,7 +91,7 @@ dev-deploy:
     changes:
       - version
     refs:
-      - enhance_v2
+      - brde
   except:
     - tags
 #------------------------- 北京DEV测试环境发布end

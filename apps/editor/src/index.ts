@@ -2,40 +2,13 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { debug } from "console";
-import { Elysia } from "elysia";
 import { ZenEngine } from '@gorules/zen-engine';
+import { Elysia, file } from "elysia";
 import { openapi } from '@elysiajs/openapi'
-import * as os from 'os';
+import { staticPlugin } from '@elysiajs/static'
 
-function getAllHostIps(): string[] {
-    const networkInterfaces = os.networkInterfaces();
-    const addresses: string[] = [];
-
-    for (const interfaceName in networkInterfaces) {
-        const networkInterface = networkInterfaces[interfaceName];
-        if (networkInterface) {
-            for (const iface of networkInterface) {
-                // Skip internal loopback addresses (127.0.0.1) and IPv6 addresses
-                // unless specifically needed. Here we focus on external IPv4.
-                if (iface.family === 'IPv4' && !iface.internal) {
-                    addresses.push(iface.address);
-                }
-            }
-        }
-    }
-    return addresses;
-}
-
-const localIps = getAllHostIps();
-console.log('Detected Host IPs:', localIps);
-const hosts = localIps.map(ip => {return {
-    port: 3000,
-    hostname: ip 
-  }
-});
-console.log('bind hosts:', hosts)
-
-const ipPlugin = new Elysia({ name: 'ip' }) 
+const staticFilelistPlugin = new Elysia({ name: 'staticFilelist' }) 
+  .use(staticPlugin({assets: '../../static', prefix: '/'}))
 	.derive(
 		{ as: 'global' },
 		({ server, request }) => ({
@@ -44,17 +17,17 @@ const ipPlugin = new Elysia({ name: 'ip' })
 	)
 	.get('/ip', ({ ip }) => ip)
 
-
+// assets 默认是 public
 const app = new Elysia()
-.use(ipPlugin)
+.use(staticFilelistPlugin)
 .use(openapi()) 
 .state('input', { num: 19 })
 .state('db', { users: [], hits: 0 })
 .state('zenDecisions', {engine: new ZenEngine(), rules:{}})
 .onBeforeHandle(({ request, store }) => {
-  console.log(`[${store.zenDecisions}] ${request.method} ${request.url}`)
-  console.log("store:", store);
-  console.log(`zenDecisions: [${store.zenDecisions}]`);
+  // console.log(`[${store.zenDecisions}] ${request.method} ${request.url}`)
+  // console.log("store:", store);
+  // console.log(`zenDecisions: [${store.zenDecisions}]`);
   // console.log("request:", request);
   // console.log("request.body:", request.body);
 })
@@ -62,7 +35,8 @@ const app = new Elysia()
   console.log("store in /state:", store);
   return store;
 })
-.get("/", () => "Hello Elysia")
+.get('/', () => file('../../static/index.html'))
+// .get("/", () => "Hello Elysia")
 .get("/input", () => {return { num: 19 }})  // 以后给自定义函数返回一个json文件schema. 这样便于前端加载对应的自定义函数组件.
 // /api 以后使用 prefix 或者 plugin 来使用.
 .post('/api/simulate',  async ({request, body, store}) => {
@@ -103,21 +77,14 @@ const app = new Elysia()
       console.log("result:", result);
       return result;
     })
-.listen(
-  {
-    port: 3000,
-    hostname: '0.0.0.0' // Explicitly bind to all network interfaces
-  }
-);
-
-// console.log(app.server)
-console.log(
-`Elysia is running at ${app.server.url.href}`
-); 
-console.log(`openapi is running at ${app.server.url.href}/openapi`)
-// `Elysia is running at ${app.server.url.href}`
-// `🦊 Elysia is running at ${app.server?.protocol}://${app.server?.hostname}:${app.server?.port}`
-
+.listen(3000, ({protocol,hostname, port, url}) => {
+    // [Elysia assign hostname to 0.0.0.0 automatically, which works with Railway](https://elysiajs.com/patterns/deploy.html#railway:~:text=provided%20by%20Railway.-,TIP,-Elysia%20assign%20hostname)
+    // console.log(url);
+    console.log('Elysia assign hostname to 0.0.0.0 automatically');
+    console.log(`🦊 Elysia  is running at ${protocol}://${hostname}:${port}`);
+    console.log(`🦊 openapi UI is running at ${protocol}://${hostname}:${port}/openapi`);
+    console.log(`🦊 openapi schema is running at ${protocol}://${hostname}:${port}/openapi/json`);
+  });
 
 // const content:object = body.content;  // content 作为规则图json， 从数据库或文件系统中获取.
 // const context:object = body.context;  // context 作为推理输入，从请求体中获取.
@@ -126,4 +93,11 @@ console.log(`openapi is running at ${app.server.url.href}/openapi`)
 // const result = await decision.evaluate(context, {"trace": false});
 // console.log("result:", result);
 // return result;
-//
+
+// Admin API
+const adminApp = new Elysia()
+  .get("/", () => "Admin API index")
+  .get("/admin", () => "Admin API")
+  .listen(3001, ({ hostname, port }) => {
+    console.log(`Admin API running at http://${hostname}:${port}`);
+});

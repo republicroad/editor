@@ -1,21 +1,78 @@
 // https://elysiajs.com/integrations/cheat-sheet.html#return-json
 import fs from 'fs/promises';
+import { readdir } from 'fs/promises';
 import path from 'path';
+import { join } from 'path';
 import { debug } from "console";
 import { ZenEngine } from '@gorules/zen-engine';
 import { Elysia, file } from "elysia";
 import { openapi } from '@elysiajs/openapi'
 import { staticPlugin } from '@elysiajs/static'
+// Function to recursively list files in a directory
+async function getFilesRecursively(dir: string, fileList: string[] = [], rootDir: string = dir): Promise<string[]> {
+  const files = await readdir(dir, { withFileTypes: true });
+  for (const file of files) {
+    const fullPath = join(dir, file.name);
+    if (file.isDirectory()) {
+      await getFilesRecursively(fullPath, fileList, rootDir);
+    } else {
+      // Add the file path relative to the root directory
+      const relativePath = path.relative(rootDir, fullPath);
+      fileList.push(relativePath);
+    }
+  }
 
+  return fileList;
+}
+
+// const ipplugin = new Elysia({ name: 'ip' })
+// 	.derive(
+// 		{ as: 'global' },
+// 		({ server, request }) => ({
+// 			ip: server?.requestIP(request)
+// 		})
+// 	)
+//   .get('/ip', ({ ip }) => ip);
+
+const staticConfig = {
+  assets: 'public', // Directory to serve static files from
+  prefix: '/', // URL prefix to access static files
+};
 const staticFilelistPlugin = new Elysia({ name: 'staticFilelist' }) 
-  .use(staticPlugin({assets: '../../static', prefix: '/'}))
-	.derive(
-		{ as: 'global' },
-		({ server, request }) => ({
-			ip: server?.requestIP(request)
-		})
-	)
-	.get('/ip', ({ ip }) => ip)
+.use(staticPlugin(staticConfig))
+.get('/', async (request) => {
+  if (!("files" in request.query)) {  // 如果没有传 files 参数，则返回 index.html
+    const url = path.resolve(staticConfig.assets, 'index.html');
+    return file(url);
+  }
+  const directoryPath = join(process.cwd(), staticConfig.assets); // Adjust 'public' to your directory name
+  try {
+    const files = await getFilesRecursively(directoryPath);
+    // Generate an HTML list
+    let htmlResponse = '<h1>File List</h1><ul>';
+    for (const file of files) {
+      // Create a link to the actual static file path
+      var fileUrl;
+      if (file === 'index.html') {
+        fileUrl = staticConfig.prefix; // Root URL for index.html
+      }else{
+        fileUrl = path.resolve(staticConfig.prefix, file);
+      }
+      // fileUrl = path.resolve(staticConfig.prefix, file);
+      htmlResponse += `<li><a href="${fileUrl}">${file}</a></li>`;
+    }
+    htmlResponse += '</ul>';
+
+    return new Response(htmlResponse, {
+      headers: {
+        'Content-Type': 'text/html'
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return new Response('Error reading directory', { status: 500 });
+  }
+});
 
 // assets 默认是 public
 const app = new Elysia()
@@ -35,8 +92,6 @@ const app = new Elysia()
   console.log("store in /state:", store);
   return store;
 })
-.get('/', () => file('../../static/index.html'))
-// .get("/", () => "Hello Elysia")
 .get("/input", () => {return { num: 19 }})  // 以后给自定义函数返回一个json文件schema. 这样便于前端加载对应的自定义函数组件.
 // /api 以后使用 prefix 或者 plugin 来使用.
 .post('/api/simulate',  async ({request, body, store}) => {

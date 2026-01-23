@@ -1,5 +1,5 @@
 // React核心库和必要的hooks
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 // Ant Design UI组件库
 import { Button, Form, Divider, Dropdown, message, Modal, theme, Typography,Input,Select } from 'antd';
 // Ant Design图标组件
@@ -10,6 +10,8 @@ import { decisionTemplates } from '../assets/decision-templates';
 import { displayError } from '../helpers/error-message.ts';
 // 决策图相关的类型定义
 import { DecisionContent, DecisionEdge, DecisionNode } from '../helpers/graph.ts';
+// 图路径计算工具函数
+import { filterGraphToNode } from '../helpers/graph-path.ts';
 // 导入智能分割函数
 // import { smartSplit } from '@gorules/jdm-editor';
 // React Router的URL参数处理hook
@@ -93,6 +95,9 @@ export const DecisionSimplePage: React.FC = () => {
 
   // 图执行追踪状态，用于模拟器功能
   const [graphTrace, setGraphTrace] = useState<Simulation>();
+
+  // 运行到节点的状态
+  const [runningNodeId, setRunningNodeId] = useState<string | null>(null);
 
   // 防重复请求的状态
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
@@ -827,6 +832,131 @@ export const DecisionSimplePage: React.FC = () => {
   };
 
   /**
+   * 运行到指定节点的函数
+   * 只运行从输入节点到目标节点的路径
+   * @param nodeId - 目标节点ID
+   */
+  const handleRunToNode = useCallback(async (nodeId: string) => {
+    console.log('[decision-simple] handleRunToNode called, nodeId:', nodeId);
+    setRunningNodeId(nodeId);
+    console.log('[decision-simple] setRunningNodeId called');
+
+    try {
+      if (!user_id) {
+        message.error('用户ID不能为空');
+        return;
+      }
+
+      // 从 graphRef 获取当前图数据，避免闭包捕获
+      const currentGraph = graphRef.current?.stateStore.getState().decisionGraph;
+      if (!currentGraph) {
+        message.error('图数据不存在');
+        return;
+      }
+
+      // 获取模拟器请求数据
+      let context = JSON.parse(graphRef.current?.stateStore.getState().simulatorRequest || '{}');
+
+      // 如果 context 为空，尝试从 inputNode 构建
+      if (Object.keys(context).length === 0) {
+        const inputNode = currentGraph.nodes?.find((node: any) => node.type === 'inputNode');
+        if (inputNode?.content?.inputs && Array.isArray(inputNode.content.inputs)) {
+          context = {};
+          inputNode.content.inputs.forEach((input: any) => {
+            if (input.key) {
+              // 根据类型转换值
+              let value = input.value;
+              switch (input.type) {
+                case 'number':
+                  value = typeof value === 'string' ? parseFloat(value) : value;
+                  break;
+                case 'bool':
+                case 'boolean':
+                  value = typeof value === 'string' ? value === 'true' : value;
+                  break;
+                case 'array':
+                  value = Array.isArray(value) ? value : [];
+                  break;
+                default:
+                  // string, datetime 等保持原样
+                  break;
+              }
+              context[input.key] = value;
+            }
+          });
+          console.log('[decision-simple] Built context from inputNode:', context);
+        }
+      }
+
+      // 过滤图，只保留到目标节点的路径
+      const filteredGraph = filterGraphToNode(currentGraph, nodeId);
+
+      // 向后端发送模拟请求
+      const result = await workbench.runRule({
+        context,
+        content: filteredGraph,
+        user_id,
+      });
+
+      // 确保结果包含 snapshot 字段
+      const enhancedResult = {
+        ...result,
+        result: {
+          ...result.result,
+          snapshot: result.result?.snapshot || currentGraph,
+        }
+      };
+
+      // 设置模拟成功的结果
+      setGraphTrace(enhancedResult as any);
+    } catch (e) {
+      // 从 graphRef 获取当前图数据
+      const currentGraph = graphRef.current?.stateStore.getState().decisionGraph;
+
+      // 使用模式匹配处理不同类型的错误
+      const errorMessage = match(e)
+        .with(
+          {
+            response: {
+              data: {
+                type: P.string,
+                source: P.string,
+              },
+            },
+          },
+          ({ response: { data: d } }) => `${d.type}: ${d.source}`,
+        )
+        .with({ response: { data: { source: P.string } } }, (d) => d.response.data.source)
+        .with({ response: { data: { message: P.string } } }, (d) => d.response.data.message)
+        .with({ message: P.string }, (d) => d.message)
+        .otherwise(() => 'Unknown error occurred');
+
+      // 显示错误消息
+      message.error(errorMessage);
+
+      // 如果是axios错误，设置错误追踪信息
+      if (axios.isAxiosError(e)) {
+        console.log(e);
+        setGraphTrace({
+          result: {
+            result: null,
+            trace: e.response?.data?.trace,
+            snapshot: currentGraph || { nodes: [], edges: [] },
+            performance: '',
+          },
+          error: {
+            message: e.response?.data?.source,
+            data: e.response?.data,
+          },
+        });
+      }
+    } finally {
+      console.log('[decision-simple] finally block, setting runningNodeId to null');
+      setRunningNodeId(null);
+    }
+  }, [user_id]);
+
+  /**
    * 检查决策图是否存在循环依赖的函数
    * @param dc - 可选的决策内容，如果不提供则使用当前图状态
    * @throws {Error} 如果检测到循环依赖则抛出错误
@@ -1140,6 +1270,8 @@ export const DecisionSimplePage: React.FC = () => {
               onEventClickHandle={(type, data, tabId) => handleCompClick(type, data, tabId)}
               onTabChange={(tabId) => setCurrentActiveTab(tabId)} // 监听标签页变化
               simulate={graphTrace}      // 模拟执行结果
+              onRunNode={handleRunToNode}  // 运行到节点的回调
+              runningNodeId={runningNodeId}  // 当前正在运行的节点ID
               panels={[
                 {
                   id: 'simulator',

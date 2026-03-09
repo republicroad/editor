@@ -8,9 +8,9 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   plugins: [react(), wasm(), tsconfigPaths()],
   build: {
-    // outDir: path.join(__dirname, 'static'),
+    outDir: path.join(__dirname, 'static'),
     // 将编辑器的构建输出到 apps/editor/public 目录，方便和后端服务器集成部署.
-    outDir: path.join(__dirname, 'apps/editor/public'),  
+    // outDir: path.join(__dirname, 'apps/editor/public'),  
     target: 'esnext',
   },
   resolve: {

@@ -33,8 +33,9 @@ if (typeof crypto.randomUUID !== 'function') {
                 v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
-        const [p1,p2,p3,p4,p5] = s.split('-');
-        return `${p1}-${p2}-${p3}-${p4}-${p5}`
+        // const [p1,p2,p3,p4,p5] = s.split('-');
+        // return `${p1}-${p2}-${p3}-${p4}-${p5}` as `${string}-${string}-${string}-${string}-${string}`;
+        return s as `${string}-${string}-${string}-${string}-${string}`;
     };
 }
 

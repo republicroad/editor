@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Divider, Dropdown, message, Modal, theme, Typography } from 'antd';
+import { Button, Divider, Dropdown, message, Modal, Space, theme, Typography } from 'antd';
 import { BulbOutlined, CheckOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError } from '../helpers/error-message.ts';
 import { DecisionContent, DecisionEdge, DecisionNode } from '../helpers/graph.ts';
 import { useSearchParams } from 'react-router-dom';
-import { DecisionGraph, DecisionGraphRef, DecisionGraphType, GraphSimulator, Simulation } from '@gorules/jdm-editor';
+import { DecisionGraph, DecisionGraphRef, DecisionGraphType, GraphSimulator, JdmUiMode, Simulation } from '@gorules/jdm-editor';
 import { PageHeader } from '../components/page-header.tsx';
 import { DirectedGraph } from 'graphology';
 import { hasCycle } from 'graphology-dag';
@@ -226,6 +226,7 @@ export const DecisionSimplePage: React.FC = () => {
 
     reader.readAsText(Array.from(fileList)?.[0], 'UTF-8');
   };
+  const [mode, setMode] = useState<JdmUiMode>('business');
 
   return (
     <>
@@ -315,6 +316,16 @@ export const DecisionSimplePage: React.FC = () => {
                   <Button onClick={saveFileAs} type={'text'} size={'small'}>
                     Save as
                   </Button>
+                  <Button size="small" type={mode === 'dev' ? 'primary' : 'default'} onClick={() => setMode('dev')}>
+                    Dev
+                  </Button>
+                  <Button
+                    size="small"
+                    type={mode === 'business' ? 'primary' : 'default'}
+                    onClick={() => setMode('business')}
+                  >
+                    Business
+                  </Button>
                 </Stack>
               </div>
             </div>
@@ -363,6 +374,7 @@ export const DecisionSimplePage: React.FC = () => {
         <div className={classes.contentWrapper}>
           <div className={classes.content}>
             <DecisionGraph
+              mode={mode}
               customNodes={customNodes}
               ref={graphRef}
               value={graph}

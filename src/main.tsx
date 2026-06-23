@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom/client';
 import './main.css';
 
 // import '@gorules/jdm-editor/dist/style.css';
-import '@gorules/jdm-editor';  
+import '@gorules/jdm-editor';
 
 import 'react-ace';
 
@@ -26,17 +26,17 @@ import { ThemeContextProvider } from './context/theme.provider.tsx';
 
 // Example of a basic polyfill for environments without crypto.randomUUID
 if (typeof crypto.randomUUID !== 'function') {
-    crypto.randomUUID = function () {
-        // 生成uuid4格式字符串
-        const s = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0,
-                v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-        // const [p1,p2,p3,p4,p5] = s.split('-');
-        // return `${p1}-${p2}-${p3}-${p4}-${p5}` as `${string}-${string}-${string}-${string}-${string}`;
-        return s as `${string}-${string}-${string}-${string}-${string}`;
-    };
+  crypto.randomUUID = function () {
+    // 生成uuid4格式字符串
+    const s = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0,
+        v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+    // const [p1,p2,p3,p4,p5] = s.split('-');
+    // return `${p1}-${p2}-${p3}-${p4}-${p5}` as `${string}-${string}-${string}-${string}-${string}`;
+    return s as `${string}-${string}-${string}-${string}-${string}`;
+  };
 }
 
 await zenWasm.default(zenWasmUrl);

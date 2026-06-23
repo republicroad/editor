@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Divider, Dropdown, message, Modal, Space, theme, Typography } from 'antd';
+import { Button, Divider, Dropdown, message, Modal, Space, Switch, theme, Typography } from 'antd';
 import { BulbOutlined, CheckOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError } from '../helpers/error-message.ts';
@@ -226,7 +226,12 @@ export const DecisionSimplePage: React.FC = () => {
 
     reader.readAsText(Array.from(fileList)?.[0], 'UTF-8');
   };
-  const [mode, setMode] = useState<JdmUiMode>('business');
+  const [mode, setMode] = useState<JdmUiMode>('dev');
+  const [isActive, setIsActive] = useState(false);
+  const handleSwitchChange = (checked) => {
+    setIsActive(checked);
+    setMode(isActive ? 'dev' : 'business');
+  };
 
   return (
     <>
@@ -316,16 +321,12 @@ export const DecisionSimplePage: React.FC = () => {
                   <Button onClick={saveFileAs} type={'text'} size={'small'}>
                     Save as
                   </Button>
-                  <Button size="small" type={mode === 'dev' ? 'primary' : 'default'} onClick={() => setMode('dev')}>
-                    Dev
-                  </Button>
-                  <Button
-                    size="small"
-                    type={mode === 'business' ? 'primary' : 'default'}
-                    onClick={() => setMode('business')}
-                  >
-                    Business
-                  </Button>
+                  <Switch
+                    checked={isActive}
+                    onChange={handleSwitchChange}
+                    checkedChildren="编辑模式:business"
+                    unCheckedChildren="编辑模式:dev"
+                  />
                 </Stack>
               </div>
             </div>

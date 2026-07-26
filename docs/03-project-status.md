@@ -1,6 +1,6 @@
 # 项目状态
 
-> 快照时间：2026-07-20
+> 快照时间：2026-07-26
 
 ---
 
@@ -11,7 +11,7 @@
 | 仓库 | 当前分支 | 基于分支 | 说明 |
 |------|----------|----------|------|
 | editor（主项目） | `opencode` | `standalone` | 定制化开发分支 |
-| jdm-editor（子模块） | `opencode` | `master` | 深度定制分支 |
+| jdm-editor（子模块） | `zrule` | `master` | 外部化改造分支 |
 
 ### 1.2 版本信息
 
@@ -108,11 +108,9 @@
 | 分支 | 说明 | 状态 |
 |------|------|------|
 | `master` | 上游发布分支 | 活跃 |
-| `standalone` | 开源分支 | 活跃 |
-| `opencode` | 定制化开发分支 | **当前** |
-| `brde` | 开发分支（同 opencode） | 历史 |
-| `mono_v1` | Monorepo 实验 | 历史 |
-| `enhance_v1/v2` | 功能增强实验 | 历史 |
+| `standalone` | 开发分支（同 opencode） | 历史 |
+| `zrule` | 外部化改造分支 | **当前** |
+| `opencode` | 定制化开发分支 | 参考 |
 
 ---
 
@@ -150,6 +148,7 @@
 - [ ] zen-engine-wasm 源码恢复或迁移
 - [ ] 完善单元测试覆盖
 - [ ] 补充 Storybook 组件文档
+- [ ] 修复 vite build 预存在问题（vite-plugin-dts 加载失败）
 
 ---
 
@@ -167,14 +166,29 @@ bca4bc8 Merge branch 'master' into standalone
 c2e0af1 fix: downgrade to react 18 (#42)
 ```
 
-### 7.2 jdm-editor 最近提交
+### 7.2 jdm-editor zrule 分支提交
 
 ```
-17cb8b9 feat(mode): business mode 下 number between 格式修改
-b280144 fix(): lexicon_list 下拉列表
-7bff32f 自定义节点敏感词库适配
-011059d feat(合并): 合并 standalone
-812b987 fix(side): 编辑器侧边栏折叠后样式修复
-ea0e01f 自定义函数样式修改
-5b15593 feat(custom node): 自定义函数模拟器结果展示
+7a2bc3d feat: export TabRequest, request-schema, json-schema from barrel
+1a5e7cc feat: replace TabJsonSchema with TabRequest for input node
+6fe2e29 feat: upgrade simulator request panel with full feature set
+6586653 feat: add simulator request/binding state to zustand store
+246f376 feat: add request-schema, json-schema helpers and i18n infrastructure
+5d16d11 feat: customNode renderTab routing, Input schema expansion
+e188084 feat: add UserResolver and components override mechanism
 ```
+
+### 7.3 zrule 分支变更摘要
+
+**jdm-editor 库（zrule 分支）：**
+- UserResolver 类型 + store + wrapper + exports
+- components override 机制（specOverrides in TabContents）
+- customNode renderTab 路由（.otherwise() 检查 customNodes by kind）
+- Input Schema 扩展 → 完整 Request 节点改造（TabRequest 3-Tab 编辑器）
+- request-schema.ts（~1,010 行）+ json-schema.ts（~66 行）
+- i18n 基础设施（zh/en 翻译）
+- Simulator Request Panel 升级（~700 行，含 Format/Sync/Save/Copy/Run）
+
+**编辑器项目（未提交）：**
+- better-auth 客户端 + UserResolver 工厂
+- DecisionGraph 集成 userResolver prop

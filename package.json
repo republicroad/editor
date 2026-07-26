@@ -21,6 +21,7 @@
     "ace-builds": "^1.43.6",
     "antd": "^5.29.3",
     "axios": "^1.13.5",
+    "better-auth": "^1.6.25",
     "graphology": "^0.26.0",
     "graphology-dag": "^0.4.1",
     "json5": "^2.2.3",

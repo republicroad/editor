@@ -16,6 +16,7 @@ import classes from './decision-simple.module.css';
 import axios from 'axios';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
 import { customNodes } from '../context/customnode.tsx'
+import { createBetterAuthResolver } from '../lib/user-resolver.ts'
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
@@ -381,6 +382,7 @@ export const DecisionSimplePage: React.FC = () => {
               onChange={(value) => setGraph(value)}
               reactFlowProOptions={{ hideAttribution: true }}
               simulate={graphTrace}
+              userResolver={createBetterAuthResolver()}
               panels={[
                 {
                   id: 'simulator',

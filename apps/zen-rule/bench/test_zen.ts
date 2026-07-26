@@ -12,6 +12,6 @@ import path from 'path';
 
   const decision = engine.createDecision(content);
   const result = await decision.evaluate({ num: 15 });
-  // console.log("result:", result);
+  console.log("result:", result);
   engine.dispose();
 })();

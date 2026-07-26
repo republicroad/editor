@@ -7,5 +7,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@gorules/zen-engine": "^0.54.0"
   }
 }

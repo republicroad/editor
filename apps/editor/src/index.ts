@@ -4,6 +4,8 @@ import { join } from 'path';
 import { debug } from "console";
 import { ZenEngine, type ZenDecision } from '@gorules/zen-engine';
 import { Hono } from 'hono';
+import type { Context, Next } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { serveStatic } from 'hono/bun';
@@ -40,10 +42,20 @@ const store = {
   },
 };
 
+// 请求日志中间件：打印每个请求的方法、路径、状态码与耗时
+async function requestLogger(c: Context, next: Next) {
+  const start = performance.now();
+  const url = new URL(c.req.url);
+  const path = url.pathname + url.search;
+  console.log(`[${new Date().toISOString()}] => ${c.req.method} ${path}`);
+  await next();
+  console.log(`[${new Date().toISOString()}] <= ${c.req.method} ${path} ${c.res.status} ${(performance.now() - start).toFixed(1)}ms`);
+}
+
 // --- OpenAPI schemas ---
 const DecisionContentSchema = z
   .object({
-    contentType: z.string(),
+    contentType: z.string().optional(),
     nodes: z.array(z.record(z.string(), z.unknown())),
     edges: z.array(z.record(z.string(), z.unknown())).optional(),
   })
@@ -132,7 +144,62 @@ const decisionRoute = createRoute({
   },
 });
 
+const SessionSchema = z
+  .object({
+    id: z.string(),
+    token: z.string(),
+    userId: z.string(),
+    expiresAt: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })
+  .openapi('Session');
+
+const UserSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    emailVerified: z.boolean(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    image: z.string().nullable(),
+  })
+  .openapi('User');
+
+const GetSessionResponseSchema = z
+  .object({
+    session: SessionSchema,
+    user: UserSchema,
+  })
+  .openapi('GetSessionResponse');
+
+const getSessionRoute = createRoute({
+  method: 'get',
+  path: '/api/auth/get-session',
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: GetSessionResponseSchema },
+      },
+      description: '当前会话（Mock 开发用户）',
+    },
+  },
+});
+
 const app = new OpenAPIHono();
+
+app.use(requestLogger);
+
+// 统一错误日志：打印堆栈并返回结构化错误响应
+app.onError((err, c) => {
+  console.error(`[${new Date().toISOString()}] ERROR ${c.req.method} ${c.req.path}:`, err);
+  if (err instanceof HTTPException) {
+    if (err.res) return err.res;
+    return c.json({ error: err.message }, err.status);
+  }
+  return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
+});
 
 // GET / 必须在 serveStatic 之前注册，否则会被静态文件中间件直接返回 index.html
 app.get('/', async (c) => {
@@ -226,6 +293,31 @@ app.openapi(decisionRoute, async (c) => {
   return c.json(result);
 });
 
+// Mock 开发用户会话，供前端 authClient.getSession() 消费 user.id
+app.openapi(getSessionRoute, (c) => {
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  return c.json({
+    session: {
+      id: "mock-session-1",
+      token: "mock-token-1",
+      userId: "mock-user-1",
+      expiresAt,
+      createdAt: now,
+      updatedAt: now,
+    },
+    user: {
+      id: "mock-user-1",
+      name: "Mock User",
+      email: "mock@example.com",
+      emailVerified: false,
+      createdAt: now,
+      updatedAt: now,
+      image: null,
+    },
+  });
+});
+
 // OpenAPI schema at /openapi/json, Scalar API Reference at /openapi
 app.doc('/openapi/json', {
   openapi: '3.0.0',
@@ -245,7 +337,10 @@ console.log(`openapi UI is running at http://${server.hostname}:${server.port}/o
 console.log(`openapi schema is running at http://${server.hostname}:${server.port}/openapi/json`);
 
 // Admin API
-const adminApp = new Hono().get('/', (c) => c.text('Admin API index')).get('/admin', (c) => c.text('Admin API'));
+const adminApp = new Hono();
+adminApp.use(requestLogger);
+adminApp.get('/', (c) => c.text('Admin API index'));
+adminApp.get('/admin', (c) => c.text('Admin API'));
 
 const adminServer = Bun.serve({
   port: 3001,

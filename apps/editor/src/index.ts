@@ -1,13 +1,13 @@
-// https://elysiajs.com/integrations/cheat-sheet.html#return-json
-import fs from 'fs/promises';
 import { readdir } from 'fs/promises';
 import path from 'path';
 import { join } from 'path';
 import { debug } from "console";
-import { ZenEngine } from '@gorules/zen-engine';
-import { Elysia, file } from "elysia";
-import { openapi } from '@elysiajs/openapi'
-import { staticPlugin } from '@elysiajs/static'
+import { ZenEngine, type ZenDecision } from '@gorules/zen-engine';
+import { Hono } from 'hono';
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { Scalar } from '@scalar/hono-api-reference';
+import { serveStatic } from 'hono/bun';
+
 // Function to recursively list files in a directory
 async function getFilesRecursively(dir: string, fileList: string[] = [], rootDir: string = dir): Promise<string[]> {
   const files = await readdir(dir, { withFileTypes: true });
@@ -25,25 +25,121 @@ async function getFilesRecursively(dir: string, fileList: string[] = [], rootDir
   return fileList;
 }
 
-// const ipplugin = new Elysia({ name: 'ip' })
-// 	.derive(
-// 		{ as: 'global' },
-// 		({ server, request }) => ({
-// 			ip: server?.requestIP(request)
-// 		})
-// 	)
-//   .get('/ip', ({ ip }) => ip);
-
 const staticConfig = {
   assets: 'public', // Directory to serve static files from
   prefix: '/', // URL prefix to access static files
 };
-const staticFilelistPlugin = new Elysia({ name: 'staticFilelist' }) 
-.use(staticPlugin(staticConfig))
-.get('/', async (request) => {
-  if (!("files" in request.query)) {  // 如果没有传 files 参数，则返回 index.html
+
+// assets 默认是 public
+const store = {
+  input: { num: 19 },
+  db: { users: [], hits: 0 },
+  zenDecisions: {
+    engine: new ZenEngine(),
+    rules: {} as Record<string, ZenDecision>,
+  },
+};
+
+// --- OpenAPI schemas ---
+const DecisionContentSchema = z
+  .object({
+    contentType: z.string(),
+    nodes: z.array(z.record(z.string(), z.unknown())),
+    edges: z.array(z.record(z.string(), z.unknown())).optional(),
+  })
+  .openapi('DecisionContent');
+
+const ContextSchema = z.record(z.string(), z.unknown()).openapi('Context');
+
+const SimulateRequestSchema = z
+  .object({
+    content: DecisionContentSchema,
+    context: ContextSchema,
+  })
+  .openapi('SimulateRequest');
+
+const SimulateResponseSchema = z
+  .object({
+    result: z.any(),
+    trace: z.any().optional(),
+    performance: z.string().optional(),
+  })
+  .openapi('SimulateResponse');
+
+const DecisionRequestSchema = z
+  .object({
+    decisionId: z.string().optional(),
+    content: DecisionContentSchema.optional(),
+    context: ContextSchema,
+  })
+  .openapi('DecisionRequest');
+
+const simulateRoute = createRoute({
+  method: 'post',
+  path: '/api/simulate',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: SimulateRequestSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: SimulateResponseSchema },
+      },
+      description: '决策模拟执行结果（含 trace）',
+    },
+    500: {
+      content: {
+        'application/json': { schema: z.any() },
+      },
+      description: '执行失败',
+    },
+  },
+});
+
+const decisionRoute = createRoute({
+  method: 'post',
+  path: '/api/decision',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: DecisionRequestSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.any() },
+      },
+      description: '决策推理执行结果',
+    },
+    400: {
+      content: {
+        'application/json': { schema: z.any() },
+      },
+      description: '请求参数缺失',
+    },
+    500: {
+      content: {
+        'application/json': { schema: z.any() },
+      },
+      description: '执行失败',
+    },
+  },
+});
+
+const app = new OpenAPIHono();
+
+// GET / 必须在 serveStatic 之前注册，否则会被静态文件中间件直接返回 index.html
+app.get('/', async (c) => {
+  if (!('files' in c.req.query())) {
+    // 如果没有传 files 参数，则返回 index.html
     const url = path.resolve(staticConfig.assets, 'index.html');
-    return file(url);
+    return new Response(Bun.file(url));
   }
   const directoryPath = join(process.cwd(), staticConfig.assets); // Adjust 'public' to your directory name
   try {
@@ -58,101 +154,101 @@ const staticFilelistPlugin = new Elysia({ name: 'staticFilelist' })
       }else{
         fileUrl = path.resolve(staticConfig.prefix, file);
       }
-      // fileUrl = path.resolve(staticConfig.prefix, file);
       htmlResponse += `<li><a href="${fileUrl}">${file}</a></li>`;
     }
     htmlResponse += '</ul>';
 
-    return new Response(htmlResponse, {
-      headers: {
-        'Content-Type': 'text/html'
-      }
-    });
+    return c.html(htmlResponse);
   } catch (error) {
     console.error(error);
-    return new Response('Error reading directory', { status: 500 });
+    return c.text('Error reading directory', 500);
   }
 });
 
-// assets 默认是 public
-const app = new Elysia()
-.use(staticFilelistPlugin)
-.use(openapi()) 
-.state('input', { num: 19 })
-.state('db', { users: [], hits: 0 })
-.state('zenDecisions', {engine: new ZenEngine(), rules:{}})
-.onBeforeHandle(({ request, store }) => {
-  // console.log(`[${store.zenDecisions}] ${request.method} ${request.url}`)
-  // console.log("store:", store);
-  // console.log(`zenDecisions: [${store.zenDecisions}]`);
-  // console.log("request:", request);
-  // console.log("request.body:", request.body);
-})
-.get("/state", ({store}) => {
-  console.log("store in /state:", store);
-  return store;
-})
-.get("/input", () => {return { num: 19 }})  // 以后给自定义函数返回一个json文件schema. 这样便于前端加载对应的自定义函数组件.
-// /api 以后使用 prefix 或者 plugin 来使用.
-.post('/api/simulate',  async ({request, body, store}) => {
-      // 动态加载规则文件
-      console.log("body:", body);
-      const content:object = body.content;
-      const context:object = body.context;
-      // const engine = new ZenEngine();
-      const engine = store.zenDecisions.engine;
-      const decision = engine.createDecision(content);
-      const result = await decision.evaluate(context, {"trace": true});  // 考虑把 trace 做成一个url?后的参数
-      // console.log("result:", result);
-      // store.zenDecisions.rules["a"] = decision;  // 测试把decision对象缓存起来.
-      return result;
-    })  
-.post('/api/decision',  async ({request, body, store}) => {
-      // https://elysiajs.com/patterns/extends-context.html#decorate
-      // 线上规则推理时需要把通过content获得的decision规则对象缓存起来，
-      // 避免每次都重新创建规则对象
-      // 动态加载规则文件
-      console.log("body:", body);
-      const engine = store.zenDecisions.engine;
-      // 如果传来了 decisionId，则尝试从缓存中获取对应的decision对象.
-      // 否则每次都重新创建新的decision对象.
-      if(body["decisionId"]) {  // decisionId 考虑作为 /api/decision/:decisionId 的 url 参数传入.
-        const decisionId:string = body.decisionId;
-        if(store.zenDecisions.rules[decisionId]) {
-          debug(`使用缓存的decision对象: ${decisionId}`);
-          const decision = store.zenDecisions.rules[decisionId];
-        } else {
-          debug(`创建新的decision对象并缓存: ${decisionId}`);
-          const decision = engine.createDecision(content);
-          store.zenDecisions.rules[decisionId] = decision;
-        }
-      }
-      const context:object = body.context;
-      const result = await decision.evaluate(context, {"trace": false});
-      console.log("result:", result);
-      return result;
-    })
-.listen(3000, ({protocol,hostname, port, url}) => {
-    // [Elysia assign hostname to 0.0.0.0 automatically, which works with Railway](https://elysiajs.com/patterns/deploy.html#railway:~:text=provided%20by%20Railway.-,TIP,-Elysia%20assign%20hostname)
-    // console.log(url);
-    console.log('Elysia assign hostname to 0.0.0.0 automatically');
-    console.log(`🦊 Elysia  is running at ${protocol}://${hostname}:${port}`);
-    console.log(`🦊 openapi UI is running at ${protocol}://${hostname}:${port}/openapi`);
-    console.log(`🦊 openapi schema is running at ${protocol}://${hostname}:${port}/openapi/json`);
-  });
+app.use('/*', serveStatic({ root: './public' }));
 
-// const content:object = body.content;  // content 作为规则图json， 从数据库或文件系统中获取.
-// const context:object = body.context;  // context 作为推理输入，从请求体中获取.
-// const engine = new ZenEngine();
-// const decision = engine.createDecision(content);
-// const result = await decision.evaluate(context, {"trace": false});
-// console.log("result:", result);
-// return result;
+app.get('/state', (c) => {
+  console.log('store in /state:', store);
+  return c.json(store);
+});
+
+// 以后给自定义函数返回一个json文件schema. 这样便于前端加载对应的自定义函数组件.
+app.get('/input', (c) => {
+  return c.json({ num: 19 });
+});
+
+// /api 以后使用 prefix 或者 plugin 来使用.
+app.openapi(simulateRoute, async (c) => {
+  // 动态加载规则文件
+  const body = c.req.valid('json');
+  console.log("body:", body);
+  // const engine = new ZenEngine();
+  const engine = store.zenDecisions.engine;
+  const decision = engine.createDecision(body.content);
+  try {
+    // 考虑把 trace 做成一个url?后的参数
+    const result = await decision.evaluate(body.context, { "trace": true });
+    // console.log("result:", result);
+    // store.zenDecisions.rules["a"] = decision;  // 测试把decision对象缓存起来.
+    return c.json(result);
+  } catch (error) {
+    console.error(error);
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+app.openapi(decisionRoute, async (c) => {
+  // 线上规则推理时需要把通过content获得的decision规则对象缓存起来，
+  // 避免每次都重新创建规则对象
+  const body = c.req.valid('json');
+  console.log("body:", body);
+  const engine = store.zenDecisions.engine;
+  const decisionId = body.decisionId;
+  // 如果传来了 decisionId，则尝试从缓存中获取对应的decision对象.
+  // 否则每次都重新创建新的decision对象.
+  let decision: ZenDecision;
+  if (decisionId && store.zenDecisions.rules[decisionId]) {
+    debug(`使用缓存的decision对象: ${decisionId}`);
+    decision = store.zenDecisions.rules[decisionId];
+  } else {
+    if (!body.content) {
+      return c.json({ error: 'content is required when decision is not cached' }, 400);
+    }
+    debug(`创建新的decision对象并缓存: ${decisionId}`);
+    decision = engine.createDecision(body.content);
+    if (decisionId) {
+      // decisionId 考虑作为 /api/decision/:decisionId 的 url 参数传入.
+      store.zenDecisions.rules[decisionId] = decision;
+    }
+  }
+  const result = await decision.evaluate(body.context, { "trace": false });
+  console.log("result:", result);
+  return c.json(result);
+});
+
+// OpenAPI schema at /openapi/json, Scalar API Reference at /openapi
+app.doc('/openapi/json', {
+  openapi: '3.0.0',
+  info: {
+    version: '1.0.0',
+    title: 'JDM Editor API',
+  },
+});
+app.get('/openapi', Scalar({ url: '/openapi/json' }));
+
+const server = Bun.serve({
+  port: 3000,
+  fetch: app.fetch,
+});
+console.log(`Hono is running at http://${server.hostname}:${server.port}`);
+console.log(`openapi UI is running at http://${server.hostname}:${server.port}/openapi`);
+console.log(`openapi schema is running at http://${server.hostname}:${server.port}/openapi/json`);
 
 // Admin API
-const adminApp = new Elysia()
-  .get("/", () => "Admin API index")
-  .get("/admin", () => "Admin API")
-  .listen(3001, ({ hostname, port }) => {
-    console.log(`Admin API running at http://${hostname}:${port}`);
+const adminApp = new Hono().get('/', (c) => c.text('Admin API index')).get('/admin', (c) => c.text('Admin API'));
+
+const adminServer = Bun.serve({
+  port: 3001,
+  fetch: adminApp.fetch,
 });
+console.log(`Admin API running at http://${adminServer.hostname}:${adminServer.port}`);

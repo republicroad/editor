@@ -44,6 +44,8 @@ Content-Type: application/json
 | `context` | `Value` | 输入上下文数据 |
 | `content` | `DecisionContent` | JDM 决策图定义 |
 
+**说明（Hono 替代后端）**: `contentType` 为可选字段。前端 `DecisionGraph` 直接发送 `{ nodes, edges }`（不含 `contentType`）时，zen-engine 按默认 `application/vnd.gorules.decision` 处理。
+
 **响应体**:
 
 ```json
@@ -72,6 +74,96 @@ Content-Type: application/json
 **限制**:
 - 请求体最大: 16MB
 - 最大执行深度: 10 层
+
+---
+
+### 1.3 Hono 替代后端（apps/editor）
+
+> Bun + Hono（`OpenAPIHono`）实现的替代后端，监听 3000 端口；另起 admin 服务监听 3001。
+> 共享 Rust 主后端的 `/api/simulate` 契约，并额外提供以下端点（全部可交互调试于 Scalar API Reference）。
+
+#### 1.3.1 会话查询
+
+```
+GET /api/auth/get-session
+```
+
+**响应体**（better-auth 兼容格式，当前为 Mock 开发用户）:
+
+```json
+{
+  "session": {
+    "id": "mock-session-1",
+    "token": "mock-token-1",
+    "userId": "mock-user-1",
+    "expiresAt": "...",
+    "createdAt": "...",
+    "updatedAt": "..."
+  },
+  "user": {
+    "id": "mock-user-1",
+    "name": "Mock User",
+    "email": "mock@example.com",
+    "emailVerified": false,
+    "createdAt": "...",
+    "updatedAt": "...",
+    "image": null
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `session` | `object` | 会话对象 |
+| `user` | `object` | 用户对象（前端 `userResolver` 读取 `user.id`） |
+
+**说明**: 该端点仅存在于 Hono 替代后端。前端 `src/lib/user-resolver.ts` 通过 `authClient.getSession()` 消费；当前为 Mock 开发用户，真实会话/数据库接入待后续。
+
+#### 1.3.2 决策推理（带缓存）
+
+```
+POST /api/decision
+Content-Type: application/json
+```
+
+**请求体**:
+
+```json
+{
+  "decisionId": "optional-id",
+  "content": {
+    "contentType": "application/vnd.gorules.decision",
+    "nodes": [...],
+    "edges": [...]
+  },
+  "context": { ... }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `decisionId` | `string` | 可选，缓存键。命中缓存时复用规则对象 |
+| `content` | `DecisionContent` | 可选（`contentType` 可省略）。未命中缓存或未传 `decisionId` 时用于创建规则 |
+| `context` | `Value` | 推理输入 |
+
+**响应体**: `{ result, trace?, performance? }`（同 `/api/simulate`）。
+
+**错误响应**: 未传 `content` 且缓存未命中时返回 `400 { error }`。
+
+**缓存逻辑**: 有 `decisionId` 且命中缓存 → 直接复用；否则用 `content` 创建规则对象并按 `decisionId` 缓存。
+
+#### 1.3.3 其他端点
+
+| 端点 | 说明 |
+|------|------|
+| `GET /state` | 返回服务端 store（`input`、`db`、`zenDecisions`） |
+| `GET /input` | 返回 `{ num: 19 }`（自定义函数 schema 占位） |
+| `GET /` | 无 `files` 参数时返回 `public/index.html`；有 `?files` 时返回 public 目录文件列表 HTML |
+| `GET /openapi/json` | OpenAPI 3.0 schema（`app.doc()` 生成） |
+| `GET /openapi` | Scalar API Reference 交互式文档页 |
+| admin `GET /`、`GET /admin`（3001） | 管理服务 |
+
+**运行日志**: 每个请求打印 `=> 方法 路径` 与 `<= 方法 路径 状态码 耗时`；未处理异常经 `onError` 统一打印堆栈并返回结构化 `{ error }`。
 
 ---
 

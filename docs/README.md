@@ -56,7 +56,7 @@ editor/
 ├── src/                    # 前端应用源码（React SPA）
 ├── jdm-editor/             # 核心组件库（git submodule）
 ├── backend/                # Rust/Axum 后端
-├── apps/                   # Bun/Elysia 替代后端
+├── apps/                   # Bun/Hono 替代后端
 ├── static/                 # 构建输出目录
 ├── docs/                   # 项目文档（本目录）
 └── Dockerfile              # Docker 构建文件

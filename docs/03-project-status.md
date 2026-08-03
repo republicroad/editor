@@ -1,6 +1,6 @@
 # 项目状态
 
-> 快照时间：2026-07-26
+> 快照时间：2026-08-03
 
 ---
 
@@ -143,12 +143,13 @@
 - lezer-zen 和 zen-engine-wasm 包源码在 opencode 分支中已移除，改为外部 npm 依赖
 
 ### 6.2 待办事项
-- [ ] Bun 后端生产化（当前为实验状态）
+- [ ] Hono 后端生产化（当前为实验状态）
 - [ ] lezer-zen 源码恢复或迁移
 - [ ] zen-engine-wasm 源码恢复或迁移
 - [ ] 完善单元测试覆盖
 - [ ] 补充 Storybook 组件文档
 - [ ] 修复 vite build 预存在问题（vite-plugin-dts 加载失败）
+- [ ] `/api/auth/get-session` 由 Mock 用户升级为真实会话（better-auth 服务端 + 数据库）
 
 ---
 
@@ -192,3 +193,7 @@ e188084 feat: add UserResolver and components override mechanism
 **编辑器项目（未提交）：**
 - better-auth 客户端 + UserResolver 工厂
 - DecisionGraph 集成 userResolver prop
+- Bun 后端 Elysia → Hono 迁移（`hono` + `@hono/zod-openapi` + `@scalar/hono-api-reference` + `zod`，移除 `elysia`/`@elysiajs/*`）
+- 新增 `GET /api/auth/get-session`（Mock 开发用户），打通 better-auth UserResolver 链路
+- 新增请求日志中间件 + `onError` 统一错误日志（打印方法/路径/状态/耗时与异常堆栈）
+- 修复 `/api/decision` 缓存逻辑 bug（原 `content` 未定义、`decision` 作用域错误）与 `contentType` 校验过严问题

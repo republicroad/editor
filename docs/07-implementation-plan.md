@@ -421,6 +421,8 @@ export { functionSpecification } from './nodes/specifications/function.specifica
 
 ### 步骤 7：编辑器项目 — 安装 better-auth 并配置
 
+> **状态注记（2026-08-03）**：本步骤客户端部分已落地（`auth-client.ts`、`user-resolver.ts`、`decision-simple.tsx` 均已实现）。服务端由 Hono 替代后端（`apps/editor`）的 `GET /api/auth/get-session` **Mock 端点**衔接（返回固定开发用户，better-auth 兼容格式）；真实会话/数据库接入为待办。
+
 #### 7a. 安装依赖
 
 ```bash

@@ -24,7 +24,7 @@ GoRules Editor 采用三层架构设计：
 ├─────────────────────────────────────────────────────────┤
 │                    后端引擎                               │
 │  ┌─────────────────────┐  ┌─────────────────────────┐   │
-│  │ Rust/Axum (主后端)   │  │ Bun/Elysia (替代后端)   │   │
+│  │ Rust/Axum (主后端)   │  │ Bun/Hono (替代后端)      │   │
 │  │ zen-engine 0.53     │  │ @gorules/zen-engine     │   │
 │  └─────────────────────┘  └─────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
@@ -58,7 +58,7 @@ editor/
 ├── backend/                      # Rust/Axum 后端
 │   └── src/main.rs               # 后端入口
 ├── apps/                         # 替代后端
-│   ├── editor/                   # Bun/Elysia 后端
+│   ├── editor/                   # Bun/Hono 后端
 │   └── zen-rule/                 # 规则执行工具
 ├── static/                       # 构建输出
 ├── vite.config.ts                # Vite 构建配置
@@ -130,7 +130,7 @@ jdm-editor/
 | zen-engine | 0.53 | GoRules 决策引擎 |
 | Tower HTTP | 0.5 | HTTP 中间件 |
 | Bun | 1.3+ | 替代后端运行时 |
-| Elysia | - | Bun HTTP 框架 |
+| Hono | 4.12 | Bun HTTP 框架 |
 
 ### 3.3 WASM 技术栈
 
@@ -148,9 +148,15 @@ jdm-editor/
 
 双后端实现，共享相同的 API 接口：
 - **Rust/Axum**: 生产环境主后端
-- **Bun/Elysia**: 开发/实验环境替代后端
+- **Bun/Hono**: 开发/实验环境替代后端
 
-两者都暴露相同的 `/api/simulate` 端点。
+两者都暴露相同的 `/api/simulate` 端点。Hono 替代后端（`apps/editor`）额外提供：
+- `POST /api/decision`：决策推理（支持按 `decisionId` 缓存规则对象复用）
+- `GET /api/auth/get-session`：会话查询（当前为 Mock 开发用户，better-auth 兼容格式）
+- `GET /openapi/json`：OpenAPI schema；`GET /openapi`：Scalar API Reference 文档页
+- `GET /state`、`GET /input`、`GET /?files`（静态目录文件列表）
+- 另起 admin 服务（端口 3001，`GET /`、`GET /admin`）
+- 每个请求打印方法/路径/状态/耗时日志，未处理异常经 `onError` 统一记录堆栈
 
 ### 4.2 Context Provider 模式
 

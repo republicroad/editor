@@ -18,7 +18,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(['**/dist', '**/.eslintrc.cjs', '**/target', 'jdm-editor/**']),
+  globalIgnores(['**/dist', '**/static', '**/.eslintrc.cjs', '**/target', 'jdm-editor/**']),
   {
     extends: fixupConfigRules(
       compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:react-hooks/recommended'),
@@ -32,6 +32,7 @@ export default defineConfig([
     languageOptions: {
       globals: {
         ...globals.browser,
+        __MONACO_VS_BASE__: 'readonly',
       },
 
       parser: tsParser,

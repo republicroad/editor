@@ -91,6 +91,25 @@ target/debug/editor
 3. 访问 `http://localhost:5173`
 4. 前端通过 Vite 代理将 `/api/*` 请求转发到后端 `localhost:3000`
 
+### 3.4 启动 Hono 规则仿真后端（apps/editor）
+
+`apps/editor` 与 `apps/zen-rule` 已纳入根 workspace（`workspaces: ["apps/*", "jdm-editor/packages/*"]`），
+统一使用 bun 管理依赖，`zen-rule` 通过 `workspace:*` 协议被引用，无需 `bun link`。
+
+```bash
+# 根目录安装全部 workspace 依赖
+bun i
+
+# 启动 apps/editor API 后端（监听 3000，admin 服务 3001）
+bun run dev:api
+
+# 可选：运行 zen-rule 冒烟测试 / 类型检查
+bun run test:zen-rule
+bun run typecheck:apps
+```
+
+OpenAPI 文档（Scalar UI）：http://localhost:3000/openapi
+
 ---
 
 ## 4. jdm-editor 组件库开发

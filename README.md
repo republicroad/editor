@@ -92,6 +92,20 @@ $ cd jdm-editor/
 jdm-editor$ bun run build
 ```
 
+## apps (Bun/Hono API 后端)
+
+`apps/editor`（Hono 规则仿真后端）与 `apps/zen-rule`（zen-engine 自定义处理函数库）已纳入根 workspace，
+统一使用 bun 管理依赖（单一 `bun.lock`），`zen-rule` 通过 `workspace:*` 协议被 `apps/editor` 引用，
+无需再手动 `bun link`。
+
+```bash
+$ bun i                # 根目录一次性安装所有 workspace 依赖
+$ bun run dev:api      # 启动 API 后端 (apps/editor), 监听 http://localhost:3000 (+ 3001 admin)
+$ bun run test:zen-rule   # 运行 zen-rule 冒烟测试
+$ bun run typecheck:apps  # 类型检查 apps/*
+```
+
+OpenAPI 交互文档: http://localhost:3000/openapi
 
 ## 参考资料
 
@@ -131,4 +145,23 @@ jdm-editor$ git add xxxx
 jdm-editor$ git commit -m 'xxxxx'
 jdm-editor$ cd ..
 $ git add jdm-editor/
+```
+
+
+## Proxy Configuration (for network-restricted environments)
+
+### Ubuntu / macOS
+
+```bash
+export HTTPS_PROXY=https://127.0.0.1:7890
+export HTTP_PROXY=http://127.0.0.1:7890
+export NO_PROXY=localhost,127.0.0.1
+```
+
+### PowerShell
+
+```powershell
+$env:HTTPS_PROXY="http://127.0.0.1:7890"
+$env:HTTP_PROXY="http://127.0.0.1:7890"
+$env:NO_PROXY="localhost,127.0.0.1"
 ```

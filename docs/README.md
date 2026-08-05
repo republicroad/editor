@@ -39,7 +39,10 @@ bun i
 # 启动前端开发服务器
 bun run dev
 
-# 启动后端（另一个终端）
+# 启动 Hono 规则仿真后端（apps/editor，替代 Rust 后端）
+bun run dev:api
+
+# 启动后端（另一个终端，Rust）
 make watch
 ```
 

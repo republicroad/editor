@@ -1,17 +1,15 @@
-
 import { ApartmentOutlined, ApiOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { createJdmNode } from '@gorules/jdm-editor';
 
-
 export const customNodes = [
-    createJdmNode({
+  createJdmNode({
     kind: 'counter',
     displayName: 'counter',
     group: 'counter',
     icon: <ApartmentOutlined />,
     shortDescription: 'Used for counter',
   }),
-    createJdmNode({
+  createJdmNode({
     kind: 'sharded_counter',
     displayName: 'sharded_counter',
     group: 'sharded_counter',

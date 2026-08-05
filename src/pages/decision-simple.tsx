@@ -1,11 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Divider, Dropdown, message, Modal, Space, theme, Typography } from 'antd';
+import { Button, Divider, Dropdown, message, Modal, theme, Typography } from 'antd';
 import { BulbOutlined, CheckOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError } from '../helpers/error-message.ts';
 import { DecisionContent, DecisionEdge, DecisionNode } from '../helpers/graph.ts';
 import { useSearchParams } from 'react-router-dom';
-import { DecisionGraph, DecisionGraphRef, DecisionGraphType, GraphSimulator, JdmUiMode, Simulation } from '@gorules/jdm-editor';
+import {
+  DecisionGraph,
+  DecisionGraphRef,
+  DecisionGraphType,
+  GraphSimulator,
+  JdmUiMode,
+  Simulation,
+} from '@gorules/jdm-editor';
 import { PageHeader } from '../components/page-header.tsx';
 import { DirectedGraph } from 'graphology';
 import { hasCycle } from 'graphology-dag';
@@ -15,8 +22,8 @@ import { match, P } from 'ts-pattern';
 import classes from './decision-simple.module.css';
 import axios from 'axios';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
-import { customNodes } from '../context/customnode.tsx'
-import { createBetterAuthResolver } from '../lib/user-resolver.ts'
+import { customNodes } from '../context/customnode.tsx';
+import { createBetterAuthResolver } from '../lib/user-resolver.ts';
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',

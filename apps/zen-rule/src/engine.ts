@@ -45,7 +45,7 @@ interface GraphContent {
 function evaluateExpressionSafe(expr: string, input?: unknown): unknown {
   try {
     return evaluateExpressionSync(expr, input);
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -61,7 +61,6 @@ class ZenRule {
 
   constructor(options?: ZenEngineOptions) {
     if (options) {
-      const loader = options.loader;
       if (options.customHandler == null) {
         options.customHandler = ZenRule.customHandlerFunc;
       }
@@ -93,9 +92,7 @@ class ZenRule {
 
   updateDecisionWithCacheKey(key: string, content: string | object): ZenDecision {
     if (!this.decisionCache.has(key)) {
-      throw new Error(
-        `rule key:${key} is not existed, please use createDecisionWithCacheKey`,
-      );
+      throw new Error(`rule key:${key} is not existed, please use createDecisionWithCacheKey`);
     }
     const decision = this.createDecision(content);
     this.decisionCache.set(key, decision);
@@ -187,7 +184,7 @@ class ZenRule {
         const exprAsts: ExprAstItem[] = [];
         for (const funcItem of customExpressions) {
           const item = { ...funcItem };
-          item.value =     ZenRule.parseOperatorExpr(funcItem.value);
+          item.value = ZenRule.parseOperatorExpr(funcItem.value);
           exprAsts.push(item);
         }
         config['expr_asts'] = exprAsts;
@@ -255,7 +252,6 @@ class ZenRule {
   ): Promise<unknown> {
     try {
       const exprId = execExpr.id;
-      const exprKey = execExpr.key;
       const exprAst = execExpr.value;
 
       const ast = Array.isArray(exprAst) ? exprAst : ZenRule.parseOperatorExpr(exprAst);
@@ -288,7 +284,7 @@ class ZenRule {
         }
         return { error: 'empty udf name not allowed' };
       }
-    } catch (e) {
+    } catch {
       return null;
     }
   }

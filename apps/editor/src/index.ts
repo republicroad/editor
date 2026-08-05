@@ -1,7 +1,7 @@
 import { readdir } from 'fs/promises';
 import path from 'path';
 import { join } from 'path';
-import { debug } from "console";
+import { debug } from 'console';
 import type { ZenDecision } from '@gorules/zen-engine';
 import { ZenRule } from 'zen-rule';
 import { Hono } from 'hono';
@@ -52,7 +52,9 @@ async function requestLogger(c: Context, next: Next) {
   const path = url.pathname + url.search;
   console.log(`[${new Date().toISOString()}] => ${c.req.method} ${path}`);
   await next();
-  console.log(`[${new Date().toISOString()}] <= ${c.req.method} ${path} ${c.res.status} ${(performance.now() - start).toFixed(1)}ms`);
+  console.log(
+    `[${new Date().toISOString()}] <= ${c.req.method} ${path} ${c.res.status} ${(performance.now() - start).toFixed(1)}ms`,
+  );
 }
 
 // --- OpenAPI schemas ---
@@ -192,9 +194,7 @@ const getSessionRoute = createRoute({
 
 // 自定义节点/自定义函数 JSON Schema（namespace/tools 格式，与 brdeapi.geetest.com/zen_custom_node_function.json 对齐）。
 // 内容本身是 JSON Schema，因此外层用宽松的 record 数组描述。
-const CustomNodeFunctionSchema = z
-  .array(z.record(z.string(), z.unknown()))
-  .openapi('CustomNodeFunctionSchema');
+const CustomNodeFunctionSchema = z.array(z.record(z.string(), z.unknown())).openapi('CustomNodeFunctionSchema');
 
 const customNodesSchemaRoute = createRoute({
   method: 'get',
@@ -237,10 +237,10 @@ app.get('/', async (c) => {
     let htmlResponse = '<h1>File List</h1><ul>';
     for (const file of files) {
       // Create a link to the actual static file path
-      var fileUrl;
+      let fileUrl;
       if (file === 'index.html') {
         fileUrl = staticConfig.prefix; // Root URL for index.html
-      }else{
+      } else {
         fileUrl = path.resolve(staticConfig.prefix, file);
       }
       htmlResponse += `<li><a href="${fileUrl}">${file}</a></li>`;
@@ -271,12 +271,12 @@ app.get('/input', (c) => {
 app.openapi(simulateRoute, async (c) => {
   // 动态加载规则文件（含自定义节点执行：ZenRule.graphAddons + customHandlerFunc）
   const body = c.req.valid('json');
-  console.log("body:", body);
+  console.log('body:', body);
   const zr = store.zenDecisions.engine;
   const decision = zr.createDecision(body.content);
   try {
     // 考虑把 trace 做成一个url?后的参数
-    const result = await decision.evaluate(body.context, { "trace": true });
+    const result = await decision.evaluate(body.context, { trace: true });
     return c.json(result);
   } catch (error) {
     console.error(error);
@@ -288,7 +288,7 @@ app.openapi(decisionRoute, async (c) => {
   // 线上规则推理时需要把通过content获得的decision规则对象缓存起来，
   // 避免每次都重新创建规则对象（缓存由 ZenRule 内部维护）
   const body = c.req.valid('json');
-  console.log("body:", body);
+  console.log('body:', body);
   const zr = store.zenDecisions.engine;
   const decisionId = body.decisionId;
   let decision: ZenDecision;
@@ -313,8 +313,8 @@ app.openapi(decisionRoute, async (c) => {
     debug('创建临时decision对象（不缓存）');
     decision = zr.createDecision(body.content);
   }
-  const result = await decision.evaluate(body.context, { "trace": false });
-  console.log("result:", result);
+  const result = await decision.evaluate(body.context, { trace: false });
+  console.log('result:', result);
   return c.json(result);
 });
 
@@ -324,17 +324,17 @@ app.openapi(getSessionRoute, (c) => {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   return c.json({
     session: {
-      id: "mock-session-1",
-      token: "mock-token-1",
-      userId: "mock-user-1",
+      id: 'mock-session-1',
+      token: 'mock-token-1',
+      userId: 'mock-user-1',
       expiresAt,
       createdAt: now,
       updatedAt: now,
     },
     user: {
-      id: "mock-user-1",
-      name: "Mock User",
-      email: "mock@example.com",
+      id: 'mock-user-1',
+      name: 'Mock User',
+      email: 'mock@example.com',
       emailVerified: false,
       createdAt: now,
       updatedAt: now,

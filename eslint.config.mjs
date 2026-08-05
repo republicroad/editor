@@ -18,7 +18,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(['**/dist', '**/.eslintrc.cjs', '**/target']),
+  globalIgnores(['**/dist', '**/.eslintrc.cjs', '**/target', 'jdm-editor/**']),
   {
     extends: fixupConfigRules(
       compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:react-hooks/recommended'),
@@ -48,6 +48,15 @@ export default defineConfig([
       ],
 
       'react-hooks/exhaustive-deps': 'off',
+    },
+  },
+  {
+    files: ['apps/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        Bun: 'readonly',
+      },
     },
   },
 ]);

@@ -1,10 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { ZenRule, registerUdf, udfManager } from './src/index.js';
-import data  from './custom.json' with { type: "json" }
-import data2  from './custom_fullnode.json' with { type: "json" }
-// console.log('data:', data);
+import { resolve } from 'node:path';
+import { ZenRule, registerUdf } from './src/index.js';
 
 // Register a UDF similar to the `foo` in main.py
 registerUdf('foo', undefined, {
@@ -22,22 +18,13 @@ registerUdf('foo', undefined, {
 
 async function testZenruleFoo() {
   const zr = new ZenRule({});
+  let filename: string;
   if (import.meta.url.startsWith('file:///$bunfs/root')) {
-    const executionDirectory = process.execPath.split('/').slice(0, -1).join('/'); 
-    // const __dirname = dirname(fileURLToPath(import.meta.url));
-    // const __dirname = process.cwd();
-    // const filename = resolve(__dirname, '../../graph/custom_fullnode.json');
-    // const filename = resolve(__dirname, 'custom_fullnode.json');
-    var filename = resolve(executionDirectory, 'custom_fullnode.json');
-  }
-  else{
+    const executionDirectory = process.execPath.split('/').slice(0, -1).join('/');
+    filename = resolve(executionDirectory, 'custom_fullnode.json');
+  } else {
     const executionDirectory = import.meta.dir;
-    // const __dirname = dirname(fileURLToPath(import.meta.url));
-    // const __dirname = process.cwd();
-    // console.log('__dirname:', __dirname);
-    // const filename = resolve(__dirname, '../../graph/custom.json');
-    var filename = resolve(executionDirectory, 'custom_fullnode.json');
-    // const filename = resolve(__dirname, 'custom.json');
+    filename = resolve(executionDirectory, 'custom_fullnode.json');
   }
   const key = filename;
   if (!zr.getDecisionCache(key)) {
@@ -47,7 +34,7 @@ async function testZenruleFoo() {
   for (let i = 0; i < 1; i++) {
     const result = await zr.evaluateAsync(key, { input: 7, myvar: 15 });
     console.log('zen rule custom result:', JSON.stringify(result, null, 2));
-    const resultValue = (result as any)?.result?.result;
+    const resultValue = (result.result as { result?: unknown } | undefined)?.result;
     if (resultValue !== 'foo value') {
       throw new Error(`custom rule execution failed, got: ${resultValue}`);
     }
@@ -58,31 +45,22 @@ async function testZenruleFoo() {
 async function testZenrule() {
   const zr = new ZenRule({});
   // Returns the full absolute path of the binary (e.g., /usr/local/bin/myapp)
-  const executablePath = process.execPath; 
+  const executablePath = process.execPath;
   // Returns the true physical directory containing the binary
-  const executionDirectory = process.execPath.split('/').slice(0, -1).join('/'); 
+  const executionDirectory = process.execPath.split('/').slice(0, -1).join('/');
   console.log('executionDirectory:', executionDirectory);
   console.log('executablePath:', executablePath);
   console.log('import.meta.url:', import.meta.url);
   console.log('import.meta.path:', import.meta.path);
   console.log('import.meta.dir:', import.meta.dir);
   console.log('process.cwd():', process.cwd());
+  let filename: string;
   if (import.meta.url.startsWith('file:///$bunfs/root')) {
-    const executionDirectory = process.execPath.split('/').slice(0, -1).join('/'); 
-    // const __dirname = dirname(fileURLToPath(import.meta.url));
-    // const __dirname = process.cwd();
-    // const filename = resolve(__dirname, '../../graph/custom_fullnode.json');
-    // const filename = resolve(__dirname, 'custom_fullnode.json');
-    var filename = resolve(executionDirectory, 'custom.json');
-  }
-  else{
-    const executionDirectory = import.meta.dir;
-    // const __dirname = dirname(fileURLToPath(import.meta.url));
-    // const __dirname = process.cwd();
-    // console.log('__dirname:', __dirname);
-    // const filename = resolve(__dirname, '../../graph/custom.json');
-    var filename = resolve(executionDirectory, 'custom.json');
-    // const filename = resolve(__dirname, 'custom.json');
+    const execDir = process.execPath.split('/').slice(0, -1).join('/');
+    filename = resolve(execDir, 'custom.json');
+  } else {
+    const execDir = import.meta.dir;
+    filename = resolve(execDir, 'custom.json');
   }
   const key = filename;
   if (!zr.getDecisionCache(key)) {

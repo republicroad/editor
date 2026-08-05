@@ -85,19 +85,12 @@ export interface UdfSchema {
 }
 
 interface UdfEntry {
-  fn: Function;
+  fn: UdfFunction;
   schema: UdfSchema;
 }
 
-const pyTDefaultsMaps: Record<string, unknown> = {
-  null: null,
-  boolean: false,
-  string: '',
-  object: {},
-  array: [],
-  integer: 0,
-  number: 0.0,
-};
+/** 可注册的 UDF 函数签名（动态注册表，运行时统一以单个 kwargs 对象调用） */
+type UdfFunction = (kwargs: Record<string, unknown>) => unknown;
 
 function jsonT2pyT(jsonType: string): (v: unknown) => unknown {
   const m: Record<string, (v: unknown) => unknown> = {
@@ -142,7 +135,12 @@ function normalizeUdfSchema(schema: UdfSchema): UdfSchema {
       normalized.parameters = derived;
     }
   } else if (schema.parameters && Object.keys(schema.parameters).length > 0) {
-    const synthesized: { properties: Record<string, JsonSchemaProperty>; required: string[]; title: string; type: 'object' } = {
+    const synthesized: {
+      properties: Record<string, JsonSchemaProperty>;
+      required: string[];
+      title: string;
+      type: 'object';
+    } = {
       properties: {},
       required: [],
       title: '',
@@ -177,12 +175,7 @@ function normalizeUdfSchema(schema: UdfSchema): UdfSchema {
 class UDFManager {
   private functions = new Map<string, UdfEntry>();
 
-  registerFunction(
-    fn: Function,
-    namespace?: string,
-    schema?: UdfSchema,
-    nameOverride?: string,
-  ): void {
+  registerFunction(fn: UdfFunction, namespace?: string, schema?: UdfSchema, nameOverride?: string): void {
     const name = nameOverride ?? fn.name;
     if (!name) {
       throw new Error('Function must have a name to register');
@@ -212,7 +205,7 @@ class UDFManager {
     const paramEntries = Object.entries(schema.parameters);
     const bound: Record<string, unknown> = {};
     paramEntries.forEach(([paramName, paramSchema], i) => {
-      const val = i < args.length ? args[i] : paramSchema.default ?? null;
+      const val = i < args.length ? args[i] : (paramSchema.default ?? null);
       const converter = jsonT2pyT(paramSchema.type ?? 'null');
       bound[paramName] = converter(val);
     });
@@ -224,8 +217,8 @@ class UDFManager {
     if (!entry) {
       throw new Error(`Function '${udfName}' is not registered in UDFManager`);
     }
-    const fn = entry.fn;
-    const result = fn(...args);
+    const kwargs = (args[0] as Record<string, unknown> | undefined) ?? {};
+    const result = entry.fn(kwargs);
     return result instanceof Promise ? await result : result;
   }
 
@@ -262,12 +255,11 @@ class UDFManager {
         title: name,
         type: 'function',
         description: entry.schema.description ?? '',
-        parameters:
-          entry.schema.parametersSchema ?? {
-            properties: {},
-            title: name,
-            type: 'object',
-          },
+        parameters: entry.schema.parametersSchema ?? {
+          properties: {},
+          title: name,
+          type: 'object',
+        },
         returns: entry.schema.returnsSchema ?? { type: 'null', title: '', properties: {} },
         namespace: ns,
         kind: ns,
@@ -279,12 +271,8 @@ class UDFManager {
 
 const udfManager = new UDFManager();
 
-function registerUdf(
-  name: string,
-  namespace?: string,
-  schema?: UdfSchema,
-): (fn: Function) => Function {
-  return (fn: Function) => {
+function registerUdf(name: string, namespace?: string, schema?: UdfSchema): (fn: UdfFunction) => UdfFunction {
+  return (fn: UdfFunction) => {
     udfManager.registerFunction(fn, namespace, schema, name);
     return fn;
   };

@@ -3,7 +3,7 @@ import * as os from 'os';
 function getAllHostIps(): string[] {
     const networkInterfaces = os.networkInterfaces();
     // console.log("networkInterfaces:", networkInterfaces);
-    const addresses: string[] = [];
+  const addresses: string[] = [];
 
     for (const interfaceName in networkInterfaces) {
         const networkInterface = networkInterfaces[interfaceName];

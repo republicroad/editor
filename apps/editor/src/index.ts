@@ -2,13 +2,15 @@ import { readdir } from 'fs/promises';
 import path from 'path';
 import { join } from 'path';
 import { debug } from "console";
-import { ZenEngine, type ZenDecision } from '@gorules/zen-engine';
+import type { ZenDecision } from '@gorules/zen-engine';
+import { ZenRule } from 'zen-rule';
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { serveStatic } from 'hono/bun';
+import { customNodeFunctionSchema } from './custom-node-schema';
 
 // Function to recursively list files in a directory
 async function getFilesRecursively(dir: string, fileList: string[] = [], rootDir: string = dir): Promise<string[]> {
@@ -37,8 +39,9 @@ const store = {
   input: { num: 19 },
   db: { users: [], hits: 0 },
   zenDecisions: {
-    engine: new ZenEngine(),
-    rules: {} as Record<string, ZenDecision>,
+    // ZenRule 封装了 customHandlerFunc（执行 customNode 的 UDF 表达式）与 graphAddons，
+    // 决策对象缓存由 ZenRule 内部维护（createDecisionWithCacheKey / getDecisionCache）。
+    engine: new ZenRule(),
   },
 };
 
@@ -187,6 +190,25 @@ const getSessionRoute = createRoute({
   },
 });
 
+// 自定义节点/自定义函数 JSON Schema（namespace/tools 格式，与 brdeapi.geetest.com/zen_custom_node_function.json 对齐）。
+// 内容本身是 JSON Schema，因此外层用宽松的 record 数组描述。
+const CustomNodeFunctionSchema = z
+  .array(z.record(z.string(), z.unknown()))
+  .openapi('CustomNodeFunctionSchema');
+
+const customNodesSchemaRoute = createRoute({
+  method: 'get',
+  path: '/api/custom-nodes/schema',
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: CustomNodeFunctionSchema },
+      },
+      description: '自定义节点与自定义函数 JSON Schema（namespace/tools 格式）',
+    },
+  },
+});
+
 const app = new OpenAPIHono();
 
 app.use(requestLogger);
@@ -239,24 +261,22 @@ app.get('/state', (c) => {
   return c.json(store);
 });
 
-// 以后给自定义函数返回一个json文件schema. 这样便于前端加载对应的自定义函数组件.
+// 自定义节点/自定义函数 JSON Schema 下发：GET /api/custom-nodes/schema（见 customNodesSchemaRoute）。
+// 前端加载该 schema 后，可动态生成对应的自定义函数组件（createJdmNode）。
 app.get('/input', (c) => {
   return c.json({ num: 19 });
 });
 
 // /api 以后使用 prefix 或者 plugin 来使用.
 app.openapi(simulateRoute, async (c) => {
-  // 动态加载规则文件
+  // 动态加载规则文件（含自定义节点执行：ZenRule.graphAddons + customHandlerFunc）
   const body = c.req.valid('json');
   console.log("body:", body);
-  // const engine = new ZenEngine();
-  const engine = store.zenDecisions.engine;
-  const decision = engine.createDecision(body.content);
+  const zr = store.zenDecisions.engine;
+  const decision = zr.createDecision(body.content);
   try {
     // 考虑把 trace 做成一个url?后的参数
     const result = await decision.evaluate(body.context, { "trace": true });
-    // console.log("result:", result);
-    // store.zenDecisions.rules["a"] = decision;  // 测试把decision对象缓存起来.
     return c.json(result);
   } catch (error) {
     console.error(error);
@@ -266,27 +286,32 @@ app.openapi(simulateRoute, async (c) => {
 
 app.openapi(decisionRoute, async (c) => {
   // 线上规则推理时需要把通过content获得的decision规则对象缓存起来，
-  // 避免每次都重新创建规则对象
+  // 避免每次都重新创建规则对象（缓存由 ZenRule 内部维护）
   const body = c.req.valid('json');
   console.log("body:", body);
-  const engine = store.zenDecisions.engine;
+  const zr = store.zenDecisions.engine;
   const decisionId = body.decisionId;
-  // 如果传来了 decisionId，则尝试从缓存中获取对应的decision对象.
-  // 否则每次都重新创建新的decision对象.
   let decision: ZenDecision;
-  if (decisionId && store.zenDecisions.rules[decisionId]) {
-    debug(`使用缓存的decision对象: ${decisionId}`);
-    decision = store.zenDecisions.rules[decisionId];
-  } else {
-    if (!body.content) {
+  if (decisionId) {
+    const cached = zr.getDecisionCache(decisionId);
+    if (cached && !body.content) {
+      debug(`使用缓存的decision对象: ${decisionId}`);
+      decision = cached;
+    } else if (cached && body.content) {
+      debug(`更新decision对象: ${decisionId}`);
+      decision = zr.updateDecisionWithCacheKey(decisionId, body.content);
+    } else if (!cached && body.content) {
+      debug(`创建新的decision对象并缓存: ${decisionId}`);
+      decision = zr.createDecisionWithCacheKey(decisionId, body.content);
+    } else {
       return c.json({ error: 'content is required when decision is not cached' }, 400);
     }
-    debug(`创建新的decision对象并缓存: ${decisionId}`);
-    decision = engine.createDecision(body.content);
-    if (decisionId) {
-      // decisionId 考虑作为 /api/decision/:decisionId 的 url 参数传入.
-      store.zenDecisions.rules[decisionId] = decision;
+  } else {
+    if (!body.content) {
+      return c.json({ error: 'content is required' }, 400);
     }
+    debug('创建临时decision对象（不缓存）');
+    decision = zr.createDecision(body.content);
   }
   const result = await decision.evaluate(body.context, { "trace": false });
   console.log("result:", result);
@@ -316,6 +341,11 @@ app.openapi(getSessionRoute, (c) => {
       image: null,
     },
   });
+});
+
+// 自定义节点/自定义函数 JSON Schema 下发
+app.openapi(customNodesSchemaRoute, (c) => {
+  return c.json(customNodeFunctionSchema);
 });
 
 // OpenAPI schema at /openapi/json, Scalar API Reference at /openapi

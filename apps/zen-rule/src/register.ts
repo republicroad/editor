@@ -1,0 +1,293 @@
+/**
+ * 完整 JSON Schema 属性（与 brdeapi.geetest.com/zen_custom_node_function.json 对齐）。
+ * index signature 允许嵌套 schema（properties/items/$defs/anyOf 等）。
+ */
+export interface JsonSchemaProperty {
+  type?: string;
+  title?: string;
+  description?: string;
+  default?: unknown;
+  anyOf?: JsonSchemaProperty[];
+  items?: JsonSchemaProperty;
+  properties?: Record<string, JsonSchemaProperty>;
+  required?: string[];
+  additionalProperties?: boolean | JsonSchemaProperty;
+  $ref?: string;
+  $defs?: Record<string, JsonSchemaProperty>;
+  enum?: unknown[];
+  format?: string;
+  [key: string]: unknown;
+}
+
+export interface JsonSchema {
+  type?: string;
+  title?: string;
+  description?: string;
+  default?: unknown;
+  anyOf?: JsonSchema[];
+  items?: JsonSchema;
+  properties?: Record<string, JsonSchemaProperty>;
+  required?: string[];
+  additionalProperties?: boolean | JsonSchemaProperty;
+  $ref?: string;
+  $defs?: Record<string, JsonSchemaProperty>;
+  [key: string]: unknown;
+}
+
+/** 扁平参数 schema（执行/绑定用，funcBindParams 依赖） */
+export interface UdfSchemaParameter {
+  type?: string;
+  description?: string;
+  default?: unknown;
+}
+
+/** 单个自定义函数（namespace/tools 格式中的 tool），对应 createJdmNode 的 kind */
+export interface CustomFunctionTool {
+  name: string;
+  title: string;
+  type: 'function';
+  description?: string;
+  parameters: {
+    properties: Record<string, JsonSchemaProperty>;
+    required?: string[];
+    title?: string;
+    type?: 'object';
+  };
+  returns: JsonSchema;
+  namespace: string;
+  kind: string;
+}
+
+/** 自定义节点命名空间（namespace/tools 格式），对应侧边栏 group */
+export interface CustomNodeNamespace {
+  type: 'namespace';
+  title: string;
+  name: string;
+  description?: string;
+  tools: CustomFunctionTool[];
+}
+
+/** UDF 声明 schema（向后兼容：扁平 parameters 与完整 parametersSchema 二选一或并存） */
+export interface UdfSchema {
+  parameters?: Record<string, UdfSchemaParameter>;
+  returns?: { type?: string; description?: string };
+  namespace?: string;
+  /** 完整 JSON Schema 形式的参数定义（用于 /api/custom-nodes/schema 下发） */
+  parametersSchema?: {
+    properties: Record<string, JsonSchemaProperty>;
+    required?: string[];
+    title?: string;
+    type?: 'object';
+  };
+  /** 完整 JSON Schema 形式的返回值定义 */
+  returnsSchema?: JsonSchema;
+  description?: string;
+}
+
+interface UdfEntry {
+  fn: Function;
+  schema: UdfSchema;
+}
+
+const pyTDefaultsMaps: Record<string, unknown> = {
+  null: null,
+  boolean: false,
+  string: '',
+  object: {},
+  array: [],
+  integer: 0,
+  number: 0.0,
+};
+
+function jsonT2pyT(jsonType: string): (v: unknown) => unknown {
+  const m: Record<string, (v: unknown) => unknown> = {
+    null: () => null,
+    boolean: (v) => Boolean(v),
+    string: (v) => String(v),
+    object: (v) => (typeof v === 'object' && v !== null ? v : {}),
+    array: (v) => (Array.isArray(v) ? v : []),
+    integer: (v) => {
+      const n = Number(v);
+      return Number.isInteger(n) ? n : 0;
+    },
+    number: (v) => Number(v),
+  };
+  return m[jsonType] ?? ((v) => v);
+}
+
+/**
+ * 归一化 UdfSchema：
+ * - 提供了 parametersSchema 时，自动派生扁平 parameters（供 funcBindParams 绑定/执行）
+ * - 只提供扁平 parameters 时，自动合成 parametersSchema（供 schema 下发，保持旧调用方兼容）
+ */
+function normalizeUdfSchema(schema: UdfSchema): UdfSchema {
+  const normalized: UdfSchema = {
+    parameters: schema.parameters ?? {},
+    returns: schema.returns ?? { type: 'null' },
+    namespace: schema.namespace ?? 'default',
+    description: schema.description,
+  };
+
+  if (schema.parametersSchema) {
+    normalized.parametersSchema = schema.parametersSchema;
+    if (!normalized.parameters || Object.keys(normalized.parameters).length === 0) {
+      const derived: Record<string, UdfSchemaParameter> = {};
+      for (const [name, prop] of Object.entries(schema.parametersSchema.properties)) {
+        derived[name] = {
+          type: typeof prop.type === 'string' ? prop.type : 'null',
+          description: prop.description,
+          default: prop.default,
+        };
+      }
+      normalized.parameters = derived;
+    }
+  } else if (schema.parameters && Object.keys(schema.parameters).length > 0) {
+    const synthesized: { properties: Record<string, JsonSchemaProperty>; required: string[]; title: string; type: 'object' } = {
+      properties: {},
+      required: [],
+      title: '',
+      type: 'object',
+    };
+    for (const [name, param] of Object.entries(schema.parameters)) {
+      synthesized.properties[name] = {
+        type: param.type,
+        description: param.description,
+        default: param.default,
+      };
+      if (param.default === undefined) {
+        synthesized.required.push(name);
+      }
+    }
+    normalized.parametersSchema = synthesized;
+  }
+
+  if (schema.returnsSchema) {
+    normalized.returnsSchema = schema.returnsSchema;
+    if (!normalized.returns || normalized.returns.type === undefined) {
+      normalized.returns = {
+        type: schema.returnsSchema.type,
+        description: schema.returnsSchema.description,
+      };
+    }
+  }
+
+  return normalized;
+}
+
+class UDFManager {
+  private functions = new Map<string, UdfEntry>();
+
+  registerFunction(
+    fn: Function,
+    namespace?: string,
+    schema?: UdfSchema,
+    nameOverride?: string,
+  ): void {
+    const name = nameOverride ?? fn.name;
+    if (!name) {
+      throw new Error('Function must have a name to register');
+    }
+    this.functions.set(name, {
+      fn,
+      schema: normalizeUdfSchema({
+        parameters: schema?.parameters ?? {},
+        returns: schema?.returns ?? { type: 'null' },
+        namespace: namespace ?? 'default',
+        parametersSchema: schema?.parametersSchema,
+        returnsSchema: schema?.returnsSchema,
+        description: schema?.description,
+      }),
+    });
+  }
+
+  udfFunctionSchema(name: string): UdfSchema | undefined {
+    return this.functions.get(name)?.schema;
+  }
+
+  funcBindParams(name: string, args: unknown[]): Record<string, unknown> {
+    const schema = this.udfFunctionSchema(name);
+    if (!schema?.parameters) {
+      return {};
+    }
+    const paramEntries = Object.entries(schema.parameters);
+    const bound: Record<string, unknown> = {};
+    paramEntries.forEach(([paramName, paramSchema], i) => {
+      const val = i < args.length ? args[i] : paramSchema.default ?? null;
+      const converter = jsonT2pyT(paramSchema.type ?? 'null');
+      bound[paramName] = converter(val);
+    });
+    return bound;
+  }
+
+  async call(udfName: string, ...args: unknown[]): Promise<unknown> {
+    const entry = this.functions.get(udfName);
+    if (!entry) {
+      throw new Error(`Function '${udfName}' is not registered in UDFManager`);
+    }
+    const fn = entry.fn;
+    const result = fn(...args);
+    return result instanceof Promise ? await result : result;
+  }
+
+  /** 扁平 schema 数组（旧接口，保持兼容） */
+  udfFunctionSchemaTools(): unknown[] {
+    const funcTools: unknown[] = [];
+    for (const entry of this.functions.values()) {
+      funcTools.push(entry.schema);
+    }
+    return funcTools;
+  }
+
+  /**
+   * namespace 分组 + tools 格式，与 brdeapi.geetest.com/zen_custom_node_function.json 对齐。
+   * 每个 namespace 对应侧边栏 group，每个 tool 对应 createJdmNode 的 kind。
+   */
+  udfFunctionSchemaNamespaces(): CustomNodeNamespace[] {
+    const namespaces = new Map<string, CustomNodeNamespace>();
+    for (const [name, entry] of this.functions.entries()) {
+      const ns = entry.schema.namespace ?? 'default';
+      let nsObj = namespaces.get(ns);
+      if (!nsObj) {
+        nsObj = {
+          type: 'namespace',
+          title: ns,
+          name: ns,
+          description: '',
+          tools: [],
+        };
+        namespaces.set(ns, nsObj);
+      }
+      nsObj.tools.push({
+        name,
+        title: name,
+        type: 'function',
+        description: entry.schema.description ?? '',
+        parameters:
+          entry.schema.parametersSchema ?? {
+            properties: {},
+            title: name,
+            type: 'object',
+          },
+        returns: entry.schema.returnsSchema ?? { type: 'null', title: '', properties: {} },
+        namespace: ns,
+        kind: ns,
+      });
+    }
+    return [...namespaces.values()];
+  }
+}
+
+const udfManager = new UDFManager();
+
+function registerUdf(
+  name: string,
+  namespace?: string,
+  schema?: UdfSchema,
+): (fn: Function) => Function {
+  return (fn: Function) => {
+    udfManager.registerFunction(fn, namespace, schema, name);
+    return fn;
+  };
+}
+
+export { UDFManager, udfManager, registerUdf };

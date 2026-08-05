@@ -10,7 +10,8 @@
     "@hono/zod-openapi": "^1.5.1",
     "@scalar/hono-api-reference": "^0.11.12",
     "hono": "^4.12.33",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "zen-rule": "link:zen-rule"
   },
   "devDependencies": {
     "bun-types": "latest"

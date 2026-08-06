@@ -8,9 +8,13 @@ URL: https://editor.gorules.io
 1. 此项目是以 editor 和 jdm-editor (editor的 jdm-editor 子仓库)组成
 2. 未来editor项目的前后端都会使用bun, 为了使用mono pacakge, 建议使用 bun >=1.3 版本.
 3. editor 和 jdm-editor 的 master 分支用于同步上游分支, 使用 standalone 分支用于开源分支版本.
+4. 使用 zrule 完成前后端 typescript 的开发和改造.
 
 使用以下命令clone项目:
+editor和jdm-editor 都使用 zrule 分支，用于完成前后端 monorepo 的 typescript 的构造.
+> git clone --recurse-submodules --branch zrule  https://github.com/republicroad/editor.git
 
+editor和jdm-editor 都使用 standalone 分支，用于探索
 > git clone --recurse-submodules --branch standalone  https://github.com/republicroad/editor.git
 
 也可以使用代理下载:

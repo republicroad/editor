@@ -31,7 +31,8 @@ jdm-editor/packages/
 | 分支 | 说明 | 与 master 差异 |
 |------|------|----------------|
 | `master` | 上游发布分支 | 基准 |
-| `opencode` | **当前分支** | +14,485 / -4,235 行，139 文件 |
+| `zrule` | **当前分支**（外部化改造分支） | 基于 master |
+| `opencode` | 定制化开发分支 | +14,485 / -4,235 行，139 文件 |
 | `standalone` | 开源发布分支 | 基于 master |
 | `brde` | 开发分支 | 同 opencode |
 
@@ -209,16 +210,16 @@ type Diff = {
 |------|------|------|
 | `nodes/specifications/custom-function.specification.tsx` | 330 | 自定义函数节点规格 |
 | `custom-function-table/index.ts` | - | 模块导出 |
-| `custom-function-table/expression.tsx` | 142 | 函数表达式组件 |
-| `custom-function-table/expression-item.tsx` | 1,050 | 函数项组件（最复杂） |
-| `custom-function-table/expression-list.tsx` | 88 | 列表 |
-| `custom-function-table/expression-command-bar.tsx` | 49 | 命令栏 |
-| `custom-function-table/expression-controller.tsx` | 65 | 控制器 |
-| `custom-function-table/expression-item-context-menu.tsx` | 50 | 右键菜单 |
-| `custom-function-table/expression.scss` | 353 | 样式 |
-| `custom-function-table/context/expression-store.context.tsx` | 147 | 状态 Store |
-| `graph/tab-custom-function-table.tsx` | 153 | Tab 组件 |
-| `helpers/custom-function-schema.ts` | 58 | Schema 定义 |
+| `custom-function-table/expression.tsx` | 120 | 函数表达式组件 |
+| `custom-function-table/expression-item.tsx` | 516 | 函数项组件（最复杂） |
+| `custom-function-table/expression-list.tsx` | 83 | 列表 |
+| `custom-function-table/expression-command-bar.tsx` | 43 | 命令栏 |
+| `custom-function-table/expression-controller.tsx` | 56 | 控制器 |
+| `custom-function-table/expression-item-context-menu.tsx` | 46 | 右键菜单 |
+| `custom-function-table/expression.scss` | 303 | 样式 |
+| `custom-function-table/context/expression-store.context.tsx` | 127 | 状态 Store |
+| `graph/tab-custom-function-table.tsx` | 118 | Tab 组件 |
+| `helpers/custom-function-schema.ts` | 43 | Schema 定义 |
 
 **自定义函数功能**：
 - 内置 `customNode` 类型，不再依赖外部 `createJdmNode`
@@ -227,6 +228,8 @@ type Diff = {
 - 返回值 Schema 推断
 - 调试器与日志输出
 - 敏感词库适配（opencode 最新提交）
+- `customFunctions` 透传（`DecisionGraphWrapper` → `TabContents` → renderTab，见 `3f59467`）
+- `expr_asts` 通过 smartSplit 回写；`editExpression` 按钮文案本地化（zh_CN）
 
 #### 3.2.3 国际化（i18n）系统
 
@@ -480,6 +483,21 @@ e583814 fix(editor): 模拟器header添加用例数据切换
 5b15593 feat(custom node): 自定义函数模拟器结果展示
 ea0e01f 自定义函数样式修改
 ```
+
+### 4.8 zrule 分支（外部化改造）
+
+```
+3f59467 feat: custom function table editor for custom node renderTab
+38fce5f fix: match opencode branch simulator request editor height
+52c39df fix: add CachedGraphIterator type to traversal iterator
+33ecf08 fix: correct UTF-8 encoding for copied files
+0e7aee0 fix: add missing tab-request.scss for Request node styling
+8faafc1 feat: export TabRequest, request-schema, json-schema from barrel
+f716ea7 feat: replace TabJsonSchema with TabRequest for input node
+203de98 feat: upgrade simulator request panel with full feature set
+```
+
+**演进路径**: UserResolver 外部化 → components override → customNode renderTab 路由 → Request 节点改造 → custom function table editor（customFunctions 透传 renderTab）
 
 ---
 

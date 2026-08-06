@@ -1,6 +1,6 @@
 # 项目状态
 
-> 快照时间：2026-08-03
+> 快照时间：2026-08-06
 
 ---
 
@@ -79,6 +79,8 @@
 | eslint | ^10.0.0 | 最新 |
 | prettier | ^3.8.1 | 稳定 |
 | semantic-release | ^25.0.3 | 稳定 |
+| monaco-editor | 0.52.2 | 锁定版本（Monaco 本地化加载） |
+| vite-plugin-static-copy | 4.1.1 | 稳定（构建期拷贝 Monaco 静态资源） |
 
 ### 3.3 后端依赖
 
@@ -118,9 +120,11 @@
 
 ### 5.1 前端
 
-- **构建命令**: `bun run build`
+- **构建命令**: `bun run build`（= `tsc && vite build`）
 - **输出目录**: `static/`
 - **状态**: 正常
+- **类型检查**: 根 tsconfig 启用 `noImplicitAny: true`（全项目严格检查，含 paths 映射引入的子模块源码）；`@gorules/lezer-zen`/`@gorules/lezer-zen-template` 无内置类型，由子模块 `src/lezer-zen.d.ts`（声明 `parser: LRParser`）+ `zen.ts` 顶部 triple-slash 引用解决
+- **Monaco 本地化加载**: 运行时从版本化路径 `/monaco-editor@0.52.2/min/vs/**` 加载，构建期由 `vite-plugin-static-copy` 从 `node_modules/monaco-editor` 拷贝到 `static/monaco-editor@0.52.2/`
 
 ### 5.2 后端
 
@@ -149,6 +153,7 @@
 - [ ] 完善单元测试覆盖
 - [ ] 补充 Storybook 组件文档
 - [ ] 修复 vite build 预存在问题（vite-plugin-dts 加载失败）
+- [ ] CI 迁移提交（`.github/workflows/validate.yml` pnpm→bun）
 - [ ] `/api/auth/get-session` 由 Mock 用户升级为真实会话（better-auth 服务端 + 数据库）
 
 ---
@@ -158,28 +163,37 @@
 ### 7.1 主项目最近提交
 
 ```
-030525c chore: use jdm-editor opencode branch to test opencode
-04f703f refactor: let jdm-editor manage it's dependency and remove useless libs
-0a0f5da Merge branch 'standalone'
-f5131eb chore: add mode DecisionGraph
-bca4bc8 Merge branch 'master' into standalone
-1a413b3 chore(release): 1.16.1
-c2e0af1 fix: downgrade to react 18 (#42)
+0292f98 feat: custom node registry with function mode in decision graph
+2e67e55 feat: localize Monaco loading with versioned static paths
+b350013 chore: refactor to use mono repo config and use linter to format codes
+31ffe11 feat: add zen-rule for backend to exec custom node functijon
+5e7504b docs: add docs for hono
+bc79a66 fix: fix rule graph /api/simulate zod error
+d4e6f33 chore: rewrite from elysia to hono
+81ae0d0 chore: update jdm-editor zrule branch
+6db5192 docs: add 07-implementation-plan to README index
+dceba9d docs: update project status and implementation plan
 ```
 
 ### 7.2 jdm-editor zrule 分支提交
 
 ```
-7a2bc3d feat: export TabRequest, request-schema, json-schema from barrel
-1a5e7cc feat: replace TabJsonSchema with TabRequest for input node
-6fe2e29 feat: upgrade simulator request panel with full feature set
-6586653 feat: add simulator request/binding state to zustand store
-246f376 feat: add request-schema, json-schema helpers and i18n infrastructure
-5d16d11 feat: customNode renderTab routing, Input schema expansion
-e188084 feat: add UserResolver and components override mechanism
+3f59467 feat: custom function table editor for custom node renderTab
+38fce5f fix: match opencode branch simulator request editor height
+52c39df fix: add CachedGraphIterator type to traversal iterator
+33ecf08 fix: correct UTF-8 encoding for copied files
+0e7aee0 fix: add missing tab-request.scss for Request node styling
+8faafc1 feat: export TabRequest, request-schema, json-schema from barrel
+f716ea7 feat: replace TabJsonSchema with TabRequest for input node
+203de98 feat: upgrade simulator request panel with full feature set
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更（2026-08-06）：**
+- Monaco 本地化加载（`2e67e55`）：monaco-editor 锁定 0.52.2，从版本化路径 `/monaco-editor@0.52.2/min/vs/**` 加载，`vite-plugin-static-copy` 构建期拷贝；`vite.config.ts` 通过 createRequire + 入口解析 + 向上爬目录定位 monaco 包（兼容 Node ≥18，规避 0.56.0 的 exports map 解析问题）
+- Custom node registry + function mode（`0292f98`）：新增 `custom-node-registry.tsx`（`schemaToCustomNodes`/`fetchCustomNodeSchema`，失败回退 `custom-node-schema.json`）、`custom-node-types.ts`、`useCustomNodes` hook、`CustomNodeSummaryCard`；`decision-simple.tsx` 将 schema 的 `customFunctions` 传入 DecisionGraph
+- custom function table editor（`3f59467`，子模块）：新增 `custom-function-table/` 组件（函数下拉、参数编辑器、结果浮层、expression-store 状态）；`customFunctions` 经 `DecisionGraphWrapper` 透传 renderTab（`tab-custom-function-table.tsx`）；`expr_asts` smartSplit 回写；`editExpression` 按钮文案本地化
 
 **jdm-editor 库（zrule 分支）：**
 - UserResolver 类型 + store + wrapper + exports
@@ -190,10 +204,11 @@ e188084 feat: add UserResolver and components override mechanism
 - i18n 基础设施（zh/en 翻译）
 - Simulator Request Panel 升级（~700 行，含 Format/Sync/Save/Copy/Run）
 
-**编辑器项目（未提交）：**
+**编辑器项目（最近已提交部分）：**
 - better-auth 客户端 + UserResolver 工厂
 - DecisionGraph 集成 userResolver prop
 - Bun 后端 Elysia → Hono 迁移（`hono` + `@hono/zod-openapi` + `@scalar/hono-api-reference` + `zod`，移除 `elysia`/`@elysiajs/*`）
 - 新增 `GET /api/auth/get-session`（Mock 开发用户），打通 better-auth UserResolver 链路
 - 新增请求日志中间件 + `onError` 统一错误日志（打印方法/路径/状态/耗时与异常堆栈）
 - 修复 `/api/decision` 缓存逻辑 bug（原 `content` 未定义、`decision` 作用域错误）与 `contentType` 校验过严问题
+- `.github/workflows/validate.yml`：pnpm→bun 迁移（未提交，待 CI 迁移提交）

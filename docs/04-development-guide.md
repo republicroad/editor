@@ -190,6 +190,11 @@ bun run typecheck
 tsc --noEmit
 ```
 
+> 注意：根 `tsconfig.json` 已启用 `noImplicitAny: true`（全项目严格检查，含 paths 映射引入的子模块源码）。
+> `@gorules/lezer-zen` / `@gorules/lezer-zen-template` 两个 npm 包不提供类型声明，其类型由 jdm-editor 子模块的
+> `src/lezer-zen.d.ts`（声明 `parser: LRParser`）提供，并通过 `src/components/code-editor/extensions/zen.ts`
+> 顶部的 `/// <reference path="../../../lezer-zen.d.ts" />` 引入，确保根工程与子模块自身的类型检查都能通过。
+
 ---
 
 ## 6. 构建与部署

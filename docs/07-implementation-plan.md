@@ -26,6 +26,12 @@
 
 ## 一、总体架构
 
+> **进展注记（2026-08-06）**：步骤 4（dg-wrapper.tsx 启用 components override 机制）与步骤 5（graph.tsx 启用 customNodeRenderer）已由以下提交落地：
+> - 子模块 `3f59467` `feat: custom function table editor for custom node renderTab` —— `customFunctions` 经 `DecisionGraphWrapper` 透传 `TabContents` → `renderTab`（新增 `tab-custom-function-table.tsx`），并新增 `custom-function-table/` 组件（函数下拉、参数编辑器、结果浮层）与 `expression-store.context.tsx`
+> - 主项目 `0292f98` `feat: custom node registry with function mode in decision graph` —— 消费方新增 `custom-node-registry.tsx`（`schemaToCustomNodes`/`fetchCustomNodeSchema`，回退 `custom-node-schema.json`）与 `useCustomNodes` hook，把 schema 中的 `customFunctions` 传入 DecisionGraph
+>
+> 其中 `customFunctions` 已实际接入（区别于计划中的 `components`/`specOverrides` 路径）。步骤 1-3 的 UserResolver + store 改造见 `5d16d11`/`e188084` 等提交，已落地。
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                     消费方（GoRules Editor）                       │

@@ -85,6 +85,12 @@ $ bun run dev
 $ bun run build
 ```
 
+> 注意: `bun run build` 等价于 `tsc && vite build`，`tsc` 前置步骤目前会因 `jdm-editor/packages/jdm-editor/src/components/decision-graph/dg-panel.tsx` 中的 3 个既有类型错误退出非 0。需出产物时可直接使用 `bunx vite build`（输出到 `static/`）。
+
+### Monaco 本地化加载
+
+Monaco 编辑器从版本化静态路径加载（如 `/monaco-editor@0.52.2/min/vs/**`），而非 CDN。`monaco-editor` 依赖（锁定 0.52.2）挂在根 package.json，构建期由 `vite-plugin-static-copy` 将 `node_modules/monaco-editor/min/vs/**` 拷贝到 `static/monaco-editor@<version>/min/vs/**`，运行时由 `src/lib/monaco.ts` 配置 `loader.config` 指向该基址。
+
 ### 构建 jdm-editor 依赖包
 
 ```bash

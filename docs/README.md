@@ -19,6 +19,7 @@
 | [05-API 参考](./05-api-reference.md) | 后端 API 与前端组件 API 文档 |
 | [06-jdm-editor 子仓库](./06-jdm-editor-submodule.md) | jdm-editor 组件库详解与分支差异 |
 | [07-实施计划](./07-implementation-plan.md) | Input/Custom 节点外部化 + better-auth 用户信息集成 |
+| [08-Request 节点计划](./08-request-node-plan.md) | Request 节点（Input 增强版）集成计划 |
 
 ---
 

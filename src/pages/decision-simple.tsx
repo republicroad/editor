@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Divider, Dropdown, message, Modal, theme, Typography } from 'antd';
+import { Button, Divider, Dropdown, message, Modal, Switch, theme, Typography } from 'antd';
 import { BulbOutlined, CheckOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError } from '../helpers/error-message.ts';
@@ -22,7 +22,7 @@ import { match, P } from 'ts-pattern';
 import classes from './decision-simple.module.css';
 import axios from 'axios';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
-import { customNodes } from '../context/customnode.tsx';
+import { useCustomNodes } from '../hooks/useCustomNodes.ts';
 import { createBetterAuthResolver } from '../lib/user-resolver.ts';
 
 enum DocumentFileTypes {
@@ -36,6 +36,23 @@ export const DecisionSimplePage: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
   const graphRef = React.useRef<DecisionGraphRef>(null);
   const { themePreference, setThemePreference } = useTheme();
+
+  const { customNodes, summaryCustomNodes, schema } = useCustomNodes();
+  const [summaryCard, setSummaryCard] = useState(() => {
+    try {
+      return localStorage.getItem('custom-node-summary-card') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const toggleSummaryCard = (checked: boolean) => {
+    setSummaryCard(checked);
+    try {
+      localStorage.setItem('custom-node-summary-card', String(checked));
+    } catch {
+      // noop
+    }
+  };
 
   const [searchParams] = useSearchParams();
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle>();
@@ -340,6 +357,13 @@ export const DecisionSimplePage: React.FC = () => {
           }
           ghost={false}
           extra={[
+            <span
+              key="summary-switch"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
+            >
+              <Typography.Text style={{ fontSize: token.fontSizeSM }}>摘要卡片</Typography.Text>
+              <Switch size="small" checked={summaryCard} onChange={toggleSummaryCard} />
+            </span>,
             <Dropdown
               overlayStyle={{ minWidth: 150 }}
               menu={{
@@ -383,7 +407,8 @@ export const DecisionSimplePage: React.FC = () => {
           <div className={classes.content}>
             <DecisionGraph
               mode={mode}
-              customNodes={customNodes}
+              customNodes={summaryCard ? summaryCustomNodes : customNodes}
+              customFunctions={schema ?? undefined}
               ref={graphRef}
               value={graph}
               onChange={(value) => setGraph(value)}

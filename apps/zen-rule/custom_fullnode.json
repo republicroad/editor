@@ -31,7 +31,7 @@
             {
               "id": "52d41e3d-067d-4930-89bd-832b038cd08f",
               "key": "result",
-              "value": "foo;;myvar ;;max([5, 8, 2, 11, 7]);;rand(100);; 'fccd;;jny' ;;$nodes.expression1",
+              "value": ["foo", "myvar ", "max([5, 8, 2, 11, 7])", "rand(100)", " 'fccd;;jny' ", "$nodes.expression1"],
               "type": "function"
             }
           ],

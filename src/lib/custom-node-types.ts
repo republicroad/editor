@@ -57,7 +57,7 @@ export interface CustomNodeNamespace {
 export type CustomNodeExpression = {
   id: string;
   key: string;
-  value: string;
+  value: string | string[];
 };
 
 export type CustomNodeConfig = {

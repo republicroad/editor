@@ -3,7 +3,7 @@ import { Button, Divider, Dropdown, message, Modal, Switch, theme, Typography } 
 import { BulbOutlined, CheckOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError } from '../helpers/error-message.ts';
-import { DecisionContent, DecisionEdge, DecisionNode } from '../helpers/graph.ts';
+import { DecisionContent, DecisionEdge, DecisionNode, normalizeGraphNodes } from '../helpers/graph.ts';
 import { useSearchParams } from 'react-router-dom';
 import {
   DecisionGraph,
@@ -95,7 +95,7 @@ export const DecisionSimplePage: React.FC = () => {
       setFileName(file?.name);
       const parsed = JSON.parse(content);
       setGraph({
-        nodes: parsed?.nodes || [],
+        nodes: normalizeGraphNodes(parsed?.nodes || []),
         edges: parsed?.edges || [],
       });
     } catch (err) {
@@ -242,7 +242,7 @@ export const DecisionSimplePage: React.FC = () => {
         );
 
         checkCyclic({ edges, nodes });
-        setGraph({ edges, nodes });
+        setGraph({ edges, nodes: normalizeGraphNodes(nodes) });
         setFileName(fileList?.[0]?.name);
       } catch (e) {
         displayError(e);

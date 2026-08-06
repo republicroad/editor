@@ -26,12 +26,15 @@ export const uid = (): string =>
     ? globalThis.crypto.randomUUID()
     : `expr-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-export const parseOperatorArgs = (expr: string): string[] => {
+export const parseOperatorArgs = (expr: string | string[]): string[] => {
+  if (Array.isArray(expr)) {
+    return expr.map((s) => s.trim());
+  }
   const pattern = /;;(?=(?:[^"'`]*["'`][^"'`]*["'`])*[^"'`]*$)/;
   return expr.split(pattern).map((s) => s.trim());
 };
 
-export const toFunctionCallValue = (toolName: string, args: string[]): string => [toolName, ...args].join(';;');
+export const toFunctionCallValue = (toolName: string, args: string[]): string[] => [toolName, ...args];
 
 export function defaultCustomNodeConfig(tool: CustomFunctionTool): CustomNodeConfig {
   const params = Object.entries(tool.parameters.properties ?? {});
@@ -47,7 +50,7 @@ export function defaultCustomNodeConfig(tool: CustomFunctionTool): CustomNodeCon
             ),
           },
         ]
-      : [{ id: uid(), key: tool.name, value: tool.name }];
+      : [{ id: uid(), key: tool.name, value: [tool.name] }];
 
   return {
     inputField: null,

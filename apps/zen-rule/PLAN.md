@@ -128,7 +128,7 @@ export function registerUdf(name: string, namespace?: string, schema?: UdfSchema
 | `evaluate(key, ctx, options?)` | `evaluate(key, ctx, options?)` | TS `decision.evaluate()` 是同步的 |
 | `async_evaluate(key, ctx, options?)` | `evaluateAsync(key, ctx, options?)` | 相同返回 Promise |
 | `graph_addons(graphContent)` | `graphAddons(graphContent)` | 向 customNode 注入 inputNode name、meta、expr_asts |
-| `parse_oprator_expr(expr)` | `parseOperatorExpr(expr)` | 正则拆分 `;;` 分隔的表达式, 支持 `list` |
+| `parse_oprator_expr(expr)` | `parseOperatorExpr(expr)` | 支持 `list`（数组原样返回）与字符串（正则拆分 `;;` 分隔, 兼容旧格式） |
 
 **ZenRule 主逻辑流程:**
 

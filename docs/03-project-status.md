@@ -144,15 +144,15 @@
 
 ### 6.1 已知问题
 - HTTP 协议下 `crypto.randomUUID` 不可用，已通过 polyfill 解决
-- lezer-zen 和 zen-engine-wasm 包源码在 opencode 分支中已移除，改为外部 npm 依赖
+- lezer-zen / lezer-zen-template / zen-engine-wasm 源码已从工作区移除（opencode 与 zrule 分支均如此），改为外部 npm 固定版本依赖
 
 ### 6.2 待办事项
 - [ ] Hono 后端生产化（当前为实验状态）
-- [ ] lezer-zen 源码恢复或迁移
-- [ ] zen-engine-wasm 源码恢复或迁移
+- [x] lezer-zen 源码移除并迁移为外部 npm 依赖（子模块 `e21bd87`）
+- [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖（子模块 `e21bd87`）
 - [ ] 完善单元测试覆盖
 - [ ] 补充 Storybook 组件文档
-- [ ] 修复 vite build 预存在问题（vite-plugin-dts 加载失败）
+- [x] 修复 vite build 预存在问题（vite-plugin-dts 加载失败；子模块构建已正常产出 dist/）
 - [ ] CI 迁移提交（`.github/workflows/validate.yml` pnpm→bun）
 - [ ] `/api/auth/get-session` 由 Mock 用户升级为真实会话（better-auth 服务端 + 数据库）
 
@@ -163,6 +163,9 @@
 ### 7.1 主项目最近提交
 
 ```
+b0b315c build: single-package submodule with published lezer/zen deps
+b7d12bc docs: update project status, dev guide and README
+1db7dbb fix: enable noImplicitAny for stricter typecheck
 0292f98 feat: custom node registry with function mode in decision graph
 2e67e55 feat: localize Monaco loading with versioned static paths
 b350013 chore: refactor to use mono repo config and use linter to format codes
@@ -178,6 +181,8 @@ dceba9d docs: update project status and implementation plan
 ### 7.2 jdm-editor zrule 分支提交
 
 ```
+e21bd87 build: single-package bun workspace, use published lezer/zen deps
+bc3314b fix: resolve tsc compile errors
 3f59467 feat: custom function table editor for custom node renderTab
 38fce5f fix: match opencode branch simulator request editor height
 52c39df fix: add CachedGraphIterator type to traversal iterator
@@ -191,6 +196,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ### 7.3 zrule 分支变更摘要
 
 **最新变更（2026-08-06）：**
+- jdm-editor 单包 workspace 化（`e21bd87` 子模块 + `b0b315c`）：移除 `packages/lezer-zen` / `lezer-zen-template` / `zen-engine-wasm` 源码，三库改为外部 npm 固定版本（0.8.1 / 0.4.0 / ^0.23.1）；root 加 `workspaces` 字段，build/typecheck/test 改 bun 原生脚本（`bun run --cwd packages/jdm-editor ...`）；保留 `pnpm-workspace.yaml` + `lerna.json` 与上游对齐；单独构建 `cd jdm-editor && bun install && bun run build` → `packages/jdm-editor/dist/`
 - Monaco 本地化加载（`2e67e55`）：monaco-editor 锁定 0.52.2，从版本化路径 `/monaco-editor@0.52.2/min/vs/**` 加载，`vite-plugin-static-copy` 构建期拷贝；`vite.config.ts` 通过 createRequire + 入口解析 + 向上爬目录定位 monaco 包（兼容 Node ≥18，规避 0.56.0 的 exports map 解析问题）
 - Custom node registry + function mode（`0292f98`）：新增 `custom-node-registry.tsx`（`schemaToCustomNodes`/`fetchCustomNodeSchema`，失败回退 `custom-node-schema.json`）、`custom-node-types.ts`、`useCustomNodes` hook、`CustomNodeSummaryCard`；`decision-simple.tsx` 将 schema 的 `customFunctions` 传入 DecisionGraph
 - custom function table editor（`3f59467`，子模块）：新增 `custom-function-table/` 组件（函数下拉、参数编辑器、结果浮层、expression-store 状态）；`customFunctions` 经 `DecisionGraphWrapper` 透传 renderTab（`tab-custom-function-table.tsx`）；`expr_asts` smartSplit 回写；`editExpression` 按钮文案本地化

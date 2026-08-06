@@ -11,7 +11,7 @@
 | 项目 | 值 |
 |------|-----|
 | 仓库名 | `@gorules/jdm-monorepo` |
-| 包管理 | pnpm + Lerna |
+| 包管理 | 本地默认 **bun**（root `package.json` 的 `workspaces` 字段）；保留 `pnpm-workspace.yaml` + Lerna 与上游对齐 |
 | 当前版本 | v1.52.0 |
 | 开源协议 | MIT |
 | 上游仓库 | https://github.com/gorules/jdm-editor |
@@ -21,17 +21,18 @@
 
 ```
 jdm-editor/packages/
-├── jdm-editor/           # @gorules/jdm-editor v1.52.0 — 核心 React 组件库
-├── lezer-zen/            # @gorules/lezer-zen — Zen 语言 Lezer 语法解析器
-└── zen-engine-wasm/      # @gorules/zen-engine-wasm — Rust→WASM 决策引擎
+└── jdm-editor/           # @gorules/jdm-editor v1.52.0 — 核心 React 组件库
 ```
+
+> zrule 分支已与 opencode 对齐：`lezer-zen`、`lezer-zen-template`、`zen-engine-wasm` 三个库不再随仓库源码维护，
+> 改为外部 npm 固定版本依赖（见 §3.6「单独构建与发布」）。
 
 ### 1.3 分支状态
 
 | 分支 | 说明 | 与 master 差异 |
 |------|------|----------------|
 | `master` | 上游发布分支 | 基准 |
-| `zrule` | **当前分支**（外部化改造分支） | 基于 master |
+| `zrule` | **当前分支**（外部化改造分支） | 基于 master；单包 workspace，三库外部 npm 依赖 |
 | `opencode` | 定制化开发分支 | +14,485 / -4,235 行，139 文件 |
 | `standalone` | 开源发布分支 | 基于 master |
 | `brde` | 开发分支 | 同 opencode |
@@ -380,6 +381,9 @@ opencode 分支将以下包改为外部 npm 依赖，移除了源码：
 | `@gorules/lezer-zen-template` | `packages/lezer-zen-template/` | 移除 |
 | `@gorules/zen-engine-wasm` | `packages/zen-engine-wasm/` | npm `@gorules/zen-engine-wasm@^0.23.1` |
 
+> **zrule 分支已对齐该模型**（提交 `e21bd87`）：同样移除三个库源码，但 `@gorules/lezer-zen-template` 仍以
+> npm `0.4.0` 保留依赖（`zen.ts` 实际引用 `@gorules/lezer-zen-template`）。构建改为 bun 原生脚本（见 §3.6）。
+
 移除的文件：
 - `packages/lezer-zen/` — 完整目录（70 行 CHANGELOG、40 行 package.json、语法文件等）
 - `packages/lezer-zen-template/` — 完整目录
@@ -396,6 +400,33 @@ opencode 分支将以下包改为外部 npm 依赖，移除了源码：
 | `.storybook/manager-head.html` | 修改 |
 | `vite.config.ts` | +3 行 |
 | `public/product_logo.svg` | 新增品牌 Logo |
+
+### 3.6 单独构建与发布（zrule）
+
+zrule 分支收敛为单包 workspace，可直接独立构建 `@gorules/jdm-editor`：
+
+```bash
+cd jdm-editor
+bun install            # 生成 bun.lock（首次）
+bun run build          # 等价于 cd packages/jdm-editor && vite build
+bun run typecheck      # 等价于 cd packages/jdm-editor && tsc --noEmit
+```
+
+产物输出到 `packages/jdm-editor/dist/`（`index.js` / `index.d.ts` / `schema.js` / `schema.d.ts` / `style.css`，ESM + 类型声明）。
+
+发布到 npm（`prepublishOnly: vite build` 会自动重跑构建）：
+
+```bash
+cd packages/jdm-editor
+npm publish
+```
+
+要点：
+
+- `vite.config.ts` 已将全部依赖（含三个 `@gorules/*` 包）external 化，消费方需自行安装它们（均来自 npm registry）。
+- 三个 `@gorules` 包固定版本：`@gorules/lezer-zen@0.8.1`、`@gorules/lezer-zen-template@0.4.0`、`@gorules/zen-engine-wasm@^0.23.1`。
+- npm 版 `@gorules/lezer-zen` / `@gorules/lezer-zen-template` 不含类型声明，由 `src/lezer-zen.d.ts` 垫片提供（保留勿删）。
+- root `package.json` 同时保留 `pnpm-workspace.yaml` 与 `lerna.json`：pnpm 环境优先读 yaml，bun 读 `workspaces` 字段，两者声明一致（`packages/*`），可并存。多包发布场景（有 pnpm 时）仍可用 `npx lerna publish`。
 
 ---
 

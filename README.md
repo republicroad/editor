@@ -93,10 +93,21 @@ Monaco 编辑器从版本化静态路径加载（如 `/monaco-editor@0.52.2/min/
 
 ### 构建 jdm-editor 依赖包
 
+zrule 分支为单包 workspace（三个 `@gorules` 库已改为外部 npm 依赖，与 opencode 对齐）：
+
 ```bash
 $ cd jdm-editor/
-jdm-editor$ bun run build
+jdm-editor$ bun install        # 首次需安装（生成 bun.lock）
+jdm-editor$ bun run build      # 等价于 packages/jdm-editor 下 vite build → dist/
 ```
+
+发布到 npm（`prepublishOnly: vite build` 自动重跑构建）：
+
+```bash
+jdm-editor$ cd packages/jdm-editor && npm publish
+```
+
+详见 `docs/06-jdm-editor-submodule.md` §3.6。
 
 ## apps (Bun/Hono API 后端)
 

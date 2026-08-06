@@ -118,12 +118,14 @@ OpenAPI 文档（Scalar UI）：http://localhost:3000/openapi
 
 ```bash
 cd jdm-editor/
-bun run build
-# 或
-pnpm build
+bun install        # 首次需安装
+bun run build      # 等价于 cd packages/jdm-editor && vite build → dist/
+bun run typecheck
 ```
 
-这会使用 Lerna 构建所有包（jdm-editor、lezer-zen、zen-engine-wasm）。
+zrule 分支为单包 workspace：`lezer-zen` / `lezer-zen-template` / `zen-engine-wasm` 已改为外部 npm 依赖，
+根脚本直接委托给 `packages/jdm-editor`（`bun run --cwd packages/jdm-editor <script>`），不再经 Lerna 聚合构建。
+`pnpm-workspace.yaml` 与 `lerna.json` 仍保留以对齐上游（有 pnpm 环境时仍可用 `pnpm build` / `npx lerna publish`）。
 
 ### 4.2 Storybook 开发
 

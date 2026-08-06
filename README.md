@@ -164,6 +164,11 @@ jdm-editor$ cd ..
 $ git add jdm-editor/
 ```
 
+修改 git submodule 中的子仓库分支:
+```bash
+# .gitmodules 中的 branch 会修改为 zrule
+git submodule set-branch --branch zrule jdm-editor
+```
 
 ## Proxy Configuration (for network-restricted environments)
 

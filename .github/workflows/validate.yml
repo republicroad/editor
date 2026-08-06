@@ -14,27 +14,30 @@ jobs:
     name: 'Code quality'
     runs-on: ubuntu-latest
     continue-on-error: true
-    timeout-minutes: 3
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
 
-      - name: Install Node.js
-        uses: actions/setup-node@v3
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
+          bun-version: 1.3.14
 
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-          run_install: true
+      - name: 'Install dependencies'
+        run: bun install --frozen-lockfile
 
       - name: 'Lint'
-        run: pnpm lint
+        run: bun run lint
 
-      - name: 'Typecheck'
-        run: pnpm typecheck
+      - name: 'Typecheck (frontend)'
+        run: bun run typecheck
+
+      - name: 'Typecheck (apps)'
+        run: bun run typecheck:apps
+
+      - name: 'zen-rule smoke test'
+        run: bun run test:zen-rule
 
   rust-codequality:
     name: 'Rust code quality'

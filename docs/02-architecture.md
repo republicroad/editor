@@ -74,28 +74,30 @@ editor/
 ```
 jdm-editor/
 ├── packages/
-│   ├── jdm-editor/               # 核心 React 组件库
-│   │   ├── src/
-│   │   │   ├── components/       # 所有编辑器组件
-│   │   │   │   ├── decision-graph/   # 图编辑器（最复杂）
-│   │   │   │   ├── decision-table/   # 表格编辑器
-│   │   │   │   ├── expression/       # 表达式编辑器
-│   │   │   │   ├── function/         # 函数编辑器
-│   │   │   │   ├── code-editor/      # 代码编辑器
-│   │   │   │   ├── custom-function-table/  # 自定义函数表格
-│   │   │   │   ├── request-table/    # 请求表格（opencode 新增）
-│   │   │   │   └── shared/           # 共享组件（Diff 控件）
-│   │   │   ├── helpers/          # 工具模块（19个文件）
-│   │   │   ├── locales/          # 国际化资源
-│   │   │   ├── theme.tsx         # 主题配置
-│   │   │   └── index.ts          # 库入口
-│   │   └── package.json          # v1.52.0
-│   ├── lezer-zen/                # Zen 语言语法解析器
-│   └── zen-engine-wasm/          # WASM 引擎绑定
-├── Cargo.toml                    # Rust 工作空间
+│   └── jdm-editor/               # 核心 React 组件库（@gorules/jdm-editor）
+│       ├── src/
+│       │   ├── components/       # 所有编辑器组件
+│       │   │   ├── decision-graph/   # 图编辑器（最复杂）
+│       │   │   ├── decision-table/   # 表格编辑器
+│       │   │   ├── expression/       # 表达式编辑器
+│       │   │   ├── function/         # 函数编辑器
+│       │   │   ├── code-editor/      # 代码编辑器
+│       │   │   ├── custom-function-table/  # 自定义函数表格
+│       │   │   ├── request-table/    # 请求表格
+│       │   │   └── shared/           # 共享组件（Diff 控件）
+│       │   ├── helpers/          # 工具模块（19个文件）
+│       │   ├── locales/          # 国际化资源
+│       │   ├── theme.tsx         # 主题配置
+│       │   └── index.ts          # 库入口
+│       └── package.json          # v1.52.0
+├── Cargo.toml                    # Rust 工作空间（WASM 相关，保留）
+├── pnpm-workspace.yaml           # 与上游对齐（bun 读根 workspaces 字段）
 ├── lerna.json                    # Lerna 配置
 └── package.json                  # monorepo 配置
 ```
+
+> zrule 分支为单包 workspace：`@gorules/lezer-zen`（0.8.1）、`@gorules/lezer-zen-template`（0.4.0）、
+> `@gorules/zen-engine-wasm`（^0.23.1）三个库已移除源码，改为外部 npm 固定版本依赖。
 
 ---
 
@@ -186,12 +188,15 @@ const customNodes = [
 ### 4.4 Monorepo 工作空间模式
 
 ```
-editor (pnpm workspace root)
-└── jdm-editor/packages/* (Lerna monorepo)
-    ├── jdm-editor      → workspace:*
-    ├── lezer-zen       → npm package
-    └── zen-engine-wasm → npm package
+editor (bun workspace root, workspaces: ["apps/*", "jdm-editor/packages/*"])
+├── apps/editor            → Hono API 后端
+├── apps/zen-rule          → zen-engine 自定义函数处理库（workspace:* 被 apps/editor 引用）
+└── jdm-editor/packages/jdm-editor   → @gorules/jdm-editor（workspace:*）
 ```
+
+> zrule 分支统一使用 **bun** 管理依赖（单一 `bun.lock`，bun ≥1.3 可识别 pnpm 元数据）。
+> `@gorules/lezer-zen`、`@gorules/lezer-zen-template`、`@gorules/zen-engine-wasm` 三个库已外部化为 npm 固定版本依赖，
+> 不再作为源码包维护；`pnpm-workspace.yaml` + `lerna.json` 仍保留与上游对齐。
 
 ---
 
@@ -264,7 +269,7 @@ Stage 3: Debian slim → 运行时（复制二进制 + 静态文件）
 
 | 工作流 | 触发条件 | 功能 |
 |--------|----------|------|
-| `validate.yml` | PR / push to master | Lint + Typecheck + Rust 格式检查 |
+| `validate.yml` | PR / push to master | Bun 流水线（`setup-bun` 1.3.14）：lint + typecheck + typecheck:apps + zen-rule 冒烟测试 + Rust 格式检查 |
 | `semantic-version.yml` | 手动触发 | 自动版本发布 |
 | `build-docker.yml` | release 提交到 master | 构建并推送 Docker 镜像 |
 

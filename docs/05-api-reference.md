@@ -363,7 +363,7 @@ import { codemirror } from '@gorules/jdm-editor';
 const extensions = codemirror.getExtensions({ ... });
 ```
 
-### 3.5 Request Schema 工具（opencode 新增）
+### 3.5 Request Schema 工具（zrule 开发分支新增）
 
 ```typescript
 import {
@@ -464,4 +464,16 @@ enum NodeKind {
   CustomFunction = 'customNode',
   Switch = 'switchNode',
 }
+```
+
+### 4.8 CustomNodeExpression
+
+```typescript
+type CustomNodeExpression = {
+  id: string;
+  key: string;
+  value: string | string[];   // 数组形式（推荐）；旧 `;;` 分隔字符串上传时自动迁移为数组
+  type?: string;
+  returnSchema?: any;
+};
 ```

@@ -32,6 +32,11 @@
 >
 > 其中 `customFunctions` 已实际接入（区别于计划中的 `components`/`specOverrides` 路径）。步骤 1-3 的 UserResolver + store 改造见 `5d16d11`/`e188084` 等提交，已落地。
 
+> **进展注记（2026-08-07）**：自定义函数表达式外部化进一步落地 —— 表达式值升级为数组形式（`string | string[]`），
+> 并兼容旧 `;;` 分隔字符串上传迁移。主项目 `760897e`（`src/helpers/graph.ts` `normalizeGraphNodes` + `custom-node-registry`/`custom-node-types` 数组化），
+> 子模块 `89dcc30`（`utility.ts` 新增 `toOperatorExprArray/String/Display`、`parseOperatorExprInput`、`normalizeCustomNodeExpressions`，
+> `isFunctionExpressionValue` 接受数组，`dg-store` 载入图时归一化）。详见 `docs/06-jdm-editor-submodule.md` §3.7。
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                     消费方（GoRules Editor）                       │

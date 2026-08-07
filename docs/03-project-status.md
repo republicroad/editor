@@ -1,6 +1,6 @@
 # 项目状态
 
-> 快照时间：2026-08-06
+> 快照时间：2026-08-07
 
 ---
 
@@ -10,8 +10,8 @@
 
 | 仓库 | 当前分支 | 基于分支 | 说明 |
 |------|----------|----------|------|
-| editor（主项目） | `opencode` | `standalone` | 定制化开发分支 |
-| jdm-editor（子模块） | `zrule` | `master` | 外部化改造分支 |
+| editor（主项目） | `zrule` | `master` | 前后端 TypeScript monorepo 开发分支 |
+| jdm-editor（子模块） | `zrule` | `master` | 外部化改造分支（与主项目同分支开发） |
 
 ### 1.2 版本信息
 
@@ -101,7 +101,8 @@
 |------|------|------|
 | `master` | 上游同步分支 | 活跃 |
 | `standalone` | 开源发布分支 | 活跃 |
-| `opencode` | 定制化开发分支 | **当前** |
+| `zrule` | 前后端 TS monorepo 开发分支 | **当前** |
+| `opencode` | 定制化开发分支 | 历史（功能已并入 zrule） |
 | `mono_v1` | Monorepo 实验 | 历史 |
 | `workspace_v1/v2/v3` | 工作空间实验 | 历史 |
 
@@ -110,9 +111,9 @@
 | 分支 | 说明 | 状态 |
 |------|------|------|
 | `master` | 上游发布分支 | 活跃 |
-| `standalone` | 开发分支（同 opencode） | 历史 |
-| `zrule` | 外部化改造分支 | **当前** |
-| `opencode` | 定制化开发分支 | 参考 |
+| `zrule` | 外部化改造 + 前后端 TS 开发分支 | **当前** |
+| `standalone` | 开源发布分支 | 活跃 |
+| `opencode` | 定制化开发分支 | 历史（功能已并入 zrule） |
 
 ---
 
@@ -153,7 +154,7 @@
 - [ ] 完善单元测试覆盖
 - [ ] 补充 Storybook 组件文档
 - [x] 修复 vite build 预存在问题（vite-plugin-dts 加载失败；子模块构建已正常产出 dist/）
-- [ ] CI 迁移提交（`.github/workflows/validate.yml` pnpm→bun）
+- [x] CI 迁移提交（`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`）
 - [ ] `/api/auth/get-session` 由 Mock 用户升级为真实会话（better-auth 服务端 + 数据库）
 
 ---
@@ -163,6 +164,9 @@
 ### 7.1 主项目最近提交
 
 ```
+2faf7eb docs: add typescript monorepo branch zrule docs
+760897e feat: array-based custom node expressions with legacy ;; upload migration
+c0f8d89 chore: editor use zrule branch as dev branch and update github workflow
 b0b315c build: single-package submodule with published lezer/zen deps
 b7d12bc docs: update project status, dev guide and README
 1db7dbb fix: enable noImplicitAny for stricter typecheck
@@ -181,6 +185,7 @@ dceba9d docs: update project status and implementation plan
 ### 7.2 jdm-editor zrule 分支提交
 
 ```
+89dcc30 feat: custom node expressions as string arrays, JSON code mode, legacy ;; migration
 e21bd87 build: single-package bun workspace, use published lezer/zen deps
 bc3314b fix: resolve tsc compile errors
 3f59467 feat: custom function table editor for custom node renderTab
@@ -195,7 +200,9 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule 分支变更摘要
 
-**最新变更（2026-08-06）：**
+**最新变更（2026-08-07）：**
+- 开发分支切换（`c0f8d89`）：editor 主项目由 `opencode` 切换到 `zrule` 作为开发分支，`.gitmodules` 中子模块分支同步设为 `zrule`；`.github/workflows/validate.yml` pnpm→bun 迁移并提交（`oven-sh/setup-bun@v2` + bun 1.3.14 + `bun install --frozen-lockfile`，lint / typecheck / typecheck:apps / test:zen-rule）
+- 数组化自定义函数表达式 + 旧 `;;` 上传迁移（`760897e` 主项目 + `89dcc30` 子模块）：`CustomNodeExpression.value` 由 `string` 扩展为 `string | string[]`；上传/导入经 `normalizeGraphNodes`（主项目 `src/helpers/graph.ts`）与 `normalizeCustomNodeExpressions`（子模块 `dg-store`）自动把旧 `;;` 字符串拆分为数组；`parseOperatorArgs`/`toFunctionCallValue`/`defaultCustomNodeConfig` 改为数组化；子模块新增 `toOperatorExprArray/String/Display`、`parseOperatorExprInput`（JSON 数组编辑 + 旧格式兼容），`isFunctionExpressionValue` 接受数组；zen-rule `parseOperatorExpr` 支持数组原样返回，新增 `custom_double_semicolon.json` 夹具
 - jdm-editor 单包 workspace 化（`e21bd87` 子模块 + `b0b315c`）：移除 `packages/lezer-zen` / `lezer-zen-template` / `zen-engine-wasm` 源码，三库改为外部 npm 固定版本（0.8.1 / 0.4.0 / ^0.23.1）；root 加 `workspaces` 字段，build/typecheck/test 改 bun 原生脚本（`bun run --cwd packages/jdm-editor ...`）；保留 `pnpm-workspace.yaml` + `lerna.json` 与上游对齐；单独构建 `cd jdm-editor && bun install && bun run build` → `packages/jdm-editor/dist/`
 - Monaco 本地化加载（`2e67e55`）：monaco-editor 锁定 0.52.2，从版本化路径 `/monaco-editor@0.52.2/min/vs/**` 加载，`vite-plugin-static-copy` 构建期拷贝；`vite.config.ts` 通过 createRequire + 入口解析 + 向上爬目录定位 monaco 包（兼容 Node ≥18，规避 0.56.0 的 exports map 解析问题）
 - Custom node registry + function mode（`0292f98`）：新增 `custom-node-registry.tsx`（`schemaToCustomNodes`/`fetchCustomNodeSchema`，失败回退 `custom-node-schema.json`）、`custom-node-types.ts`、`useCustomNodes` hook、`CustomNodeSummaryCard`；`decision-simple.tsx` 将 schema 的 `customFunctions` 传入 DecisionGraph
@@ -217,4 +224,4 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - 新增 `GET /api/auth/get-session`（Mock 开发用户），打通 better-auth UserResolver 链路
 - 新增请求日志中间件 + `onError` 统一错误日志（打印方法/路径/状态/耗时与异常堆栈）
 - 修复 `/api/decision` 缓存逻辑 bug（原 `content` 未定义、`decision` 作用域错误）与 `contentType` 校验过严问题
-- `.github/workflows/validate.yml`：pnpm→bun 迁移（未提交，待 CI 迁移提交）
+- `.github/workflows/validate.yml`：pnpm→bun 迁移（已随 `c0f8d89` 提交，含 lint / typecheck / typecheck:apps / test:zen-rule）

@@ -42,9 +42,9 @@ GoRules Editor 是一个开源的业务规则引擎可视化编辑器，基于 *
 | Decision Table | 决策表节点，表格化规则 | Dev/Business |
 | Expression | 表达式节点，条件表达式 | Dev/Business |
 | Function | 函数节点，自定义代码 | Dev |
-| Custom Function | 自定义函数节点（opencode 新增） | Dev |
+| Custom Function | 自定义函数节点（zrule 开发分支新增） | Dev |
 | Switch | 分支节点，多路条件分支 | Dev/Business |
-| Request | 请求节点（opencode 新增） | Dev |
+| Request | 请求节点（zrule 开发分支新增） | Dev |
 
 #### 3.1.3 决策表编辑器
 - 表格式规则编辑
@@ -59,12 +59,13 @@ GoRules Editor 是一个开源的业务规则引擎可视化编辑器，基于 *
 - Monaco Editor 可选支持
 - Lezer 语法解析器
 
-#### 3.1.5 自定义函数编辑器（opencode 新增）
+#### 3.1.5 自定义函数编辑器（zrule 开发分支新增）
 - 代码编辑器（Monaco）
 - 函数参数 Schema 定义
 - 调试器与日志输出
+- 表达式值支持数组形式（`string | string[]`），旧 `;;` 分隔字符串上传时自动迁移为数组
 
-#### 3.1.6 Request 节点（opencode 新增）
+#### 3.1.6 Request 节点（zrule 开发分支新增）
 - 请求/响应定义管理
 - JSON Schema 支持
 - 示例数据源管理
@@ -96,7 +97,7 @@ GoRules Editor 是一个开源的业务规则引擎可视化编辑器，基于 *
 ### 3.5 主题与国际化
 
 - 暗色/亮色/自动主题切换
-- 中文/英文双语支持（opencode 新增）
+- 中文/英文双语支持（zrule 开发分支新增）
 - CSS 变量主题系统（40+ `--grl-*` 变量）
 
 ### 3.6 图 Diff（差异追踪）

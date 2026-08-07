@@ -1,6 +1,6 @@
 # jdm-editor 子仓库文档
 
-> 本文档详细描述 `jdm-editor` 子模块的架构、组件体系，以及 opencode 分支与 master 分支的差异分析。
+> 本文档详细描述 `jdm-editor` 子模块的架构、组件体系，以及 zrule（当前开发分支）/ opencode 分支与 master 分支的差异分析。
 
 ---
 
@@ -32,8 +32,8 @@ jdm-editor/packages/
 | 分支 | 说明 | 与 master 差异 |
 |------|------|----------------|
 | `master` | 上游发布分支 | 基准 |
-| `zrule` | **当前分支**（外部化改造分支） | 基于 master；单包 workspace，三库外部 npm 依赖 |
-| `opencode` | 定制化开发分支 | +14,485 / -4,235 行，139 文件 |
+| `zrule` | **当前分支**（外部化改造 + 前后端 TS monorepo 开发分支） | 基于 master；单包 workspace，三库外部 npm 依赖 |
+| `opencode` | 定制化开发分支（历史，功能已并入 zrule） | +14,485 / -4,235 行，139 文件 |
 | `standalone` | 开源发布分支 | 基于 master |
 | `brde` | 开发分支 | 同 opencode |
 
@@ -428,6 +428,26 @@ npm publish
 - npm 版 `@gorules/lezer-zen` / `@gorules/lezer-zen-template` 不含类型声明，由 `src/lezer-zen.d.ts` 垫片提供（保留勿删）。
 - root `package.json` 同时保留 `pnpm-workspace.yaml` 与 `lerna.json`：pnpm 环境优先读 yaml，bun 读 `workspaces` 字段，两者声明一致（`packages/*`），可并存。多包发布场景（有 pnpm 时）仍可用 `npx lerna publish`。
 
+### 3.7 zrule 数组化表达式与 legacy `;;` 迁移（`89dcc30`）
+
+将自定义函数表达式的 `value` 由 `;;` 分隔字符串升级为 `string | string[]` 数组，并提供旧格式上传自动迁移。
+
+**变更内容：**
+
+- **表达式值类型**：`ExpressionEntry.value` / `CustomNodeExpression.value` 扩展为 `string | string[]`；`expr_asts.value` 为数组。
+- **新增工具函数**（`helpers/utility.ts`）：
+  - `toOperatorExprArray(value)` — 数组原样返回，字符串走 `smartSplit` 拆 `;;`
+  - `toOperatorExprString(value)` — 数组 `join(';;')`，字符串原样返回
+  - `toOperatorExprDisplay(value)` — 数组 `JSON.stringify` 展示，字符串原样返回（CodeEditor 输入框）
+  - `parseOperatorExprInput(text)` — 编辑器输入解析：`[...]` 合法 JSON 数组原样返回，含 `;;` 拆分为数组，否则返回字符串
+  - `normalizeCustomNodeExpressions(nodes)` / `normalizeOperatorExprValue(value)` — 上传/载入时把旧 `;;` 字符串自动迁移为数组
+- **schema 判定**：`isFunctionExpressionValue` 从 `typeof value === 'string' && value.includes(';;')` 扩展为 `Array.isArray(value) || ...`；`getFunctionNameFromValue` 支持数组取首项。
+- **Store 归一化**：`dg-store.context.tsx` 在 `setGraph`/载入图时对 `customNode` 节点的 `expressions` 与 `expr_asts` 调用 `normalizeCustomNodeExpressions`。
+- **编辑器 UI**（`expression-item.tsx`）：CodeEditor 以 JSON 数组形式展示与编辑，`onChange` 经 `parseOperatorExprInput` 写回；函数值构建改为 `string[]`（`buildFunctionValue`）。
+- **Tab 回写**（`tab-custom-function-table.tsx`）：`expr_asts.value` 用 `toOperatorExprArray` 生成数组。
+
+> 主项目侧配套（`760897e`）：`src/helpers/graph.ts` 新增 `normalizeGraphNodes`，`decision-simple.tsx` 上传/导入 JSON 时调用；`custom-node-registry.tsx` 的 `parseOperatorArgs` 接受数组、`toFunctionCallValue` 返回数组；`custom-node-types.ts` 的 `value` 类型同步为 `string | string[]`；zen-rule `parseOperatorExpr` 支持数组原样返回（新增 `custom_double_semicolon.json` 夹具）。
+
 ---
 
 ## 4. opencode 分支演进历史
@@ -518,6 +538,8 @@ ea0e01f 自定义函数样式修改
 ### 4.8 zrule 分支（外部化改造）
 
 ```
+89dcc30 feat: custom node expressions as string arrays, JSON code mode, legacy ;; migration
+e21bd87 build: single-package bun workspace, use published lezer/zen deps
 3f59467 feat: custom function table editor for custom node renderTab
 38fce5f fix: match opencode branch simulator request editor height
 52c39df fix: add CachedGraphIterator type to traversal iterator

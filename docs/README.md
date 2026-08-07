@@ -4,7 +4,8 @@
 
 **项目地址**: https://github.com/republicroad/editor  
 **在线演示**: https://editor.gorules.io  
-**当前版本**: v1.16.1（主项目）/ v1.52.0（jdm-editor 组件库）
+**当前版本**: v1.16.1（主项目）/ v1.52.0（jdm-editor 组件库）  
+**开发分支**: `zrule`（editor 与 jdm-editor 子模块均使用，前后端 TypeScript monorepo）
 
 ---
 
@@ -28,6 +29,10 @@
 ### 克隆项目
 
 ```bash
+# 开发分支（前后端 TypeScript monorepo，推荐）
+git clone --recurse-submodules --branch zrule https://github.com/republicroad/editor.git
+
+# 开源发布/探索分支
 git clone --recurse-submodules --branch standalone https://github.com/republicroad/editor.git
 ```
 

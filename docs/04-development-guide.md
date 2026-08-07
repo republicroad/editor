@@ -15,26 +15,26 @@
 ### 1.2 克隆项目
 
 ```bash
-# 方式一：直接克隆（推荐）
-git clone --recurse-submodules --branch standalone https://github.com/republicroad/editor.git
+# 方式一：直接克隆（推荐，开发分支）
+git clone --recurse-submodules --branch zrule https://github.com/republicroad/editor.git
 
 # 方式二：已有仓库，拉取子模块
 git submodule update --init
 cd jdm-editor/
-git fetch origin standalone:standalone
-git checkout standalone
+git fetch origin zrule:zrule
+git checkout zrule
 ```
 
 ### 1.3 分支切换
 
 ```bash
-# 主项目切换到 opencode 分支
-git checkout opencode
+# 主项目切换到 zrule 分支（当前开发分支）
+git checkout zrule
 
-# 子模块切换到 opencode 分支
+# 子模块切换到 zrule 分支
 cd jdm-editor/
-git fetch origin opencode:opencode
-git checkout opencode
+git fetch origin zrule:zrule
+git checkout zrule
 ```
 
 ---
@@ -291,7 +291,7 @@ git submodule update --remote
 # 或进入子模块手动更新
 cd jdm-editor/
 git fetch origin
-git pull origin standalone
+git pull origin zrule
 ```
 
 ### 8.3 提交子模块修改

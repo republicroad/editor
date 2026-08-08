@@ -11,6 +11,7 @@ import {
 
 import { udfManager } from './register.js';
 import './contrib.js';
+import './lists.js';
 
 const CUSTOM_HANDLER_META = '__meta__';
 

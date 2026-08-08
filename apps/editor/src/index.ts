@@ -1,9 +1,9 @@
-import { readdir } from 'fs/promises';
+import { readdir, readFile } from 'fs/promises';
 import path from 'path';
 import { join } from 'path';
 import { debug } from 'console';
 import type { ZenDecision } from '@gorules/zen-engine';
-import { ZenRule } from 'zen-rule';
+import { registerList, listLists, ZenRule } from 'zen-rule';
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
@@ -55,6 +55,26 @@ async function requestLogger(c: Context, next: Next) {
   console.log(
     `[${new Date().toISOString()}] <= ${c.req.method} ${path} ${c.res.status} ${(performance.now() - start).toFixed(1)}ms`,
   );
+}
+
+// 名单文件目录：apps/editor/lists/*.json（{ name, description, items }），启动时注册进 zen-rule 名单存储。
+const LISTS_DIR = path.resolve(import.meta.dir ?? process.cwd(), '../lists');
+
+async function loadLists(): Promise<void> {
+  try {
+    const entries = await readdir(LISTS_DIR, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+      const raw = await readFile(join(LISTS_DIR, entry.name), 'utf-8');
+      const list = JSON.parse(raw) as { name?: string; description?: string; items?: string[] };
+      if (!list.name || !Array.isArray(list.items)) continue;
+      const items = list.items.map((item) => String(item));
+      registerList({ name: list.name, description: list.description, items });
+      console.log(`[lists] loaded ${list.name} (${items.length} items) from ${entry.name}`);
+    }
+  } catch (error) {
+    console.warn(`[lists] failed to load list files from ${LISTS_DIR}:`, error);
+  }
 }
 
 // --- OpenAPI schemas ---
@@ -209,6 +229,35 @@ const customNodesSchemaRoute = createRoute({
   },
 });
 
+const ListSummarySchema = z
+  .object({
+    name: z.string(),
+    size: z.number(),
+  })
+  .openapi('ListSummary');
+
+const ListQuerySchema = z
+  .object({
+    q: z.string().optional(),
+  })
+  .openapi('ListQuery');
+
+const listsRoute = createRoute({
+  method: 'get',
+  path: '/api/lists',
+  request: {
+    query: ListQuerySchema,
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.array(ListSummarySchema) },
+      },
+      description: '服务端名单名称列表（支持 q 关键词搜索，供查询名单节点下拉动态加载）',
+    },
+  },
+});
+
 const app = new OpenAPIHono();
 
 app.use(requestLogger);
@@ -348,6 +397,13 @@ app.openapi(customNodesSchemaRoute, (c) => {
   return c.json(customNodeFunctionSchema);
 });
 
+// 名单名称列表下发（查询名单节点下拉数据源）
+app.openapi(listsRoute, (c) => {
+  const q = c.req.query('q');
+  const lists = listLists(q).map((list) => ({ name: list.name, size: list.items.length }));
+  return c.json(lists);
+});
+
 // OpenAPI schema at /openapi/json, Scalar API Reference at /openapi
 app.doc('/openapi/json', {
   openapi: '3.0.0',
@@ -357,6 +413,8 @@ app.doc('/openapi/json', {
   },
 });
 app.get('/openapi', Scalar({ url: '/openapi/json' }));
+
+await loadLists();
 
 const server = Bun.serve({
   port: 3000,

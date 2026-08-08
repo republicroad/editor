@@ -1,4 +1,5 @@
 export { ZenRule } from './engine.js';
+export { registerList, listLists, getList, queryList, type NamedList } from './lists.js';
 export {
   UDFManager,
   udfManager,

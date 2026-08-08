@@ -1,3 +1,5 @@
+import type { CustomNodeConfig, CustomNodeExpression } from '../lib/custom-node-types';
+
 export type Position = {
   x: number;
   y: number;
@@ -42,7 +44,7 @@ export const normalizeGraphNodes = (nodes: DecisionNode[]): DecisionNode[] =>
       return node;
     }
 
-    const content = node.content as { config?: any } | undefined;
+    const content = node.content as { config?: CustomNodeConfig & { expr_asts?: CustomNodeExpression[] } } | undefined;
     const config = content?.config;
     if (!config || !Array.isArray(config.expressions)) {
       return node;
@@ -54,12 +56,15 @@ export const normalizeGraphNodes = (nodes: DecisionNode[]): DecisionNode[] =>
         ...content,
         config: {
           ...config,
-          expressions: config.expressions.map((expr: any) => ({
+          expressions: config.expressions.map((expr: CustomNodeExpression) => ({
             ...expr,
             value: normalizeExpressionValue(expr?.value),
           })),
           expr_asts: Array.isArray(config.expr_asts)
-            ? config.expr_asts.map((ast: any) => ({ ...ast, value: normalizeExpressionValue(ast?.value) }))
+            ? config.expr_asts.map((ast: CustomNodeExpression) => ({
+                ...ast,
+                value: normalizeExpressionValue(ast?.value),
+              }))
             : config.expr_asts,
         },
       },

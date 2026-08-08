@@ -10,6 +10,7 @@
     /* module references  */
     "baseUrl": ".",
     "paths": {
+      "@/*": ["./src/*"],
       "@gorules/jdm-editor": ["jdm-editor/packages/jdm-editor/src"],
     },
 

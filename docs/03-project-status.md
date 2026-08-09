@@ -1,6 +1,6 @@
 # 项目状态
 
-> 快照时间：2026-08-07
+> 快照时间：2026-08-09
 
 ---
 
@@ -122,6 +122,7 @@
 ### 5.1 前端
 
 - **构建命令**: `bun run build`（= `tsc && vite build`）
+- **测试命令**: `bun run test`（子模块内 = `bun run --cwd packages/jdm-editor test` = `bun test src`，当前 21 pass）
 - **输出目录**: `static/`
 - **状态**: 正常
 - **类型检查**: 根 tsconfig 启用 `noImplicitAny: true`（全项目严格检查，含 paths 映射引入的子模块源码）；`@gorules/lezer-zen`/`@gorules/lezer-zen-template` 无内置类型，由子模块 `src/lezer-zen.d.ts`（声明 `parser: LRParser`）+ `zen.ts` 顶部 triple-slash 引用解决
@@ -151,7 +152,7 @@
 - [ ] Hono 后端生产化（当前为实验状态）
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖（子模块 `e21bd87`）
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖（子模块 `e21bd87`）
-- [ ] 完善单元测试覆盖
+- [~] 完善单元测试覆盖（bun test 基线已建立：request-schema helpers 与 json-path-extractor，21 pass，见子模块 `f4e972d`；继续向模拟器 hooks / 节点组件补充）
 - [ ] 补充 Storybook 组件文档
 - [x] 修复 vite build 预存在问题（vite-plugin-dts 加载失败；子模块构建已正常产出 dist/）
 - [x] CI 迁移提交（`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`）
@@ -164,6 +165,11 @@
 ### 7.1 主项目最近提交
 
 ```
+2852407 docs: record simulator modularization refactor and test baseline in request node plan
+cf61aee feat: update jdm-editor with request node enhancements and simulator tooltip fix
+ac905e6 docs: add antd vs shadcn+ReUI evaluation docs
+7dc44d5 feat: query-list custom node with two-pane editor and server list API
+3a99c94 docs: update docs
 2faf7eb docs: add typescript monorepo branch zrule docs
 760897e feat: array-based custom node expressions with legacy ;; upload migration
 c0f8d89 chore: editor use zrule branch as dev branch and update github workflow
@@ -185,6 +191,14 @@ dceba9d docs: update project status and implementation plan
 ### 7.2 jdm-editor zrule 分支提交
 
 ```
+a75fd1e refactor(simulator): extract nodes panel and request binding/editor hooks
+f4e972d test: add unit tests for request-schema helpers and json path extractor
+e254cd7 refactor(simulator): extract request toolbar and persistence hook, sync definition defaults
+10eff3b refactor: extract request tab orchestration into use* hooks
+7133c49 refactor(simulator): simplify request toolbar
+303e169 refactor: split tab-request.tsx and request-schema.ts into modular files
+6a2fe8d fix: simulator toolbar tooltip flickering on hover
+5d73ea6 feat: examples table view with drawer editor for request node
 89dcc30 feat: custom node expressions as string arrays, JSON code mode, legacy ;; migration
 e21bd87 build: single-package bun workspace, use published lezer/zen deps
 bc3314b fix: resolve tsc compile errors
@@ -199,6 +213,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更（2026-08-09）：**
+- query-list 自定义节点（`7dc44d5`）：主项目新增 query-list 节点双栏（Code / Server）编辑器，后端新增 server list API（ListNodesRequest + server `list` 操作），打通「画布自定义节点 → 后端列表查询」链路
+- antd vs shadcn+ReUI 评估存档（`ac905e6` + `3a99c94`）：新增 docs 09/10/11 三份评估文档（见 README 索引），结论为「antd 核心 + ReUI 增量」，08 Request 节点计划同步补充模拟器重构与测试基线记录（`2852407`）
+- 模拟器模块化重构（子模块 `5d73ea6`→`a75fd1e`）：`tab-request.tsx` / `request-schema.ts` 拆分为 `simulator/` 目录（`simulator-nodes-panel.tsx`、`simulator-request-toolbar.tsx`、`use-request-example-persistence`、`use-simulator-request-binding`、`use-simulator-request-editor`）；新增 examples 表格视图 + 抽屉编辑器（`5d73ea6`）；定义默认值在切源时同步（`e254cd7`）；工具栏 tooltip 抖动修复（`6a2fe8d`）；光标在外部同步时保持在末尾（`7133c49`）
+- bun test 单测基线（子模块 `f4e972d`）：新增 `@types/bun` + `test` script（`bun test src`），request-schema helpers 与 json-path-extractor 单元测试，**21 pass / 0 fail**
+- 主项目同步（`cf61aee`）：jdm-editor 更新至 `a75fd1e`，带入 Request 节点增强与模拟器 tooltip 修复
 
 **最新变更（2026-08-07）：**
 - 开发分支切换（`c0f8d89`）：editor 主项目由 `opencode` 切换到 `zrule` 作为开发分支，`.gitmodules` 中子模块分支同步设为 `zrule`；`.github/workflows/validate.yml` pnpm→bun 迁移并提交（`oven-sh/setup-bun@v2` + bun 1.3.14 + `bun install --frozen-lockfile`，lint / typecheck / typecheck:apps / test:zen-rule）

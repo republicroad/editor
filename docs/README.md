@@ -21,6 +21,9 @@
 | [06-jdm-editor 子仓库](./06-jdm-editor-submodule.md) | jdm-editor 组件库详解与分支差异 |
 | [07-实施计划](./07-implementation-plan.md) | Input/Custom 节点外部化 + better-auth 用户信息集成 |
 | [08-Request 节点计划](./08-request-node-plan.md) | Request 节点（Input 增强版）集成计划 |
+| [09-shadcn+ReUI 取代 antd 评估](./09-shadcn-reui-replacing-antd.md) | antd 替换可行性评估（结论：antd 核心 + ReUI 增量） |
+| [10-从零重写评估与路线图](./10-rewrite-roadmap.md) | 从零重写 jdm-editor 的评估与 P1–P8 路线图（存档） |
+| [11-antd vs shadcn+ReUI 对比](./11-antd-vs-shadcn-reui-comparison.md) | antd 与 shadcn+ReUI 组件能力对照 |
 
 ---
 
@@ -50,6 +53,14 @@ bun run dev:api
 
 # 启动后端（另一个终端，Rust）
 make watch
+```
+
+### 运行测试
+
+```bash
+# jdm-editor 组件库单元测试（bun test，位于子模块）
+cd jdm-editor && bun run test
+# 等价于 cd packages/jdm-editor && bun test src
 ```
 
 ### 访问应用

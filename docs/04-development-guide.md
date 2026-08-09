@@ -121,6 +121,7 @@ cd jdm-editor/
 bun install        # 首次需安装
 bun run build      # 等价于 cd packages/jdm-editor && vite build → dist/
 bun run typecheck
+bun run test       # 等价于 cd packages/jdm-editor && bun test src
 ```
 
 zrule 分支为单包 workspace：`lezer-zen` / `lezer-zen-template` / `zen-engine-wasm` 已改为外部 npm 依赖，
@@ -140,10 +141,12 @@ pnpm storybook
 
 ```bash
 cd jdm-editor/
-pnpm test
-# 或带覆盖率
-pnpm test:coverage
+bun run test
+# 等价于 cd packages/jdm-editor && bun test src（bun test v1.3.14，单测基线见 06 文档 §3.8）
 ```
+
+> 说明：根 `test` script 已改为 bun 原生脚本（`bun run --cwd packages/jdm-editor test`）。
+> 历史上 pnpm 时代的 `pnpm test` / `pnpm test:coverage` 脚本已不存在。
 
 ### 4.4 代码格式化
 

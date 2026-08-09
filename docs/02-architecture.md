@@ -222,6 +222,18 @@ zen-engine 解析 DecisionContent → 执行 DAG 遍历
 返回 SimulationResult → 前端渲染结果/轨迹
 ```
 
+模拟器前端（jdm-editor 子模块 `simulator/` 目录）职责划分：
+
+```
+SimulatorRequestPanel（编排）
+├── useSimulatorRequestBinding      节点 → requestValue 派生链（responseExpressionMap 等）
+├── useSimulatorRequestEditor       requestValue 编辑 + 外部同步 + 切源默认值同步
+├── useRequestExamplePersistence    用例数据源持久化
+└── SimulatorRequestToolbar         运行 / 停止 / 加载用例 / 步进
+
+SimulatorNodesPanel                  节点列表 / 选择与状态图标（独立于请求面板）
+```
+
 ### 5.3 WASM 客户端执行
 
 ```

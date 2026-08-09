@@ -61,8 +61,15 @@ jdm-editor/packages/
 │   │   │   ├── graph-tabs.tsx         # Tab 管理
 │   │   │   └── tab-*.tsx              # 各类 Tab 实现
 │   │   ├── simulator/            # 模拟执行
-│   │   │   ├── dg-simulator.tsx       # 模拟器 UI
-│   │   │   └── simulator-request-panel.tsx  # 请求模拟面板
+│   │   │   ├── dg-simulator.tsx               # 模拟器 UI
+│   │   │   ├── simulator-request-panel.tsx    # 请求模拟面板（主编排）
+│   │   │   ├── simulator-nodes-panel.tsx      # 节点列表/选择与状态图标（zrule 重构抽出）
+│   │   │   ├── simulator-request-toolbar.tsx  # 工具栏（运行/停止/加载用例/步进）
+│   │   │   ├── use-request-example-persistence.ts # 用例数据源持久化 hook
+│   │   │   ├── use-simulator-request-binding.ts   # 节点→requestValue 派生链绑定 hook
+│   │   │   ├── use-simulator-request-editor.ts    # requestValue 编辑 + 外部同步 hook
+│   │   │   ├── simulator-editor.tsx           # 模拟器编辑器
+│   │   │   └── simulation.types.ts            # 模拟类型定义
 │   │   └── diff/                 # Diff 差异系统
 │   │       ├── comparison.ts          # 比较算法
 │   │       └── utility.ts             # Diff 计算
@@ -410,6 +417,7 @@ cd jdm-editor
 bun install            # 生成 bun.lock（首次）
 bun run build          # 等价于 cd packages/jdm-editor && vite build
 bun run typecheck      # 等价于 cd packages/jdm-editor && tsc --noEmit
+bun run test           # 等价于 cd packages/jdm-editor && bun test src（单测基线，见 §3.8）
 ```
 
 产物输出到 `packages/jdm-editor/dist/`（`index.js` / `index.d.ts` / `schema.js` / `schema.d.ts` / `style.css`，ESM + 类型声明）。
@@ -447,6 +455,36 @@ npm publish
 - **Tab 回写**（`tab-custom-function-table.tsx`）：`expr_asts.value` 用 `toOperatorExprArray` 生成数组。
 
 > 主项目侧配套（`760897e`）：`src/helpers/graph.ts` 新增 `normalizeGraphNodes`，`decision-simple.tsx` 上传/导入 JSON 时调用；`custom-node-registry.tsx` 的 `parseOperatorArgs` 接受数组、`toFunctionCallValue` 返回数组；`custom-node-types.ts` 的 `value` 类型同步为 `string | string[]`；zen-rule `parseOperatorExpr` 支持数组原样返回（新增 `custom_double_semicolon.json` 夹具）。
+
+### 3.8 模拟器模块化重构与测试基线（`5d73ea6` → `a75fd1e`）
+
+将 `tab-request.tsx`（1,952 行）与 `request-schema.ts`（1,236 行）拆分为 `simulator/` 模块目录，职责收敛到单一 Hook / 组件；并建立 bun test 单测基线。
+
+**模块职责划分：**
+
+| 模块 | 职责 |
+|------|------|
+| `simulator-request-panel.tsx` | 请求面板主组件（编排） |
+| `simulator-nodes-panel.tsx` | 节点列表 / 选择与状态图标（从 `dg-simulator.tsx` 抽出） |
+| `simulator-request-toolbar.tsx` | 工具栏（运行 / 停止 / 加载用例 / 步进） |
+| `use-request-example-persistence.ts` | 用例数据源持久化（参数对象化，`setRequestExampleData`） |
+| `use-simulator-request-binding.ts` | 派生链绑定：节点 → `requestValue`（`responseExpressionMap` / `CustomOperatorType` / `ExpressionDataType`） |
+| `use-simulator-request-editor.ts` | requestValue 编辑 + 外部同步 + 切源时定义默认值同步（光标保持在末尾） |
+| `simulation.types.ts` | 模拟相关类型定义 |
+
+**拆分的提交链（`303e169` → `a75fd1e`）：**
+
+- `303e169`：`tab-request.tsx` / `request-schema.ts` 拆分为模块文件
+- `7133c49` / `10eff3b`：工具栏简化，请求 Tab 编排抽为 `use*` hooks
+- `e254cd7`：抽取 toolbar + 持久化 hook，切源时同步 definition 默认值
+- `6a2fe8d`：工具栏 tooltip 悬停闪烁修复
+- `5d73ea6`：新增 examples 表格视图 + 抽屉编辑器（`NodeKind` 加入 request schema 类型）
+- `a75fd1e`：抽取 nodes-panel 与 request binding/editor hooks
+
+**测试基线（`f4e972d`）：**
+
+- `@types/bun` + root `test` script（`bun run --cwd packages/jdm-editor test` = `bun test src`）
+- 覆盖 `request-schema` helpers 与 `json-path-extractor`，当前 **21 pass / 0 fail / 30 expect()**（2 个文件）
 
 ---
 
@@ -538,6 +576,14 @@ ea0e01f 自定义函数样式修改
 ### 4.8 zrule 分支（外部化改造）
 
 ```
+a75fd1e refactor(simulator): extract nodes panel and request binding/editor hooks
+f4e972d test: add unit tests for request-schema helpers and json path extractor
+e254cd7 refactor(simulator): extract request toolbar and persistence hook, sync definition defaults
+10eff3b refactor: extract request tab orchestration into use* hooks
+7133c49 refactor(simulator): simplify request toolbar
+303e169 refactor: split tab-request.tsx and request-schema.ts into modular files
+6a2fe8d fix: simulator toolbar tooltip flickering on hover
+5d73ea6 feat: examples table view with drawer editor for request node
 89dcc30 feat: custom node expressions as string arrays, JSON code mode, legacy ;; migration
 e21bd87 build: single-package bun workspace, use published lezer/zen deps
 3f59467 feat: custom function table editor for custom node renderTab
@@ -550,7 +596,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 203de98 feat: upgrade simulator request panel with full feature set
 ```
 
-**演进路径**: UserResolver 外部化 → components override → customNode renderTab 路由 → Request 节点改造 → custom function table editor（customFunctions 透传 renderTab）
+**演进路径**: UserResolver 外部化 → components override → customNode renderTab 路由 → Request 节点改造 → custom function table editor（customFunctions 透传 renderTab）→ 模拟器模块化重构（simulator/ 目录 + use* hooks）→ bun test 单测基线
 
 ---
 

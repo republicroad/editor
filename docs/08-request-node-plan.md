@@ -121,3 +121,32 @@
 | `tab-request.tsx` 的 i18n 依赖 | 步骤 3 已移植完整 i18n 系统 |
 | `simulator-request-panel.tsx` store 字段不匹配 | 步骤 5 已添加所需字段 |
 | opencode 分支代码与 zrule 分支的隐式差异 | 每个阶段完成后运行 Typecheck |
+
+---
+
+## 六、模拟器模块化重构（后续）
+
+> 目标：拆分 `simulator/` 下的大组件为可测试的独立模块，并为 request-schema helpers 建立单测基线（bun test）。
+> 分支：zrule | 日期：2026-08-09
+
+### 执行步骤
+
+- [x] **步骤 18**：新增单测基线
+  - `helpers/request-schema/__tests__/examples.test.ts`（merge/normalize/conflicts/template/sources/schema 更新）
+  - `helpers/__tests__/json-path-extractor.test.ts`
+  - 基础设施：`@types/bun` devDep + `test: bun test src` script + tsconfig `types: ["bun"]`
+  - 提交 `test: add unit tests for request-schema helpers and json path extractor` ✅ `f4e972d`
+- [x] **步骤 19**：拆分 `dg-simulator.tsx`
+  - 搜索/清除/节点列表/StatusIcon → `simulator/simulator-nodes-panel.tsx`
+  - `dg-simulator.tsx` 收敛为布局 + 响应编辑器，仅保留 `SimulationSegment`/`displaySegment`
+- [x] **步骤 20**：抽取 hooks
+  - `simulator/use-simulator-request-binding.ts`：承接 requestSources/boundIndex/resolvedBinding/currentBindingIdentity/definitions/sourceOptions/bindingName/shouldShowSelect 派生链
+  - `simulator/use-simulator-request-editor.ts`：requestValue 状态、外部 simulatorRequest 应用、defaultRequest 同步、切源动画定时器
+  - 提交 `refactor(simulator): extract nodes panel and request binding/editor hooks` ✅ `a75fd1e`
+- [x] **步骤 21**：验证 `bun run typecheck` ✅ 通过；`bun test` ✅ 21 pass；`bun run build` ✅ 通过
+
+### 备注
+
+- `use-request-example-persistence.ts` 已使用对象参数签名（`UseRequestExamplePersistenceParams`）。
+- `use-request-examples-editing.ts` 的下载/上传已用 `saveFile`/`file.text()`，不再依赖 `Buffer`/`getRawFile`。
+

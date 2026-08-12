@@ -12,6 +12,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@gorules/jdm-editor": ["jdm-editor/packages/jdm-editor/src"],
+      "monaco-editor": ["node_modules/monaco-editor"],
+      "monaco-editor/*": ["node_modules/monaco-editor/*"],
     },
 
     /* Bundler mode */

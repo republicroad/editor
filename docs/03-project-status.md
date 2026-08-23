@@ -214,6 +214,10 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule 分支变更摘要
 
+**最新变更(2026-08-23)：**
+- 主 app antd 迁移完成(docs/12):src/ 内 antd 引用 7 文件 → 1(theme.provider ConfigProvider,jdm-editor 硬依赖);`@ant-design/icons` 全部换 lucide;新增 shadcn switch/dropdown-menu/alert-dialog + sonner(替代 message/Modal.confirm/Dropdown/Switch);主 chunk -291 kB
+- 主题集成修复:`theme.provider` 双信号 dark 模式(`body[data-theme]` + `html.dark`);`main.css` 补 Tailwind preflight(修复 UA `button{color:buttontext}` 导致暗色按钮文字不可见)与 body 底色
+
 **最新变更(2026-08-09)：**
 - query-list 自定义节点(`7dc44d5`)：主项目新增 query-list 节点双栏(Code / Server)编辑器，后端新增 server list API(ListNodesRequest + server `list` 操作)，打通「画布自定义节点 → 后端列表查询」链路
 - antd vs shadcn+ReUI 评估存档(`ac905e6` + `3a99c94`)：新增 docs 09/10/11 三份评估文档(见 README 索引)，结论为「antd 核心 + ReUI 增量」，08 Request 节点计划同步补充模拟器重构与测试基线记录(`2852407`)

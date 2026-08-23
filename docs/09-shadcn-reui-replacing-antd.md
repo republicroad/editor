@@ -1,6 +1,7 @@
 # 09. 用 shadcn + ReUI 取代 antd 的可行性评估
 
-> 状态：存档评估(未实施)。结论：**保留 antd 核心 + 新 UI 用 ReUI**。
+> 状态：评估存档。结论：**jdm-editor 核心保留 antd + 主 app 界面一律 shadcn/ReUI**。
+> 更新(2026-08-23)：主 app 层面已按本结论完成迁移(src/ 仅剩 `theme.provider` 的 ConfigProvider),实施细节见 **docs/12**。
 > 日期：2026-08-08
 > 分支：zrule
 

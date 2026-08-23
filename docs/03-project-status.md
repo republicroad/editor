@@ -149,11 +149,11 @@
 - lezer-zen / lezer-zen-template / zen-engine-wasm 源码已从工作区移除(opencode 与 zrule 分支均如此)，改为外部 npm 固定版本依赖
 
 ### 6.2 待办事项
-- [ ] Hono 后端生产化(当前为实验状态)
+- [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；剩余：真实部署配置、错误处理统一
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线已建立：request-schema helpers 与 json-path-extractor，21 pass，见子模块 `f4e972d`；继续向模拟器 hooks / 节点组件补充)
-- [ ] 补充 Storybook 组件文档
+- [~] 完善单元测试覆盖(bun test 基线已建立：request-schema helpers 与 json-path-extractor，21 pass，见子模块 `f4e972d`；主项目新增 http-request 协议库单测(`bun test src` 共 62 pass)、zen-rule 名单注册表单测(17 pass)；继续向模拟器 hooks / 节点组件补充)
+- [~] 补充 Storybook 组件文档(新增 simulator-request-panel stories(带/不带 InputNode 绑定)，`--smoke-test` 通过；其余组件沿用既有 stories)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [ ] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)
@@ -213,6 +213,14 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-23，第二批：编辑器功能 C+D)：**
+- Monaco 双实例类型冲突修复(子模块 tsconfig):直接 import `monaco-editor` 与 `@monaco-editor/react` 内部解析到两份不同拷贝导致 3 处 TS 冲突;`packages/jdm-editor/tsconfig.json` 增加 paths 钉死工作区副本，子模块 typecheck 归零
+- 名单 API 持久化 CRUD(`apps/editor`):新增 `GET/PUT/DELETE /api/lists/{name}` 与 `POST /api/lists`(upsert)，写回 `apps/editor/lists/*.json`(unicode 安全文件名清洗、删除时清理落盘文件);zen-rule 新增 `deleteList`;CRUD 冒烟测试通过；服务端口支持 `PORT` 环境变量覆盖(默认 3000)
+- 移除 :3001 admin 存根服务(实验遗留，README 中的 3001 说明已过时)
+- http-request 协议库抽取(主项目 `src/lib/http-request-protocol.ts`):parseHttpRequest/toHttpRequestValue/对象字面量行编解码/auth 四态等纯函数从节点组件抽出,`parseOperatorArgs` 一并迁入并由 custom-node-registry 转出保持兼容;根 package.json 新增 `test` script + `@types/bun`,`bun test src` 共 **62 pass**
+- zen-rule 测试基建:`tsconfig` 显式引用 bun-types，修复存量 typecheck:apps 对测试文件报错
+- Storybook:子模块新增 simulator-request-panel stories(带/不带 InputNode 绑定两个场景),`--smoke-test` 通过
 
 **最新变更(2026-08-23)：**
 - HTTP 请求节点 E1+E2(docs/08 §7)：编辑器左表单页签化(Headers/Body/Params/高级，shadcn Tabs)+ 右响应分栏保留；引擎(`apps/zen-rule`)新增 `params` 查询参数合并、`timeout`(100–60000ms)、`retry`(仅网络错/超时/5xx/429，指数退避)、`auth`(Basic/Bearer，显式 Authorization 头优先)；表达式尾参变长序列化，旧图零迁移；bun test 13 pass

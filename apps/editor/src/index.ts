@@ -1,10 +1,9 @@
-import { readdir, readFile } from 'fs/promises';
+import { readdir, readFile, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 import { join } from 'path';
 import { debug } from 'console';
 import type { ZenDecision } from '@gorules/zen-engine';
-import { registerList, listLists, ZenRule } from 'zen-rule';
-import { Hono } from 'hono';
+import { deleteList, getList, registerList, listLists, ZenRule } from 'zen-rule';
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
@@ -75,6 +74,40 @@ async function loadLists(): Promise<void> {
   } catch (error) {
     console.warn(`[lists] failed to load list files from ${LISTS_DIR}:`, error);
   }
+}
+
+// 文件名安全化：保留 unicode 字母/数字/下划线/连字符，其余折叠为下划线
+const sanitizeListFilename = (name: string): string =>
+  name.replace(/[^\p{L}\p{N}_-]+/gu, '_').replace(/^[-_]+|[-_]+$/g, '') || 'unnamed';
+
+/** 按内容中的 name 字段定位名单文件(装载时 name 与文件名并无强制对应) */
+async function findListFile(name: string): Promise<string | null> {
+  try {
+    const entries = await readdir(LISTS_DIR, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+      const filePath = join(LISTS_DIR, entry.name);
+      try {
+        const raw = await readFile(filePath, 'utf-8');
+        const parsed = JSON.parse(raw) as { name?: string };
+        if (parsed.name === name) {
+          return filePath;
+        }
+      } catch {
+        // 单个文件损坏不阻塞查找
+      }
+    }
+  } catch {
+    // 目录缺失时按新文件处理
+  }
+  return null;
+}
+
+async function writeListFile(list: { name: string; description?: string; items: string[] }): Promise<void> {
+  const existing = await findListFile(list.name);
+  const filePath = existing ?? join(LISTS_DIR, `${sanitizeListFilename(list.name)}.json`);
+  await writeFile(filePath, `${JSON.stringify({ ...list }, null, 2)}\n`, 'utf-8');
+  console.log(`[lists] persisted ${list.name} -> ${path.basename(filePath)}`);
 }
 
 // --- OpenAPI schemas ---
@@ -232,6 +265,7 @@ const customNodesSchemaRoute = createRoute({
 const ListSummarySchema = z
   .object({
     name: z.string(),
+    description: z.string().optional(),
     size: z.number(),
   })
   .openapi('ListSummary');
@@ -241,6 +275,21 @@ const ListQuerySchema = z
     q: z.string().optional(),
   })
   .openapi('ListQuery');
+
+const NamedListSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    items: z.array(z.string()),
+  })
+  .openapi('NamedList');
+
+const ListUpdateSchema = z
+  .object({
+    description: z.string().optional(),
+    items: z.array(z.string()),
+  })
+  .openapi('ListUpdate');
 
 const listsRoute = createRoute({
   method: 'get',
@@ -254,6 +303,115 @@ const listsRoute = createRoute({
         'application/json': { schema: z.array(ListSummarySchema) },
       },
       description: '服务端名单名称列表(支持 q 关键词搜索，供查询名单节点下拉动态加载)',
+    },
+  },
+});
+
+const listDetailRoute = createRoute({
+  method: 'get',
+  path: '/api/lists/{name}',
+  request: {
+    params: z.object({ name: z.string() }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: NamedListSchema },
+      },
+      description: '名单详情(含全部条目)',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '名单不存在',
+    },
+  },
+});
+
+const listCreateRoute = createRoute({
+  method: 'post',
+  path: '/api/lists',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: NamedListSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: NamedListSchema },
+      },
+      description: '已保存(upsert：同名覆盖)并回写 JSON 文件',
+    },
+    400: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '请求体不合法',
+    },
+    500: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: 'JSON 文件回写失败',
+    },
+  },
+});
+
+const listUpdateRoute = createRoute({
+  method: 'put',
+  path: '/api/lists/{name}',
+  request: {
+    params: z.object({ name: z.string() }),
+    body: {
+      content: {
+        'application/json': { schema: ListUpdateSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: NamedListSchema },
+      },
+      description: '已更新并回写 JSON 文件',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '名单不存在',
+    },
+    500: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: 'JSON 文件回写失败',
+    },
+  },
+});
+
+const listDeleteRoute = createRoute({
+  method: 'delete',
+  path: '/api/lists/{name}',
+  request: {
+    params: z.object({ name: z.string() }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.object({ deleted: z.boolean() }) },
+      },
+      description: '已删除(内存存储 + 对应 JSON 文件)',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '名单不存在',
     },
   },
 });
@@ -400,8 +558,85 @@ app.openapi(customNodesSchemaRoute, (c) => {
 // 名单名称列表下发(查询名单节点下拉数据源)
 app.openapi(listsRoute, (c) => {
   const q = c.req.query('q');
-  const lists = listLists(q).map((list) => ({ name: list.name, size: list.items.length }));
+  const lists = listLists(q).map((list) => ({
+    name: list.name,
+    description: list.description,
+    size: list.items.length,
+  }));
   return c.json(lists);
+});
+
+// 名单详情
+app.openapi(listDetailRoute, (c) => {
+  const { name } = c.req.valid('param');
+  const list = getList(name);
+  if (!list) {
+    return c.json({ error: `list '${name}' not found` }, 404);
+  }
+  return c.json({ name: list.name, description: list.description, items: list.items }, 200);
+});
+
+// 名单保存(upsert)：注册进 zen-rule 存储并回写 JSON 文件(重启后经 loadLists 恢复)
+app.openapi(listCreateRoute, async (c) => {
+  const body = c.req.valid('json');
+  const list = {
+    name: body.name.trim(),
+    description: body.description?.trim() || undefined,
+    items: body.items.map((item) => String(item)),
+  };
+  if (!list.name) {
+    return c.json({ error: 'name is required' }, 400);
+  }
+  registerList(list);
+  try {
+    await writeListFile(list);
+  } catch (error) {
+    console.error(`[lists] failed to persist ${list.name}:`, error);
+    return c.json({ error: `failed to persist list file: ${String(error)}` }, 500);
+  }
+  return c.json(list, 200);
+});
+
+// 名单更新(仅已存在的名单；name 不可变)
+app.openapi(listUpdateRoute, async (c) => {
+  const { name } = c.req.valid('param');
+  const body = c.req.valid('json');
+  const existing = getList(name);
+  if (!existing) {
+    return c.json({ error: `list '${name}' not found` }, 404);
+  }
+  const list = {
+    name: existing.name,
+    description: body.description?.trim() || undefined,
+    items: body.items.map((item) => String(item)),
+  };
+  registerList(list);
+  try {
+    await writeListFile(list);
+  } catch (error) {
+    console.error(`[lists] failed to persist ${list.name}:`, error);
+    return c.json({ error: `failed to persist list file: ${String(error)}` }, 500);
+  }
+  return c.json(list, 200);
+});
+
+// 名单删除：内存存储 + 对应 JSON 文件一并移除
+app.openapi(listDeleteRoute, async (c) => {
+  const { name } = c.req.valid('param');
+  if (!getList(name)) {
+    return c.json({ error: `list '${name}' not found` }, 404);
+  }
+  deleteList(name);
+  const filePath = await findListFile(name);
+  if (filePath) {
+    try {
+      await unlink(filePath);
+      console.log(`[lists] removed file ${path.basename(filePath)} for ${name}`);
+    } catch (error) {
+      console.warn(`[lists] failed to remove file for ${name}:`, error);
+    }
+  }
+  return c.json({ deleted: true }, 200);
 });
 
 // OpenAPI schema at /openapi/json, Scalar API Reference at /openapi
@@ -417,21 +652,9 @@ app.get('/openapi', Scalar({ url: '/openapi/json' }));
 await loadLists();
 
 const server = Bun.serve({
-  port: 3000,
+  port: Number(process.env.PORT ?? 3000),
   fetch: app.fetch,
 });
 console.log(`Hono is running at http://${server.hostname}:${server.port}`);
 console.log(`openapi UI is running at http://${server.hostname}:${server.port}/openapi`);
 console.log(`openapi schema is running at http://${server.hostname}:${server.port}/openapi/json`);
-
-// Admin API
-const adminApp = new Hono();
-adminApp.use(requestLogger);
-adminApp.get('/', (c) => c.text('Admin API index'));
-adminApp.get('/admin', (c) => c.text('Admin API'));
-
-const adminServer = Bun.serve({
-  port: 3001,
-  fetch: adminApp.fetch,
-});
-console.log(`Admin API running at http://${adminServer.hostname}:${adminServer.port}`);

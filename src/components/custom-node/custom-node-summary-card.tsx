@@ -5,11 +5,11 @@ import {
   useDecisionGraphState,
   GraphNode,
 } from '@gorules/jdm-editor';
-import { Button, Typography, theme } from 'antd';
 import React from 'react';
 
 import { parseOperatorArgs } from '../../lib/custom-node-registry';
 import type { CustomFunctionTool, CustomNodeConfig } from '../../lib/custom-node-types';
+import { Button } from '../ui/button';
 import css from './custom-node.module.css';
 
 type CustomNodeSummaryCardProps = MinimalNodeProps & {
@@ -25,7 +25,6 @@ export const CustomNodeSummaryCard: React.FC<CustomNodeSummaryCardProps> = ({
   tool,
 }) => {
   const graphActions = useDecisionGraphActions();
-  const { token } = theme.useToken();
 
   const { config, output } = useDecisionGraphState(({ decisionGraph, simulate }) => ({
     config: (decisionGraph?.nodes ?? []).find((node) => node.id === id)?.content?.config as
@@ -46,13 +45,20 @@ export const CustomNodeSummaryCard: React.FC<CustomNodeSummaryCardProps> = ({
       isSelected={selected}
       noBodyPadding
       actions={[
-        <Button key="edit-expression" type="text" onClick={() => graphActions.openTab(id)}>
+        <Button
+          key="edit-expression"
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 text-xs"
+          onClick={() => graphActions.openTab(id)}
+        >
           编辑表达式
         </Button>,
       ]}
     >
       <div className={css.summary}>
-        <Typography.Text className={css.kind}>{`${tool.namespace}.${tool.name}`}</Typography.Text>
+        <span className={css.kind}>{`${tool.namespace}.${tool.name}`}</span>
         {params.length > 0 ? (
           <div className={css.rows}>
             {params.map(([key, prop], index) => (
@@ -63,19 +69,11 @@ export const CustomNodeSummaryCard: React.FC<CustomNodeSummaryCardProps> = ({
             ))}
           </div>
         ) : (
-          <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-            无参数调用
-          </Typography.Text>
+          <span className="text-xs text-muted-foreground">无参数调用</span>
         )}
         <div className={css.returns}>
-          <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-            {tool.returns.title ?? tool.returns.type ?? 'Any'}
-          </Typography.Text>
-          {output !== undefined && (
-            <Typography.Text className={css.traceValue} style={{ color: token.colorSuccess }}>
-              {JSON.stringify(output)}
-            </Typography.Text>
-          )}
+          <span className="text-xs text-muted-foreground">{tool.returns.title ?? tool.returns.type ?? 'Any'}</span>
+          {output !== undefined && <span className={`${css.traceValue} text-success`}>{JSON.stringify(output)}</span>}
         </div>
       </div>
     </GraphNode>

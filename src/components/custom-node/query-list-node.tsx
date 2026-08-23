@@ -8,7 +8,6 @@ import {
   useDecisionGraphState,
   CodeEditor,
 } from '@gorules/jdm-editor';
-import { Alert, Button, Input, Typography, theme } from 'antd';
 import React, { useEffect, useState } from 'react';
 
 import { Autocomplete as AutocompletePrimitive } from '@base-ui/react/autocomplete';
@@ -17,6 +16,7 @@ import type { CustomNodeConfig, CustomNodeExpression } from '../../lib/custom-no
 import PlusCircleIcon from '../../reui/icons/default/outline/plus-circle';
 import ShieldSearchIcon from '../../reui/icons/default/outline/shield-search';
 import TrashSquareIcon from '../../reui/icons/default/outline/trash-square';
+import { Alert, AlertDescription, AlertTitle } from '../reui/alert';
 import {
   Autocomplete,
   AutocompleteContent,
@@ -26,6 +26,8 @@ import {
   AutocompleteStatus,
 } from '../reui/autocomplete';
 import { Badge } from '../reui/badge';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import css from './custom-node.module.css';
 
 interface ListOption {
@@ -169,19 +171,23 @@ const QueryInstanceEditor: React.FC<QueryInstanceEditorProps> = ({ expr, onChang
         placeholder="Zen 表达式，如 input.phone"
         maxRows={3}
       />
-      <Input
-        addonBefore="输出键"
-        placeholder="result"
-        value={expr.key}
-        onChange={(event) => onChange({ ...expr, key: event.target.value })}
-      />
-      {listName && listOption && (
-        <Alert
-          type="info"
-          showIcon
-          message={`命中名单 ${listName}(${listOption.size} 条)`}
-          description="执行时以服务端名单为准。"
+      <div className="flex h-8 items-center overflow-hidden rounded-md border border-input bg-transparent dark:bg-input/30">
+        <span className="h-full shrink-0 border-r border-input bg-muted/50 px-2 leading-8 text-xs text-muted-foreground">
+          输出键
+        </span>
+        <Input
+          className="h-8 rounded-none border-0 bg-transparent text-xs shadow-none focus-visible:border-0 focus-visible:ring-0"
+          placeholder="result"
+          value={expr.key}
+          onChange={(event) => onChange({ ...expr, key: event.target.value })}
         />
+      </div>
+      {listName && listOption && (
+        <Alert variant="info">
+          <ShieldSearchIcon />
+          <AlertTitle>{`命中名单 ${listName}(${listOption.size} 条)`}</AlertTitle>
+          <AlertDescription>执行时以服务端名单为准。</AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -197,17 +203,15 @@ interface QueryListRowProps {
 }
 
 const QueryListRow: React.FC<QueryListRowProps> = ({ index, expr, selected, hit, onSelect, onRemove }) => {
-  const { token } = theme.useToken();
   const { listName } = parseExpr(expr);
 
   return (
     <div
-      className={`${css.listRow}${selected ? ` ${css.listRowSelected}` : ''}`}
-      style={selected ? { backgroundColor: token.colorPrimaryBg } : undefined}
+      className={`${css.listRow}${selected ? ` ${css.listRowSelected}` : ''}${selected ? ' bg-primary/10' : ''}`}
       onClick={onSelect}
     >
       <div className={css.listRowHeader}>
-        <Typography.Text style={{ fontSize: token.fontSizeSM }}>查询 {index + 1}</Typography.Text>
+        <span className="text-xs font-medium">查询 {index + 1}</span>
         <div className={css.listRowActions}>
           {hit !== undefined && (
             <Badge variant={hit ? 'success' : 'secondary'} size="xs" radius="full">
@@ -215,14 +219,18 @@ const QueryListRow: React.FC<QueryListRowProps> = ({ index, expr, selected, hit,
             </Badge>
           )}
           <Button
-            type="text"
-            size="small"
-            icon={<TrashSquareIcon className="size-4" />}
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            aria-label="删除查询"
             onClick={(event) => {
               event.stopPropagation();
               onRemove();
             }}
-          />
+          >
+            <TrashSquareIcon />
+          </Button>
         </div>
       </div>
       <div className={css.listRowValue}>{listName || '未选择'}</div>
@@ -282,7 +290,14 @@ export const QueryListTab: React.FC<{ id: string }> = ({ id }) => {
           ))}
         </div>
         <div className={css.listAdd}>
-          <Button type="dashed" block icon={<PlusCircleIcon className="size-4" />} onClick={addQuery}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 w-full border-dashed text-xs"
+            onClick={addQuery}
+          >
+            <PlusCircleIcon />
             添加查询
           </Button>
         </div>
@@ -290,9 +305,9 @@ export const QueryListTab: React.FC<{ id: string }> = ({ id }) => {
       <div className={css.tabDetail}>
         {selected ? (
           <div className={css.form}>
-            <Typography.Text style={{ fontSize: 12 }}>
+            <span className="text-xs text-muted-foreground">
               查询 {selectedIndex + 1} · 输出键：{selected.key}
-            </Typography.Text>
+            </span>
             <QueryInstanceEditor
               key={selected.id}
               expr={selected}
@@ -304,9 +319,7 @@ export const QueryListTab: React.FC<{ id: string }> = ({ id }) => {
             />
           </div>
         ) : (
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            尚未配置查询，点击左侧「添加查询」。
-          </Typography.Text>
+          <span className="text-xs text-muted-foreground">尚未配置查询，点击左侧「添加查询」。</span>
         )}
       </div>
     </div>
@@ -339,13 +352,20 @@ const QueryListNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpe
       isSelected={selected}
       noBodyPadding
       actions={[
-        <Button key="edit-query-list" type="text" onClick={() => graphActions.openTab(id)}>
+        <Button
+          key="edit-query-list"
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 text-xs"
+          onClick={() => graphActions.openTab(id)}
+        >
           编辑
         </Button>,
       ]}
     >
       <div className={css.summary}>
-        <Typography.Text className={css.kind}>risk.query_list</Typography.Text>
+        <span className={css.kind}>risk.query_list</span>
         <div className={css.rows}>
           {expressions.length === 0 && (
             <div className={css.row}>
@@ -369,10 +389,8 @@ const QueryListNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpe
           })}
         </div>
         <div className={css.returns}>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            查询次数
-          </Typography.Text>
-          <Typography.Text style={{ fontSize: 12 }}>{expressions.length}</Typography.Text>
+          <span className="text-xs text-muted-foreground">查询次数</span>
+          <span className="text-xs">{expressions.length}</span>
         </div>
       </div>
     </GraphNode>

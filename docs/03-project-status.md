@@ -214,6 +214,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule 分支变更摘要
 
+**最新变更(2026-08-23，第四批：crypto 节点 UX 改造)：**
+- 摘要方式改为 ReUI Cascader 两级级联(普通摘要/HMAC 签名 × MD5/SHA1/SHA256/SHA512)，模式由显式选择驱动，选中 HMAC 才显示密钥输入框(必填)；旧图「secret 非空即 HMAC」推导兼容，零迁移
+- 输出编码改 shadcn ToggleGroup 三段互斥分段按钮(HEX/Base64/Base64URL)，HEX 大写 Switch 保留
+- 协议库新增 `deriveCryptoMode`/`applyCryptoMode`(切回普通摘要强制清空密钥槽位)，单测 +3 至 12；主仓测试基线 81 pass
+- 引入 `@reui/cascader` 组件族与 toggle-group/spinner，新增依赖 @tanstack/react-virtual、@radix-ui/react-toggle(-group)；cascader 源码按 React18 类型修补 ref 只读冲突(cascader.tsx/cascader-footer.tsx)
+
 **最新变更(2026-08-23，第三批：crypto 自定义节点)：**
 - 新增 `contrib.crypto` 摘要签名节点(引擎+前端全链路)：zen-rule 注册 `crypto` UDF(md5/sha1/sha256/sha512，secret 非空启用 HMAC，hex/base64/base64url 编码，upper 大写 hex；非法值宽容回退不抛异常)，Bun.CryptoHasher 原生实现零新依赖，标准向量测试 7 pass
 - 前端双栏编辑器(实例行列表+详情表单)：算法/编码 Select、密钥 CodeEditor、HEX 大写 Switch、多实例支持；表达式协议 `['crypto', input, "algorithm", secret?, "encoding"?, upper?]` 变长尾参，抽取至 `src/lib/crypto-protocol.ts`(9 单测)

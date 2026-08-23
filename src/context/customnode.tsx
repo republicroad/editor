@@ -1,4 +1,4 @@
-import { ApartmentOutlined, ApiOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { ChevronLeft, ChevronRight, Network, Plug } from 'lucide-react';
 import { createJdmNode } from '@gorules/jdm-editor';
 
 export const customNodes = [
@@ -6,7 +6,7 @@ export const customNodes = [
     kind: 'counter',
     displayName: 'counter',
     group: 'counter',
-    icon: <ApartmentOutlined />,
+    icon: <Network />,
     shortDescription: 'Used for counter',
   }),
   createJdmNode({
@@ -31,14 +31,14 @@ export const customNodes = [
     kind: 'rightHandleNode',
     group: 'integrations',
     displayName: 'Right Handle',
-    icon: <RightOutlined />,
+    icon: <ChevronRight />,
     handleLeft: false,
   }),
   createJdmNode({
     kind: 'leftHandleNode',
     group: 'integrations',
     displayName: 'Left Handle',
-    icon: <LeftOutlined />,
+    icon: <ChevronLeft />,
     handleRight: false,
   }),
   createJdmNode({
@@ -46,7 +46,7 @@ export const customNodes = [
     group: 'inputs',
     displayName: 'Inputs Form',
     shortDescription: 'With inputs map form',
-    icon: <ApiOutlined />,
+    icon: <Plug />,
     inputs: [
       {
         control: 'text',

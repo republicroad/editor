@@ -44,6 +44,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { Switch } from '../ui/switch';
+import { Hint } from './key-value-editor';
 import css from './custom-node.module.css';
 
 const KIND = 'contrib.crypto';
@@ -237,11 +238,12 @@ interface CryptoRowProps {
   index: number;
   expr: CustomNodeExpression;
   selected: boolean;
+  result?: string;
   onSelect: () => void;
   onRemove: () => void;
 }
 
-const CryptoRow: React.FC<CryptoRowProps> = ({ index, expr, selected, onSelect, onRemove }) => {
+const CryptoRow: React.FC<CryptoRowProps> = ({ index, expr, selected, result, onSelect, onRemove }) => {
   const { algorithm, secretExpr } = parseCrypto(expr);
   const mode = deriveCryptoMode(secretExpr);
 
@@ -253,6 +255,13 @@ const CryptoRow: React.FC<CryptoRowProps> = ({ index, expr, selected, onSelect, 
       <div className={css.listRowHeader}>
         <span className="text-xs font-medium">摘要 {index + 1}</span>
         <div className={css.listRowActions}>
+          {result && (
+            <Hint label={result}>
+              <Badge variant="success" size="xs" radius="full" className="max-w-20 truncate font-mono">
+                {result.length > 8 ? `${result.slice(0, 8)}…` : result}
+              </Badge>
+            </Hint>
+          )}
           <Badge variant={mode === 'hmac' ? 'info' : 'secondary'} size="xs" radius="full">
             {MODE_LABELS[mode]}
           </Badge>
@@ -279,6 +288,8 @@ const CryptoRow: React.FC<CryptoRowProps> = ({ index, expr, selected, onSelect, 
 export const CryptoTab: React.FC<{ id: string }> = ({ id }) => {
   const graphActions = useDecisionGraphActions();
   const config = useNodeConfig(id);
+  const output = useDecisionGraphState(({ simulate }) => simulate?.result?.trace?.[id]?.output);
+  const outputs = (output ?? {}) as Record<string, unknown>;
   const expressions = config?.expressions ?? [];
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -333,6 +344,7 @@ export const CryptoTab: React.FC<{ id: string }> = ({ id }) => {
               index={index}
               expr={expr}
               selected={index === selectedIndex}
+              result={typeof outputs[expr.key] === 'string' ? (outputs[expr.key] as string) : undefined}
               onSelect={() => setSelectedIndex(index)}
               onRemove={() => removeDigest(index)}
             />
@@ -383,11 +395,17 @@ const CryptoNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpecif
 }) => {
   const graphActions = useDecisionGraphActions();
 
-  const config = useDecisionGraphState(({ decisionGraph }) => {
-    return (decisionGraph?.nodes ?? []).find((node) => node.id === id)?.content?.config as CustomNodeConfig | undefined;
+  const config = useDecisionGraphState(({ decisionGraph, simulate }) => {
+    return {
+      config: (decisionGraph?.nodes ?? []).find((node) => node.id === id)?.content?.config as
+        | CustomNodeConfig
+        | undefined,
+      output: simulate?.result?.trace?.[id]?.output as Record<string, unknown> | undefined,
+    };
   });
 
-  const expressions = config?.expressions ?? [];
+  const expressions = config?.config?.expressions ?? [];
+  const outputs = config?.output ?? {};
 
   return (
     <GraphNode
@@ -420,10 +438,16 @@ const CryptoNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpecif
           {expressions.map((expr, index) => {
             const { algorithm, secretExpr } = parseCrypto(expr);
             const mode = deriveCryptoMode(secretExpr);
+            const result = outputs[expr.key];
             return (
               <div className={css.row} key={expr.id}>
                 <span className={css.rowKey}>摘要 {index + 1}</span>
                 <span className={css.rowValue}>{ALGORITHM_LABELS[algorithm]}</span>
+                {typeof result === 'string' && (
+                  <Badge variant="success" size="xs" radius="full" className="max-w-16 truncate font-mono">
+                    {result.length > 6 ? `${result.slice(0, 6)}…` : result}
+                  </Badge>
+                )}
                 <Badge variant={mode === 'hmac' ? 'info' : 'secondary'} size="xs" radius="full">
                   {MODE_LABELS[mode]}
                 </Badge>

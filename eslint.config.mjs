@@ -60,4 +60,12 @@ export default defineConfig([
       },
     },
   },
+  {
+    // vendored from @reui registry: shadcn CLI 落盘文件，不做源码级 lint 约束
+    files: ['src/components/reui/cascader/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ]);

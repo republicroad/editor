@@ -8,14 +8,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
-// 反射定位 monaco-editor 的 package.json，读取其 version 生成版本化静态路径（与 src/lib/monaco.ts 单一来源，见下方 define）。
+// 反射定位 monaco-editor 的 package.json，读取其 version 生成版本化静态路径(与 src/lib/monaco.ts 单一来源，见下方 define)。
 // 说明：
-//  - monaco-editor 0.52.x 无 exports 且 main 为空（仅 module），Node 下裸名 'monaco-editor' 解析失败，
-//    但任意子路径可直接解析；0.56.x 起改为 exports map（不导出 './package.json'，会被 catch-all "./*" 改写），
+//  - monaco-editor 0.52.x 无 exports 且 main 为空(仅 module)，Node 下裸名 'monaco-editor' 解析失败，
+//    但任意子路径可直接解析；0.56.x 起改为 exports map(不导出 './package.json'，会被 catch-all "./*" 改写)，
 //    裸名可解析但 'esm/...' 子路径会被改写。故按序尝试裸名 / ESM 入口。
 //  - 拿到包内真实文件后，自入口向上逐级找最近的 package.json。
-//    刻意不依赖 node:module.findPackageJSON（需 Node ≥22.14.0，且 bun 1.x 的 node:module 未实现），
-//    因此最低兼容 Node ≥18（与 package.json engines.node 一致），bun 亦可用。
+//    刻意不依赖 node:module.findPackageJSON(需 Node ≥22.14.0，且 bun 1.x 的 node:module 未实现)，
+//    因此最低兼容 Node ≥18(与 package.json engines.node 一致)，bun 亦可用。
 const require = createRequire(import.meta.url);
 
 function resolveMonacoEntry(): string {

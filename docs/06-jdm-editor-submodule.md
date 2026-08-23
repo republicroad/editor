@@ -1,6 +1,6 @@
 # jdm-editor 子仓库文档
 
-> 本文档详细描述 `jdm-editor` 子模块的架构、组件体系，以及 zrule（当前开发分支）/ opencode 分支与 master 分支的差异分析。
+> 本文档详细描述 `jdm-editor` 子模块的架构、组件体系，以及 zrule(当前开发分支)/ opencode 分支与 master 分支的差异分析。
 
 ---
 
@@ -11,7 +11,7 @@
 | 项目 | 值 |
 |------|-----|
 | 仓库名 | `@gorules/jdm-monorepo` |
-| 包管理 | 本地默认 **bun**（root `package.json` 的 `workspaces` 字段）；保留 `pnpm-workspace.yaml` + Lerna 与上游对齐 |
+| 包管理 | 本地默认 **bun**(root `package.json` 的 `workspaces` 字段)；保留 `pnpm-workspace.yaml` + Lerna 与上游对齐 |
 | 当前版本 | v1.52.0 |
 | 开源协议 | MIT |
 | 上游仓库 | https://github.com/gorules/jdm-editor |
@@ -25,15 +25,15 @@ jdm-editor/packages/
 ```
 
 > zrule 分支已与 opencode 对齐：`lezer-zen`、`lezer-zen-template`、`zen-engine-wasm` 三个库不再随仓库源码维护，
-> 改为外部 npm 固定版本依赖（见 §3.6「单独构建与发布」）。
+> 改为外部 npm 固定版本依赖(见 §3.6「单独构建与发布」)。
 
 ### 1.3 分支状态
 
 | 分支 | 说明 | 与 master 差异 |
 |------|------|----------------|
 | `master` | 上游发布分支 | 基准 |
-| `zrule` | **当前分支**（外部化改造 + 前后端 TS monorepo 开发分支） | 基于 master；单包 workspace，三库外部 npm 依赖 |
-| `opencode` | 定制化开发分支（历史，功能已并入 zrule） | +14,485 / -4,235 行，139 文件 |
+| `zrule` | **当前分支**(外部化改造 + 前后端 TS monorepo 开发分支) | 基于 master；单包 workspace，三库外部 npm 依赖 |
+| `opencode` | 定制化开发分支(历史，功能已并入 zrule) | +14,485 / -4,235 行，139 文件 |
 | `standalone` | 开源发布分支 | 基于 master |
 | `brde` | 开发分支 | 同 opencode |
 
@@ -46,7 +46,7 @@ jdm-editor/packages/
 ```
 @gorules/jdm-editor
 ├── components/
-│   ├── decision-graph/           # 图编辑器（最复杂，18 个子模块）
+│   ├── decision-graph/           # 图编辑器(最复杂，18 个子模块)
 │   │   ├── dg.tsx                # 主组件 DecisionGraph
 │   │   ├── context/              # Zustand 状态管理
 │   │   │   ├── dg-store.context.tsx   # 图状态 Store
@@ -54,7 +54,7 @@ jdm-editor/packages/
 │   │   ├── nodes/                # 节点系统
 │   │   │   ├── graph-node.tsx         # 基础节点包装
 │   │   │   ├── custom-node/           # 自定义节点支持
-│   │   │   └── specifications/        # 节点规格定义（10 个文件）
+│   │   │   └── specifications/        # 节点规格定义(10 个文件)
 │   │   ├── graph/                # 图渲染
 │   │   │   ├── graph.tsx              # 图主组件
 │   │   │   ├── graph-side-toolbar.tsx # 侧边栏工具栏
@@ -62,9 +62,9 @@ jdm-editor/packages/
 │   │   │   └── tab-*.tsx              # 各类 Tab 实现
 │   │   ├── simulator/            # 模拟执行
 │   │   │   ├── dg-simulator.tsx               # 模拟器 UI
-│   │   │   ├── simulator-request-panel.tsx    # 请求模拟面板（主编排）
-│   │   │   ├── simulator-nodes-panel.tsx      # 节点列表/选择与状态图标（zrule 重构抽出）
-│   │   │   ├── simulator-request-toolbar.tsx  # 工具栏（运行/停止/加载用例/步进）
+│   │   │   ├── simulator-request-panel.tsx    # 请求模拟面板(主编排)
+│   │   │   ├── simulator-nodes-panel.tsx      # 节点列表/选择与状态图标(zrule 重构抽出)
+│   │   │   ├── simulator-request-toolbar.tsx  # 工具栏(运行/停止/加载用例/步进)
 │   │   │   ├── use-request-example-persistence.ts # 用例数据源持久化 hook
 │   │   │   ├── use-simulator-request-binding.ts   # 节点→requestValue 派生链绑定 hook
 │   │   │   ├── use-simulator-request-editor.ts    # requestValue 编辑 + 外部同步 hook
@@ -83,12 +83,12 @@ jdm-editor/packages/
 │   │
 │   ├── expression/               # 表达式编辑器
 │   ├── function/                 # 函数编辑器
-│   ├── code-editor/              # 代码编辑器（CodeMirror/Monaco）
-│   ├── custom-function-table/    # 自定义函数表格（opencode 新增）
-│   ├── request-table/            # 请求表格（opencode 新增）
+│   ├── code-editor/              # 代码编辑器(CodeMirror/Monaco)
+│   ├── custom-function-table/    # 自定义函数表格(opencode 新增)
+│   ├── request-table/            # 请求表格(opencode 新增)
 │   └── shared/                   # 共享 Diff 控件
 │
-├── helpers/                      # 工具模块（19 个文件）
+├── helpers/                      # 工具模块(19 个文件)
 ├── locales/                      # 国际化资源
 ├── theme.tsx                     # 主题系统
 └── index.ts                      # 库入口
@@ -130,7 +130,7 @@ type NodeSpecification<T> = {
 };
 ```
 
-已注册的节点类型（`NodeKind` 枚举）：
+已注册的节点类型(`NodeKind` 枚举)：
 
 | 枚举值 | 类型字符串 | 说明 |
 |--------|------------|------|
@@ -159,7 +159,7 @@ type Diff = {
 };
 ```
 
-共享 Diff 控件（`shared/` 目录）：
+共享 Diff 控件(`shared/` 目录)：
 - `DiffInput` — 差异输入框
 - `DiffRadio` — 差异单选框
 - `DiffSelect` — 差异下拉框
@@ -202,11 +202,11 @@ type Diff = {
 | `helpers/json-schema.ts` | 78 | JSON Schema 转换工具 |
 
 **Request 节点功能**：
-- 请求/响应定义管理（RequestDefinition 类型）
+- 请求/响应定义管理(RequestDefinition 类型)
 - JSON Schema 构建与解析
-- 示例数据源（Example Sources）管理
-- 字段顺序标准化（normalizeRequestDefinitionOrders）
-- 不可见字符清理（normalizeRequestFieldKey）
+- 示例数据源(Example Sources)管理
+- 字段顺序标准化(normalizeRequestDefinitionOrders)
+- 不可见字符清理(normalizeRequestFieldKey)
 - 与 Monaco Editor 集成的 JSON 编辑
 - Excel 上传/下载支持
 
@@ -219,7 +219,7 @@ type Diff = {
 | `nodes/specifications/custom-function.specification.tsx` | 330 | 自定义函数节点规格 |
 | `custom-function-table/index.ts` | - | 模块导出 |
 | `custom-function-table/expression.tsx` | 120 | 函数表达式组件 |
-| `custom-function-table/expression-item.tsx` | 516 | 函数项组件（最复杂） |
+| `custom-function-table/expression-item.tsx` | 516 | 函数项组件(最复杂) |
 | `custom-function-table/expression-list.tsx` | 83 | 列表 |
 | `custom-function-table/expression-command-bar.tsx` | 43 | 命令栏 |
 | `custom-function-table/expression-controller.tsx` | 56 | 控制器 |
@@ -231,15 +231,15 @@ type Diff = {
 
 **自定义函数功能**：
 - 内置 `customNode` 类型，不再依赖外部 `createJdmNode`
-- 代码编辑器集成（Monaco）
+- 代码编辑器集成(Monaco)
 - 函数参数 JSON Schema 定义
 - 返回值 Schema 推断
 - 调试器与日志输出
-- 敏感词库适配（opencode 最新提交）
-- `customFunctions` 透传（`DecisionGraphWrapper` → `TabContents` → renderTab，见 `3f59467`）
-- `expr_asts` 通过 smartSplit 回写；`editExpression` 按钮文案本地化（zh_CN）
+- 敏感词库适配(opencode 最新提交)
+- `customFunctions` 透传(`DecisionGraphWrapper` → `TabContents` → renderTab，见 `3f59467`)
+- `expr_asts` 通过 smartSplit 回写；`editExpression` 按钮文案本地化(zh_CN)
 
-#### 3.2.3 国际化（i18n）系统
+#### 3.2.3 国际化(i18n)系统
 
 新增文件：
 
@@ -247,20 +247,20 @@ type Diff = {
 |------|------|
 | `locales/index.ts` | 模块导出 |
 | `locales/context.tsx` | I18nProvider + useTranslation |
-| `locales/en_US.json` | 英文翻译（280 条） |
-| `locales/zh_CN.json` | 中文翻译（280 条） |
+| `locales/en_US.json` | 英文翻译(280 条) |
+| `locales/zh_CN.json` | 中文翻译(280 条) |
 
 **翻译覆盖范围**：
-- 通用操作（确认、取消、删除、编辑等）
-- 图编辑器（图表、组件、节点等）
-- 决策表（字段、类型、操作等）
-- 模拟器（运行、结果、轨迹等）
+- 通用操作(确认、取消、删除、编辑等)
+- 图编辑器(图表、组件、节点等)
+- 决策表(字段、类型、操作等)
+- 模拟器(运行、结果、轨迹等)
 - 错误消息
 - UI 控件文本
 
 #### 3.2.4 Excel 导入导出增强
 
-修改文件：`helpers/excel.ts`（+115 行）
+修改文件：`helpers/excel.ts`(+115 行)
 
 **增强功能**：
 - 支持更复杂的 Excel 格式
@@ -276,7 +276,7 @@ type Diff = {
 
 ### 3.3 opencode 修改的核心组件
 
-#### 3.3.1 图状态 Store（dg-store.context.tsx）
+#### 3.3.1 图状态 Store(dg-store.context.tsx)
 
 变更：+447 行
 
@@ -286,7 +286,7 @@ type Diff = {
 - 新增 `NodeTypeKind` 常量
 - 支持更多节点类型的序列化/反序列化
 
-#### 3.3.2 Input 节点规格（input.specification.tsx）
+#### 3.3.2 Input 节点规格(input.specification.tsx)
 
 变更：+250 行 / -27 行
 
@@ -296,7 +296,7 @@ type Diff = {
 - 与 Request Schema 系统集成
 - 新增输入字段的类型推断
 
-#### 3.3.3 侧边栏工具栏（graph-side-toolbar.tsx）
+#### 3.3.3 侧边栏工具栏(graph-side-toolbar.tsx)
 
 变更：+257 行
 
@@ -306,7 +306,7 @@ type Diff = {
 - 菜单列表动态加载
 - 侧边栏折叠后样式修复
 
-#### 3.3.4 图渲染组件（graph.tsx）
+#### 3.3.4 图渲染组件(graph.tsx)
 
 变更：+313 行
 
@@ -316,7 +316,7 @@ type Diff = {
 - 自定义函数节点 Tab 集成
 - Tab 切换逻辑优化
 
-#### 3.3.5 请求模拟面板（simulator-request-panel.tsx）
+#### 3.3.5 请求模拟面板(simulator-request-panel.tsx)
 
 变更：+646 行
 
@@ -326,7 +326,7 @@ type Diff = {
 - 用例数据切换功能
 - 数据源与模拟器集成
 
-#### 3.3.6 决策表 Tab（tab-decision-table.tsx）
+#### 3.3.6 决策表 Tab(tab-decision-table.tsx)
 
 变更：+77 行
 
@@ -388,41 +388,41 @@ opencode 分支将以下包改为外部 npm 依赖，移除了源码：
 | `@gorules/lezer-zen-template` | `packages/lezer-zen-template/` | 移除 |
 | `@gorules/zen-engine-wasm` | `packages/zen-engine-wasm/` | npm `@gorules/zen-engine-wasm@^0.23.1` |
 
-> **zrule 分支已对齐该模型**（提交 `e21bd87`）：同样移除三个库源码，但 `@gorules/lezer-zen-template` 仍以
-> npm `0.4.0` 保留依赖（`zen.ts` 实际引用 `@gorules/lezer-zen-template`）。构建改为 bun 原生脚本（见 §3.6）。
+> **zrule 分支已对齐该模型**(提交 `e21bd87`)：同样移除三个库源码，但 `@gorules/lezer-zen-template` 仍以
+> npm `0.4.0` 保留依赖(`zen.ts` 实际引用 `@gorules/lezer-zen-template`)。构建改为 bun 原生脚本(见 §3.6)。
 
 移除的文件：
-- `packages/lezer-zen/` — 完整目录（70 行 CHANGELOG、40 行 package.json、语法文件等）
+- `packages/lezer-zen/` — 完整目录(70 行 CHANGELOG、40 行 package.json、语法文件等)
 - `packages/lezer-zen-template/` — 完整目录
-- `packages/zen-engine-wasm/` — 完整目录（含 Rust 源码、WASM 构建配置等）
+- `packages/zen-engine-wasm/` — 完整目录(含 Rust 源码、WASM 构建配置等)
 
 ### 3.5 配置变更
 
 | 文件 | 变更 |
 |------|------|
-| `package.json` | +1 行（新增依赖） |
-| `bun.lock` | +2,914 行（Bun 锁文件新增） |
+| `package.json` | +1 行(新增依赖) |
+| `bun.lock` | +2,914 行(Bun 锁文件新增) |
 | `pnpm-lock.yaml` | 更新依赖 |
 | `.storybook/main.ts` | +1 行 |
 | `.storybook/manager-head.html` | 修改 |
 | `vite.config.ts` | +3 行 |
 | `public/product_logo.svg` | 新增品牌 Logo |
 
-### 3.6 单独构建与发布（zrule）
+### 3.6 单独构建与发布(zrule)
 
 zrule 分支收敛为单包 workspace，可直接独立构建 `@gorules/jdm-editor`：
 
 ```bash
 cd jdm-editor
-bun install            # 生成 bun.lock（首次）
+bun install            # 生成 bun.lock(首次)
 bun run build          # 等价于 cd packages/jdm-editor && vite build
 bun run typecheck      # 等价于 cd packages/jdm-editor && tsc --noEmit
-bun run test           # 等价于 cd packages/jdm-editor && bun test src（单测基线，见 §3.8）
+bun run test           # 等价于 cd packages/jdm-editor && bun test src(单测基线，见 §3.8)
 ```
 
-产物输出到 `packages/jdm-editor/dist/`（`index.js` / `index.d.ts` / `schema.js` / `schema.d.ts` / `style.css`，ESM + 类型声明）。
+产物输出到 `packages/jdm-editor/dist/`(`index.js` / `index.d.ts` / `schema.js` / `schema.d.ts` / `style.css`，ESM + 类型声明)。
 
-发布到 npm（`prepublishOnly: vite build` 会自动重跑构建）：
+发布到 npm(`prepublishOnly: vite build` 会自动重跑构建)：
 
 ```bash
 cd packages/jdm-editor
@@ -431,60 +431,60 @@ npm publish
 
 要点：
 
-- `vite.config.ts` 已将全部依赖（含三个 `@gorules/*` 包）external 化，消费方需自行安装它们（均来自 npm registry）。
+- `vite.config.ts` 已将全部依赖(含三个 `@gorules/*` 包)external 化，消费方需自行安装它们(均来自 npm registry)。
 - 三个 `@gorules` 包固定版本：`@gorules/lezer-zen@0.8.1`、`@gorules/lezer-zen-template@0.4.0`、`@gorules/zen-engine-wasm@^0.23.1`。
-- npm 版 `@gorules/lezer-zen` / `@gorules/lezer-zen-template` 不含类型声明，由 `src/lezer-zen.d.ts` 垫片提供（保留勿删）。
-- root `package.json` 同时保留 `pnpm-workspace.yaml` 与 `lerna.json`：pnpm 环境优先读 yaml，bun 读 `workspaces` 字段，两者声明一致（`packages/*`），可并存。多包发布场景（有 pnpm 时）仍可用 `npx lerna publish`。
+- npm 版 `@gorules/lezer-zen` / `@gorules/lezer-zen-template` 不含类型声明，由 `src/lezer-zen.d.ts` 垫片提供(保留勿删)。
+- root `package.json` 同时保留 `pnpm-workspace.yaml` 与 `lerna.json`：pnpm 环境优先读 yaml，bun 读 `workspaces` 字段，两者声明一致(`packages/*`)，可并存。多包发布场景(有 pnpm 时)仍可用 `npx lerna publish`。
 
-### 3.7 zrule 数组化表达式与 legacy `;;` 迁移（`89dcc30`）
+### 3.7 zrule 数组化表达式与 legacy `;;` 迁移(`89dcc30`)
 
 将自定义函数表达式的 `value` 由 `;;` 分隔字符串升级为 `string | string[]` 数组，并提供旧格式上传自动迁移。
 
 **变更内容：**
 
 - **表达式值类型**：`ExpressionEntry.value` / `CustomNodeExpression.value` 扩展为 `string | string[]`；`expr_asts.value` 为数组。
-- **新增工具函数**（`helpers/utility.ts`）：
+- **新增工具函数**(`helpers/utility.ts`)：
   - `toOperatorExprArray(value)` — 数组原样返回，字符串走 `smartSplit` 拆 `;;`
   - `toOperatorExprString(value)` — 数组 `join(';;')`，字符串原样返回
-  - `toOperatorExprDisplay(value)` — 数组 `JSON.stringify` 展示，字符串原样返回（CodeEditor 输入框）
+  - `toOperatorExprDisplay(value)` — 数组 `JSON.stringify` 展示，字符串原样返回(CodeEditor 输入框)
   - `parseOperatorExprInput(text)` — 编辑器输入解析：`[...]` 合法 JSON 数组原样返回，含 `;;` 拆分为数组，否则返回字符串
   - `normalizeCustomNodeExpressions(nodes)` / `normalizeOperatorExprValue(value)` — 上传/载入时把旧 `;;` 字符串自动迁移为数组
 - **schema 判定**：`isFunctionExpressionValue` 从 `typeof value === 'string' && value.includes(';;')` 扩展为 `Array.isArray(value) || ...`；`getFunctionNameFromValue` 支持数组取首项。
 - **Store 归一化**：`dg-store.context.tsx` 在 `setGraph`/载入图时对 `customNode` 节点的 `expressions` 与 `expr_asts` 调用 `normalizeCustomNodeExpressions`。
-- **编辑器 UI**（`expression-item.tsx`）：CodeEditor 以 JSON 数组形式展示与编辑，`onChange` 经 `parseOperatorExprInput` 写回；函数值构建改为 `string[]`（`buildFunctionValue`）。
-- **Tab 回写**（`tab-custom-function-table.tsx`）：`expr_asts.value` 用 `toOperatorExprArray` 生成数组。
+- **编辑器 UI**(`expression-item.tsx`)：CodeEditor 以 JSON 数组形式展示与编辑，`onChange` 经 `parseOperatorExprInput` 写回；函数值构建改为 `string[]`(`buildFunctionValue`)。
+- **Tab 回写**(`tab-custom-function-table.tsx`)：`expr_asts.value` 用 `toOperatorExprArray` 生成数组。
 
-> 主项目侧配套（`760897e`）：`src/helpers/graph.ts` 新增 `normalizeGraphNodes`，`decision-simple.tsx` 上传/导入 JSON 时调用；`custom-node-registry.tsx` 的 `parseOperatorArgs` 接受数组、`toFunctionCallValue` 返回数组；`custom-node-types.ts` 的 `value` 类型同步为 `string | string[]`；zen-rule `parseOperatorExpr` 支持数组原样返回（新增 `custom_double_semicolon.json` 夹具）。
+> 主项目侧配套(`760897e`)：`src/helpers/graph.ts` 新增 `normalizeGraphNodes`，`decision-simple.tsx` 上传/导入 JSON 时调用；`custom-node-registry.tsx` 的 `parseOperatorArgs` 接受数组、`toFunctionCallValue` 返回数组；`custom-node-types.ts` 的 `value` 类型同步为 `string | string[]`；zen-rule `parseOperatorExpr` 支持数组原样返回(新增 `custom_double_semicolon.json` 夹具)。
 
-### 3.8 模拟器模块化重构与测试基线（`5d73ea6` → `a75fd1e`）
+### 3.8 模拟器模块化重构与测试基线(`5d73ea6` → `a75fd1e`)
 
-将 `tab-request.tsx`（1,952 行）与 `request-schema.ts`（1,236 行）拆分为 `simulator/` 模块目录，职责收敛到单一 Hook / 组件；并建立 bun test 单测基线。
+将 `tab-request.tsx`(1,952 行)与 `request-schema.ts`(1,236 行)拆分为 `simulator/` 模块目录，职责收敛到单一 Hook / 组件；并建立 bun test 单测基线。
 
 **模块职责划分：**
 
 | 模块 | 职责 |
 |------|------|
-| `simulator-request-panel.tsx` | 请求面板主组件（编排） |
-| `simulator-nodes-panel.tsx` | 节点列表 / 选择与状态图标（从 `dg-simulator.tsx` 抽出） |
-| `simulator-request-toolbar.tsx` | 工具栏（运行 / 停止 / 加载用例 / 步进） |
-| `use-request-example-persistence.ts` | 用例数据源持久化（参数对象化，`setRequestExampleData`） |
-| `use-simulator-request-binding.ts` | 派生链绑定：节点 → `requestValue`（`responseExpressionMap` / `CustomOperatorType` / `ExpressionDataType`） |
-| `use-simulator-request-editor.ts` | requestValue 编辑 + 外部同步 + 切源时定义默认值同步（光标保持在末尾） |
+| `simulator-request-panel.tsx` | 请求面板主组件(编排) |
+| `simulator-nodes-panel.tsx` | 节点列表 / 选择与状态图标(从 `dg-simulator.tsx` 抽出) |
+| `simulator-request-toolbar.tsx` | 工具栏(运行 / 停止 / 加载用例 / 步进) |
+| `use-request-example-persistence.ts` | 用例数据源持久化(参数对象化，`setRequestExampleData`) |
+| `use-simulator-request-binding.ts` | 派生链绑定：节点 → `requestValue`(`responseExpressionMap` / `CustomOperatorType` / `ExpressionDataType`) |
+| `use-simulator-request-editor.ts` | requestValue 编辑 + 外部同步 + 切源时定义默认值同步(光标保持在末尾) |
 | `simulation.types.ts` | 模拟相关类型定义 |
 
-**拆分的提交链（`303e169` → `a75fd1e`）：**
+**拆分的提交链(`303e169` → `a75fd1e`)：**
 
 - `303e169`：`tab-request.tsx` / `request-schema.ts` 拆分为模块文件
 - `7133c49` / `10eff3b`：工具栏简化，请求 Tab 编排抽为 `use*` hooks
 - `e254cd7`：抽取 toolbar + 持久化 hook，切源时同步 definition 默认值
 - `6a2fe8d`：工具栏 tooltip 悬停闪烁修复
-- `5d73ea6`：新增 examples 表格视图 + 抽屉编辑器（`NodeKind` 加入 request schema 类型）
+- `5d73ea6`：新增 examples 表格视图 + 抽屉编辑器(`NodeKind` 加入 request schema 类型)
 - `a75fd1e`：抽取 nodes-panel 与 request binding/editor hooks
 
-**测试基线（`f4e972d`）：**
+**测试基线(`f4e972d`)：**
 
-- `@types/bun` + root `test` script（`bun run --cwd packages/jdm-editor test` = `bun test src`）
-- 覆盖 `request-schema` helpers 与 `json-path-extractor`，当前 **21 pass / 0 fail / 30 expect()**（2 个文件）
+- `@types/bun` + root `test` script(`bun run --cwd packages/jdm-editor test` = `bun test src`)
+- 覆盖 `request-schema` helpers 与 `json-path-extractor`，当前 **21 pass / 0 fail / 30 expect()**(2 个文件)
 
 ---
 
@@ -492,7 +492,7 @@ npm publish
 
 opencode 分支共有 **55+ commits**，按功能主题分组如下：
 
-### 4.1 自定义节点系统（迭代开发）
+### 4.1 自定义节点系统(迭代开发)
 
 ```
 cbe6ec9 feat: 编辑器v3版本
@@ -502,7 +502,7 @@ c68c54f refactor: prepare bun workspace monorepo best practice
 
 **演进路径**: v1 基础框架 → v2 功能完善 → v3 生产就绪
 
-### 4.2 Request 节点系统（迭代开发）
+### 4.2 Request 节点系统(迭代开发)
 
 ```
 41eeb03 feat: request node v1
@@ -573,7 +573,7 @@ e583814 fix(editor): 模拟器header添加用例数据切换
 ea0e01f 自定义函数样式修改
 ```
 
-### 4.8 zrule 分支（外部化改造）
+### 4.8 zrule 分支(外部化改造)
 
 ```
 a75fd1e refactor(simulator): extract nodes panel and request binding/editor hooks
@@ -596,7 +596,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 203de98 feat: upgrade simulator request panel with full feature set
 ```
 
-**演进路径**: UserResolver 外部化 → components override → customNode renderTab 路由 → Request 节点改造 → custom function table editor（customFunctions 透传 renderTab）→ 模拟器模块化重构（simulator/ 目录 + use* hooks）→ bun test 单测基线
+**演进路径**: UserResolver 外部化 → components override → customNode renderTab 路由 → Request 节点改造 → custom function table editor(customFunctions 透传 renderTab)→ 模拟器模块化重构(simulator/ 目录 + use* hooks)→ bun test 单测基线
 
 ---
 

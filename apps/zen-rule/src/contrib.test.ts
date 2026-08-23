@@ -41,8 +41,7 @@ afterAll(() => {
   server.stop(true);
 });
 
-const callUdf = async (kwargs: Record<string, unknown>) =>
-  (await httpRequest(kwargs)) as Record<string, unknown>;
+const callUdf = async (kwargs: Record<string, unknown>) => (await httpRequest(kwargs)) as Record<string, unknown>;
 
 describe('http_request udf', () => {
   test('GET 解析 JSON 响应体', async () => {

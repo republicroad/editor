@@ -37,9 +37,7 @@ const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', '
 const HTTP_REQUEST_TIMEOUT_MS = 10_000;
 
 const asRecord = (value: unknown): Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
+  value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
 const httpErrorResult = (error: string) => ({ status: 0, headers: {}, body: null, error });
 
@@ -56,7 +54,7 @@ export const httpRequest = registerUdf('http_request', 'contrib', {
       method: {
         type: 'string',
         title: 'Method',
-        description: 'HTTP 方法（GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS），默认 GET',
+        description: 'HTTP 方法(GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS)，默认 GET',
         default: 'GET',
       },
       headers: {
@@ -69,7 +67,7 @@ export const httpRequest = registerUdf('http_request', 'contrib', {
         type: 'object',
         title: 'Body',
         description:
-          '请求体对象（自动 JSON 序列化并补充 content-type: application/json），GET/HEAD 忽略，空对象视为无请求体',
+          '请求体对象(自动 JSON 序列化并补充 content-type: application/json)，GET/HEAD 忽略，空对象视为无请求体',
         default: null,
       },
     },
@@ -80,7 +78,10 @@ export const httpRequest = registerUdf('http_request', 'contrib', {
   returnsSchema: { type: 'object', title: 'http_request 函数返回', properties: {} },
 })(async function httpRequestUdf(kwargs: Record<string, unknown>) {
   const url = String(kwargs?.url ?? '').trim();
-  const method = (String(kwargs?.method ?? 'GET').trim().toUpperCase() || 'GET');
+  const method =
+    String(kwargs?.method ?? 'GET')
+      .trim()
+      .toUpperCase() || 'GET';
   const rawBody = asRecord(kwargs?.body);
 
   if (!url) {

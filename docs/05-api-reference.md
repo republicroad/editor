@@ -44,7 +44,7 @@ Content-Type: application/json
 | `context` | `Value` | 输入上下文数据 |
 | `content` | `DecisionContent` | JDM 决策图定义 |
 
-**说明（Hono 替代后端）**: `contentType` 为可选字段。前端 `DecisionGraph` 直接发送 `{ nodes, edges }`（不含 `contentType`）时，zen-engine 按默认 `application/vnd.gorules.decision` 处理。
+**说明(Hono 替代后端)**: `contentType` 为可选字段。前端 `DecisionGraph` 直接发送 `{ nodes, edges }`(不含 `contentType`)时，zen-engine 按默认 `application/vnd.gorules.decision` 处理。
 
 **响应体**:
 
@@ -59,7 +59,7 @@ Content-Type: application/json
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `result` | `Value` | 执行结果 |
-| `trace` | `Value` | 执行轨迹（可选） |
+| `trace` | `Value` | 执行轨迹(可选) |
 | `performance` | `string` | 执行耗时 |
 
 **错误响应**:
@@ -77,10 +77,10 @@ Content-Type: application/json
 
 ---
 
-### 1.3 Hono 替代后端（apps/editor）
+### 1.3 Hono 替代后端(apps/editor)
 
-> Bun + Hono（`OpenAPIHono`）实现的替代后端，监听 3000 端口；另起 admin 服务监听 3001。
-> 共享 Rust 主后端的 `/api/simulate` 契约，并额外提供以下端点（全部可交互调试于 Scalar API Reference）。
+> Bun + Hono(`OpenAPIHono`)实现的替代后端，监听 3000 端口；另起 admin 服务监听 3001。
+> 共享 Rust 主后端的 `/api/simulate` 契约，并额外提供以下端点(全部可交互调试于 Scalar API Reference)。
 
 #### 1.3.1 会话查询
 
@@ -88,7 +88,7 @@ Content-Type: application/json
 GET /api/auth/get-session
 ```
 
-**响应体**（better-auth 兼容格式，当前为 Mock 开发用户）:
+**响应体**(better-auth 兼容格式，当前为 Mock 开发用户):
 
 ```json
 {
@@ -115,11 +115,11 @@ GET /api/auth/get-session
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `session` | `object` | 会话对象 |
-| `user` | `object` | 用户对象（前端 `userResolver` 读取 `user.id`） |
+| `user` | `object` | 用户对象(前端 `userResolver` 读取 `user.id`) |
 
 **说明**: 该端点仅存在于 Hono 替代后端。前端 `src/lib/user-resolver.ts` 通过 `authClient.getSession()` 消费；当前为 Mock 开发用户，真实会话/数据库接入待后续。
 
-#### 1.3.2 决策推理（带缓存）
+#### 1.3.2 决策推理(带缓存)
 
 ```
 POST /api/decision
@@ -143,10 +143,10 @@ Content-Type: application/json
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `decisionId` | `string` | 可选，缓存键。命中缓存时复用规则对象 |
-| `content` | `DecisionContent` | 可选（`contentType` 可省略）。未命中缓存或未传 `decisionId` 时用于创建规则 |
+| `content` | `DecisionContent` | 可选(`contentType` 可省略)。未命中缓存或未传 `decisionId` 时用于创建规则 |
 | `context` | `Value` | 推理输入 |
 
-**响应体**: `{ result, trace?, performance? }`（同 `/api/simulate`）。
+**响应体**: `{ result, trace?, performance? }`(同 `/api/simulate`)。
 
 **错误响应**: 未传 `content` 且缓存未命中时返回 `400 { error }`。
 
@@ -156,12 +156,12 @@ Content-Type: application/json
 
 | 端点 | 说明 |
 |------|------|
-| `GET /state` | 返回服务端 store（`input`、`db`、`zenDecisions`） |
-| `GET /input` | 返回 `{ num: 19 }`（自定义函数 schema 占位） |
+| `GET /state` | 返回服务端 store(`input`、`db`、`zenDecisions`) |
+| `GET /input` | 返回 `{ num: 19 }`(自定义函数 schema 占位) |
 | `GET /` | 无 `files` 参数时返回 `public/index.html`；有 `?files` 时返回 public 目录文件列表 HTML |
-| `GET /openapi/json` | OpenAPI 3.0 schema（`app.doc()` 生成） |
+| `GET /openapi/json` | OpenAPI 3.0 schema(`app.doc()` 生成) |
 | `GET /openapi` | Scalar API Reference 交互式文档页 |
-| admin `GET /`、`GET /admin`（3001） | 管理服务 |
+| admin `GET /`、`GET /admin`(3001) | 管理服务 |
 
 **运行日志**: 每个请求打印 `=> 方法 路径` 与 `<= 方法 路径 状态码 耗时`；未处理异常经 `onError` 统一打印堆栈并返回结构化 `{ error }`。
 
@@ -191,7 +191,7 @@ import { DecisionGraph, DecisionGraphRef } from '@gorules/jdm-editor';
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
-| `value` | `DecisionGraphType` | 图数据（nodes + edges） |
+| `value` | `DecisionGraphType` | 图数据(nodes + edges) |
 | `onChange` | `(value: DecisionGraphType) => void` | 数据变更回调 |
 | `mode` | `'dev' \| 'business'` | UI 模式 |
 | `customNodes` | `JdmNode[]` | 自定义节点类型 |
@@ -350,7 +350,7 @@ const nodeType = useNodeType(nodeKind);
 ```typescript
 import { usePersistentState } from '@gorules/jdm-editor';
 
-// React Hook: 持久化状态（localStorage）
+// React Hook: 持久化状态(localStorage)
 const [value, setValue] = usePersistentState('key', defaultValue);
 ```
 
@@ -363,7 +363,7 @@ import { codemirror } from '@gorules/jdm-editor';
 const extensions = codemirror.getExtensions({ ... });
 ```
 
-### 3.5 Request Schema 工具（zrule 开发分支新增）
+### 3.5 Request Schema 工具(zrule 开发分支新增)
 
 ```typescript
 import {
@@ -452,7 +452,7 @@ type Simulation = {
 type JdmUiMode = 'dev' | 'business';
 ```
 
-### 4.7 NodeKind（枚举）
+### 4.7 NodeKind(枚举)
 
 ```typescript
 enum NodeKind {
@@ -472,7 +472,7 @@ enum NodeKind {
 type CustomNodeExpression = {
   id: string;
   key: string;
-  value: string | string[];   // 数组形式（推荐）；旧 `;;` 分隔字符串上传时自动迁移为数组
+  value: string | string[];   // 数组形式(推荐)；旧 `;;` 分隔字符串上传时自动迁移为数组
   type?: string;
   returnSchema?: any;
 };

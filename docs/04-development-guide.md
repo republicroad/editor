@@ -7,7 +7,7 @@
 | 工具 | 版本要求 | 说明 |
 |------|----------|------|
 | Git | 2.30+ | 支持 submodules |
-| Bun | 1.3+ | 包管理与构建（推荐） |
+| Bun | 1.3+ | 包管理与构建(推荐) |
 | pnpm | 10+ | 替代包管理器 |
 | Rust | stable | 后端构建 |
 | Node.js | 18+ | 前端构建 |
@@ -15,7 +15,7 @@
 ### 1.2 克隆项目
 
 ```bash
-# 方式一：直接克隆（推荐，开发分支）
+# 方式一：直接克隆(推荐，开发分支)
 git clone --recurse-submodules --branch zrule https://github.com/republicroad/editor.git
 
 # 方式二：已有仓库，拉取子模块
@@ -28,7 +28,7 @@ git checkout zrule
 ### 1.3 分支切换
 
 ```bash
-# 主项目切换到 zrule 分支（当前开发分支）
+# 主项目切换到 zrule 分支(当前开发分支)
 git checkout zrule
 
 # 子模块切换到 zrule 分支
@@ -41,10 +41,10 @@ git checkout zrule
 
 ## 2. 依赖安装
 
-### 2.1 使用 Bun（推荐）
+### 2.1 使用 Bun(推荐)
 
 ```bash
-# 安装所有依赖（包括子模块工作空间）
+# 安装所有依赖(包括子模块工作空间)
 bun i
 ```
 
@@ -69,12 +69,12 @@ bun run dev
 pnpm dev
 ```
 
-Vite 开发服务器默认运行在 `http://localhost:5173`，支持热模块替换（HMR）。
+Vite 开发服务器默认运行在 `http://localhost:5173`，支持热模块替换(HMR)。
 
 ### 3.2 启动后端
 
 ```bash
-# 方式一：使用 Makefile（推荐，支持文件监听）
+# 方式一：使用 Makefile(推荐，支持文件监听)
 make watch
 
 # 方式二：手动构建运行
@@ -91,16 +91,16 @@ target/debug/editor
 3. 访问 `http://localhost:5173`
 4. 前端通过 Vite 代理将 `/api/*` 请求转发到后端 `localhost:3000`
 
-### 3.4 启动 Hono 规则仿真后端（apps/editor）
+### 3.4 启动 Hono 规则仿真后端(apps/editor)
 
-`apps/editor` 与 `apps/zen-rule` 已纳入根 workspace（`workspaces: ["apps/*", "jdm-editor/packages/*"]`），
+`apps/editor` 与 `apps/zen-rule` 已纳入根 workspace(`workspaces: ["apps/*", "jdm-editor/packages/*"]`)，
 统一使用 bun 管理依赖，`zen-rule` 通过 `workspace:*` 协议被引用，无需 `bun link`。
 
 ```bash
 # 根目录安装全部 workspace 依赖
 bun i
 
-# 启动 apps/editor API 后端（监听 3000，admin 服务 3001）
+# 启动 apps/editor API 后端(监听 3000，admin 服务 3001)
 bun run dev:api
 
 # 可选：运行 zen-rule 冒烟测试 / 类型检查
@@ -108,7 +108,7 @@ bun run test:zen-rule
 bun run typecheck:apps
 ```
 
-OpenAPI 文档（Scalar UI）：http://localhost:3000/openapi
+OpenAPI 文档(Scalar UI)：http://localhost:3000/openapi
 
 ---
 
@@ -125,8 +125,8 @@ bun run test       # 等价于 cd packages/jdm-editor && bun test src
 ```
 
 zrule 分支为单包 workspace：`lezer-zen` / `lezer-zen-template` / `zen-engine-wasm` 已改为外部 npm 依赖，
-根脚本直接委托给 `packages/jdm-editor`（`bun run --cwd packages/jdm-editor <script>`），不再经 Lerna 聚合构建。
-`pnpm-workspace.yaml` 与 `lerna.json` 仍保留以对齐上游（有 pnpm 环境时仍可用 `pnpm build` / `npx lerna publish`）。
+根脚本直接委托给 `packages/jdm-editor`(`bun run --cwd packages/jdm-editor <script>`)，不再经 Lerna 聚合构建。
+`pnpm-workspace.yaml` 与 `lerna.json` 仍保留以对齐上游(有 pnpm 环境时仍可用 `pnpm build` / `npx lerna publish`)。
 
 ### 4.2 Storybook 开发
 
@@ -142,10 +142,10 @@ pnpm storybook
 ```bash
 cd jdm-editor/
 bun run test
-# 等价于 cd packages/jdm-editor && bun test src（bun test v1.3.14，单测基线见 06 文档 §3.8）
+# 等价于 cd packages/jdm-editor && bun test src(bun test v1.3.14，单测基线见 06 文档 §3.8)
 ```
 
-> 说明：根 `test` script 已改为 bun 原生脚本（`bun run --cwd packages/jdm-editor test`）。
+> 说明：根 `test` script 已改为 bun 原生脚本(`bun run --cwd packages/jdm-editor test`)。
 > 历史上 pnpm 时代的 `pnpm test` / `pnpm test:coverage` 脚本已不存在。
 
 ### 4.4 代码格式化
@@ -162,7 +162,7 @@ pnpm format:fix   # 自动修复
 
 ### 5.1 ESLint
 
-项目使用 ESLint flat config（`eslint.config.mjs`），集成：
+项目使用 ESLint flat config(`eslint.config.mjs`)，集成：
 - TypeScript 支持
 - React Hooks 规则
 - React Refresh 规则
@@ -195,9 +195,9 @@ bun run typecheck
 tsc --noEmit
 ```
 
-> 注意：根 `tsconfig.json` 已启用 `noImplicitAny: true`（全项目严格检查，含 paths 映射引入的子模块源码）。
+> 注意：根 `tsconfig.json` 已启用 `noImplicitAny: true`(全项目严格检查，含 paths 映射引入的子模块源码)。
 > `@gorules/lezer-zen` / `@gorules/lezer-zen-template` 两个 npm 包不提供类型声明，其类型由 jdm-editor 子模块的
-> `src/lezer-zen.d.ts`（声明 `parser: LRParser`）提供，并通过 `src/components/code-editor/extensions/zen.ts`
+> `src/lezer-zen.d.ts`(声明 `parser: LRParser`)提供，并通过 `src/components/code-editor/extensions/zen.ts`
 > 顶部的 `/// <reference path="../../../lezer-zen.d.ts" />` 引入，确保根工程与子模块自身的类型检查都能通过。
 
 ---

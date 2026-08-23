@@ -52,7 +52,7 @@
             "url": { "description": "请求地址", "title": "URL", "type": "string" },
             "method": {
               "default": "GET",
-              "description": "HTTP 方法（GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS），默认 GET",
+              "description": "HTTP 方法(GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS)，默认 GET",
               "title": "Method",
               "type": "string"
             },
@@ -64,7 +64,7 @@
             },
             "body": {
               "default": null,
-              "description": "请求体对象（自动 JSON 序列化并补充 content-type: application/json），GET/HEAD 忽略，空对象视为无请求体",
+              "description": "请求体对象(自动 JSON 序列化并补充 content-type: application/json)，GET/HEAD 忽略，空对象视为无请求体",
               "title": "Body",
               "type": "object"
             }

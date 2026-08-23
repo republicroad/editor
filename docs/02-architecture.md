@@ -54,7 +54,7 @@ editor/
 │   │   └── error-message.ts      # 错误处理
 │   └── assets/                   # 静态资源
 │       └── decision-templates.ts # 决策模板
-├── jdm-editor/                   # 核心组件库（git submodule）
+├── jdm-editor/                   # 核心组件库(git submodule)
 ├── backend/                      # Rust/Axum 后端
 │   └── src/main.rs               # 后端入口
 ├── apps/                         # 替代后端
@@ -74,30 +74,30 @@ editor/
 ```
 jdm-editor/
 ├── packages/
-│   └── jdm-editor/               # 核心 React 组件库（@gorules/jdm-editor）
+│   └── jdm-editor/               # 核心 React 组件库(@gorules/jdm-editor)
 │       ├── src/
 │       │   ├── components/       # 所有编辑器组件
-│       │   │   ├── decision-graph/   # 图编辑器（最复杂）
+│       │   │   ├── decision-graph/   # 图编辑器(最复杂)
 │       │   │   ├── decision-table/   # 表格编辑器
 │       │   │   ├── expression/       # 表达式编辑器
 │       │   │   ├── function/         # 函数编辑器
 │       │   │   ├── code-editor/      # 代码编辑器
 │       │   │   ├── custom-function-table/  # 自定义函数表格
 │       │   │   ├── request-table/    # 请求表格
-│       │   │   └── shared/           # 共享组件（Diff 控件）
-│       │   ├── helpers/          # 工具模块（19个文件）
+│       │   │   └── shared/           # 共享组件(Diff 控件)
+│       │   ├── helpers/          # 工具模块(19个文件)
 │       │   ├── locales/          # 国际化资源
 │       │   ├── theme.tsx         # 主题配置
 │       │   └── index.ts          # 库入口
 │       └── package.json          # v1.52.0
-├── Cargo.toml                    # Rust 工作空间（WASM 相关，保留）
-├── pnpm-workspace.yaml           # 与上游对齐（bun 读根 workspaces 字段）
+├── Cargo.toml                    # Rust 工作空间(WASM 相关，保留)
+├── pnpm-workspace.yaml           # 与上游对齐(bun 读根 workspaces 字段)
 ├── lerna.json                    # Lerna 配置
 └── package.json                  # monorepo 配置
 ```
 
-> zrule 分支为单包 workspace：`@gorules/lezer-zen`（0.8.1）、`@gorules/lezer-zen-template`（0.4.0）、
-> `@gorules/zen-engine-wasm`（^0.23.1）三个库已移除源码，改为外部 npm 固定版本依赖。
+> zrule 分支为单包 workspace：`@gorules/lezer-zen`(0.8.1)、`@gorules/lezer-zen-template`(0.4.0)、
+> `@gorules/zen-engine-wasm`(^0.23.1)三个库已移除源码，改为外部 npm 固定版本依赖。
 
 ---
 
@@ -116,7 +116,7 @@ jdm-editor/
 | Zustand | 4.5 | 状态管理 |
 | Immer | 10.1 | 不可变状态 |
 | CodeMirror | 6 | 代码编辑器 |
-| Monaco Editor | 4.7 | 代码编辑器（可选） |
+| Monaco Editor | 4.7 | 代码编辑器(可选) |
 | React Router | 7.13 | 路由 |
 | Graphology | 0.26 | 图数据结构 |
 | Zod | 4.3 | Schema 验证 |
@@ -152,19 +152,19 @@ jdm-editor/
 - **Rust/Axum**: 生产环境主后端
 - **Bun/Hono**: 开发/实验环境替代后端
 
-两者都暴露相同的 `/api/simulate` 端点。Hono 替代后端（`apps/editor`）额外提供：
-- `POST /api/decision`：决策推理（支持按 `decisionId` 缓存规则对象复用）
-- `GET /api/auth/get-session`：会话查询（当前为 Mock 开发用户，better-auth 兼容格式）
+两者都暴露相同的 `/api/simulate` 端点。Hono 替代后端(`apps/editor`)额外提供：
+- `POST /api/decision`：决策推理(支持按 `decisionId` 缓存规则对象复用)
+- `GET /api/auth/get-session`：会话查询(当前为 Mock 开发用户，better-auth 兼容格式)
 - `GET /openapi/json`：OpenAPI schema；`GET /openapi`：Scalar API Reference 文档页
-- `GET /state`、`GET /input`、`GET /?files`（静态目录文件列表）
-- 另起 admin 服务（端口 3001，`GET /`、`GET /admin`）
+- `GET /state`、`GET /input`、`GET /?files`(静态目录文件列表)
+- 另起 admin 服务(端口 3001，`GET /`、`GET /admin`)
 - 每个请求打印方法/路径/状态/耗时日志，未处理异常经 `onError` 统一记录堆栈
 
 ### 4.2 Context Provider 模式
 
 React Context 管理全局状态：
-- `ThemeContext`: 主题偏好（暗色/亮色/自动）
-- `JdmConfigProvider`: 编辑器配置（主题、语言、字典）
+- `ThemeContext`: 主题偏好(暗色/亮色/自动)
+- `JdmConfigProvider`: 编辑器配置(主题、语言、字典)
 - `DictionaryProvider`: 自定义字典
 - `I18nProvider`: 国际化
 
@@ -190,11 +190,11 @@ const customNodes = [
 ```
 editor (bun workspace root, workspaces: ["apps/*", "jdm-editor/packages/*"])
 ├── apps/editor            → Hono API 后端
-├── apps/zen-rule          → zen-engine 自定义函数处理库（workspace:* 被 apps/editor 引用）
-└── jdm-editor/packages/jdm-editor   → @gorules/jdm-editor（workspace:*）
+├── apps/zen-rule          → zen-engine 自定义函数处理库(workspace:* 被 apps/editor 引用)
+└── jdm-editor/packages/jdm-editor   → @gorules/jdm-editor(workspace:*)
 ```
 
-> zrule 分支统一使用 **bun** 管理依赖（单一 `bun.lock`，bun ≥1.3 可识别 pnpm 元数据）。
+> zrule 分支统一使用 **bun** 管理依赖(单一 `bun.lock`，bun ≥1.3 可识别 pnpm 元数据)。
 > `@gorules/lezer-zen`、`@gorules/lezer-zen-template`、`@gorules/zen-engine-wasm` 三个库已外部化为 npm 固定版本依赖，
 > 不再作为源码包维护；`pnpm-workspace.yaml` + `lerna.json` 仍保留与上游对齐。
 
@@ -222,16 +222,16 @@ zen-engine 解析 DecisionContent → 执行 DAG 遍历
 返回 SimulationResult → 前端渲染结果/轨迹
 ```
 
-模拟器前端（jdm-editor 子模块 `simulator/` 目录）职责划分：
+模拟器前端(jdm-editor 子模块 `simulator/` 目录)职责划分：
 
 ```
-SimulatorRequestPanel（编排）
-├── useSimulatorRequestBinding      节点 → requestValue 派生链（responseExpressionMap 等）
+SimulatorRequestPanel(编排)
+├── useSimulatorRequestBinding      节点 → requestValue 派生链(responseExpressionMap 等)
 ├── useSimulatorRequestEditor       requestValue 编辑 + 外部同步 + 切源默认值同步
 ├── useRequestExamplePersistence    用例数据源持久化
 └── SimulatorRequestToolbar         运行 / 停止 / 加载用例 / 步进
 
-SimulatorNodesPanel                  节点列表 / 选择与状态图标（独立于请求面板）
+SimulatorNodesPanel                  节点列表 / 选择与状态图标(独立于请求面板)
 ```
 
 ### 5.3 WASM 客户端执行
@@ -270,7 +270,7 @@ backend/src/main.rs → Cargo build --release → target/release/editor
 ```
 Stage 1: Rust builder → 编译后端二进制
 Stage 2: React builder → 构建前端静态文件
-Stage 3: Debian slim → 运行时（复制二进制 + 静态文件）
+Stage 3: Debian slim → 运行时(复制二进制 + 静态文件)
 ```
 
 ---
@@ -281,7 +281,7 @@ Stage 3: Debian slim → 运行时（复制二进制 + 静态文件）
 
 | 工作流 | 触发条件 | 功能 |
 |--------|----------|------|
-| `validate.yml` | PR / push to master | Bun 流水线（`setup-bun` 1.3.14）：lint + typecheck + typecheck:apps + zen-rule 冒烟测试 + Rust 格式检查 |
+| `validate.yml` | PR / push to master | Bun 流水线(`setup-bun` 1.3.14)：lint + typecheck + typecheck:apps + zen-rule 冒烟测试 + Rust 格式检查 |
 | `semantic-version.yml` | 手动触发 | 自动版本发布 |
 | `build-docker.yml` | release 提交到 master | 构建并推送 Docker 镜像 |
 
@@ -290,4 +290,4 @@ Stage 3: Debian slim → 运行时（复制二进制 + 静态文件）
 - 使用 `semantic-release` 自动管理版本
 - 基于 Conventional Commits 规范
 - 自动生成 CHANGELOG
-- 自动发布到 npm（jdm-editor 包）
+- 自动发布到 npm(jdm-editor 包)

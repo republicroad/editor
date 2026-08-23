@@ -50,6 +50,7 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   useEffect(() => {
     document.body.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', isDarkTheme);
   }, [isDarkTheme]);
 
   const setThemePreference = (preference: ThemePreference) => {

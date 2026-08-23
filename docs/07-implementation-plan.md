@@ -26,20 +26,20 @@
 
 ## 一、总体架构
 
-> **进展注记（2026-08-06）**：步骤 4（dg-wrapper.tsx 启用 components override 机制）与步骤 5（graph.tsx 启用 customNodeRenderer）已由以下提交落地：
-> - 子模块 `3f59467` `feat: custom function table editor for custom node renderTab` —— `customFunctions` 经 `DecisionGraphWrapper` 透传 `TabContents` → `renderTab`（新增 `tab-custom-function-table.tsx`），并新增 `custom-function-table/` 组件（函数下拉、参数编辑器、结果浮层）与 `expression-store.context.tsx`
-> - 主项目 `0292f98` `feat: custom node registry with function mode in decision graph` —— 消费方新增 `custom-node-registry.tsx`（`schemaToCustomNodes`/`fetchCustomNodeSchema`，回退 `custom-node-schema.json`）与 `useCustomNodes` hook，把 schema 中的 `customFunctions` 传入 DecisionGraph
+> **进展注记(2026-08-06)**：步骤 4(dg-wrapper.tsx 启用 components override 机制)与步骤 5(graph.tsx 启用 customNodeRenderer)已由以下提交落地：
+> - 子模块 `3f59467` `feat: custom function table editor for custom node renderTab` —— `customFunctions` 经 `DecisionGraphWrapper` 透传 `TabContents` → `renderTab`(新增 `tab-custom-function-table.tsx`)，并新增 `custom-function-table/` 组件(函数下拉、参数编辑器、结果浮层)与 `expression-store.context.tsx`
+> - 主项目 `0292f98` `feat: custom node registry with function mode in decision graph` —— 消费方新增 `custom-node-registry.tsx`(`schemaToCustomNodes`/`fetchCustomNodeSchema`，回退 `custom-node-schema.json`)与 `useCustomNodes` hook，把 schema 中的 `customFunctions` 传入 DecisionGraph
 >
-> 其中 `customFunctions` 已实际接入（区别于计划中的 `components`/`specOverrides` 路径）。步骤 1-3 的 UserResolver + store 改造见 `5d16d11`/`e188084` 等提交，已落地。
+> 其中 `customFunctions` 已实际接入(区别于计划中的 `components`/`specOverrides` 路径)。步骤 1-3 的 UserResolver + store 改造见 `5d16d11`/`e188084` 等提交，已落地。
 
-> **进展注记（2026-08-07）**：自定义函数表达式外部化进一步落地 —— 表达式值升级为数组形式（`string | string[]`），
-> 并兼容旧 `;;` 分隔字符串上传迁移。主项目 `760897e`（`src/helpers/graph.ts` `normalizeGraphNodes` + `custom-node-registry`/`custom-node-types` 数组化），
-> 子模块 `89dcc30`（`utility.ts` 新增 `toOperatorExprArray/String/Display`、`parseOperatorExprInput`、`normalizeCustomNodeExpressions`，
-> `isFunctionExpressionValue` 接受数组，`dg-store` 载入图时归一化）。详见 `docs/06-jdm-editor-submodule.md` §3.7。
+> **进展注记(2026-08-07)**：自定义函数表达式外部化进一步落地 —— 表达式值升级为数组形式(`string | string[]`)，
+> 并兼容旧 `;;` 分隔字符串上传迁移。主项目 `760897e`(`src/helpers/graph.ts` `normalizeGraphNodes` + `custom-node-registry`/`custom-node-types` 数组化)，
+> 子模块 `89dcc30`(`utility.ts` 新增 `toOperatorExprArray/String/Display`、`parseOperatorExprInput`、`normalizeCustomNodeExpressions`，
+> `isFunctionExpressionValue` 接受数组，`dg-store` 载入图时归一化)。详见 `docs/06-jdm-editor-submodule.md` §3.7。
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                     消费方（GoRules Editor）                       │
+│                     消费方(GoRules Editor)                       │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  Auth: better-auth → authClient.useSession()               │  │
 │  │  UserResolver: createBetterAuthResolver()                  │  │
@@ -102,7 +102,7 @@
 | 位置 | Input 节点 | Custom 节点 |
 |------|-----------|-------------|
 | 文件 | `graph.tsx` L304-306 | `graph.tsx` L309-315 |
-| 现状 | ⚠️ 内容结构过于简单（仅 `{name: ''}`） | ✅ 正确 |
+| 现状 | ⚠️ 内容结构过于简单(仅 `{name: ''}`) | ✅ 正确 |
 
 ### 2.5 数据 Schema
 
@@ -123,15 +123,15 @@
 
 | 维度 | `customNodes` prop | `components` prop |
 |------|-------------------|-------------------|
-| 目标类型 | 仅 `customNode` | **任意类型**（含内置） |
+| 目标类型 | 仅 `customNode` | **任意类型**(含内置) |
 | `renderNode` | ✅ 支持 | ✅ 支持 |
-| `renderTab` | ❌ 不支持（Custom 节点也无法覆盖） | ✅ 支持 |
+| `renderTab` | ❌ 不支持(Custom 节点也无法覆盖) | ✅ 支持 |
 | `generateNode` | ✅ 支持 | ✅ 支持 |
 | 侧边栏分组 | ✅ 支持 | ⚠️ 归入 `extended` 组 |
 
 **结论**：两种路径各有优劣。最佳方案是同时修复两条路径：
 - `customNodes`：补全 `renderTab` 路由
-- `components`：统一 override 机制（与 Input 节点共用同一套代码）
+- `components`：统一 override 机制(与 Input 节点共用同一套代码)
 
 ---
 
@@ -319,7 +319,7 @@ const TabContents = React.FC<{
 
 **文件**: `jdm-editor/packages/jdm-editor/src/components/decision-graph/nodes/specifications/specification-types.ts`
 
-`renderTab` 的参数类型保持不变（仍包含 `user`），因为这是 `NodeSpecification` 的公共 API，消费方的自定义 Tab 可能需要这些值。
+`renderTab` 的参数类型保持不变(仍包含 `user`)，因为这是 `NodeSpecification` 的公共 API，消费方的自定义 Tab 可能需要这些值。
 
 ---
 
@@ -432,7 +432,7 @@ export { functionSpecification } from './nodes/specifications/function.specifica
 
 ### 步骤 7：编辑器项目 — 安装 better-auth 并配置
 
-> **状态注记（2026-08-03）**：本步骤客户端部分已落地（`auth-client.ts`、`user-resolver.ts`、`decision-simple.tsx` 均已实现）。服务端由 Hono 替代后端（`apps/editor`）的 `GET /api/auth/get-session` **Mock 端点**衔接（返回固定开发用户，better-auth 兼容格式）；真实会话/数据库接入为待办。
+> **状态注记(2026-08-03)**：本步骤客户端部分已落地(`auth-client.ts`、`user-resolver.ts`、`decision-simple.tsx` 均已实现)。服务端由 Hono 替代后端(`apps/editor`)的 `GET /api/auth/get-session` **Mock 端点**衔接(返回固定开发用户，better-auth 兼容格式)；真实会话/数据库接入为待办。
 
 #### 7a. 安装依赖
 
@@ -501,13 +501,13 @@ const userResolver = createBetterAuthResolver();
 
 ### 步骤 8：Node 元数据标记增强
 
-由于 `user` 现在从 store 获取，节点创建和编辑时的 metadata 标记逻辑**无需改动**（步骤 3 中 graph.tsx 的 `addNodeInner` 已改为从 store 读取）。
+由于 `user` 现在从 store 获取，节点创建和编辑时的 metadata 标记逻辑**无需改动**(步骤 3 中 graph.tsx 的 `addNodeInner` 已改为从 store 读取)。
 
 ---
 
 ## 四、文件变更清单
 
-### jdm-editor 库（7 个文件）
+### jdm-editor 库(7 个文件)
 
 | 文件 | 变更类型 | 说明 |
 |------|---------|------|
@@ -519,7 +519,7 @@ const userResolver = createBetterAuthResolver();
 | `graph-side-toolbar.tsx` | 修改 | 从 store 读取 `user` |
 | `index.ts` | 修改 | 导出 `UserResolver` 类型，导出各 specification |
 
-### 编辑器项目（3 个新文件 + 1 个修改）
+### 编辑器项目(3 个新文件 + 1 个修改)
 
 | 文件 | 变更类型 | 说明 |
 |------|---------|------|
@@ -535,7 +535,7 @@ const userResolver = createBetterAuthResolver();
 | 维度 | 策略 |
 |------|------|
 | **user props** | 删除，替换为 `userResolver`。**破坏性变更**，需在 CHANGELOG 中标注 |
-| **renderTab 签名** | 保留 `user` 参数（从 store 读取后传入），消费方自定义 Tab 无需改动 |
+| **renderTab 签名** | 保留 `user` 参数(从 store 读取后传入)，消费方自定义 Tab 无需改动 |
 | **config.meta 写入** | 逻辑不变，只是数据来源从 prop 变为 store |
 | **没有 userResolver 的消费方** | `user` 默认 `''`，行为与之前一致 |
 
@@ -563,7 +563,7 @@ const userResolver = createBetterAuthResolver();
 
 ## 七、数据迁移
 
-现有 `customFunctionNode` 数据需要转换为 `customNode` 格式（如果在阶段二中启用了 `customNodeRenderer`）：
+现有 `customFunctionNode` 数据需要转换为 `customNode` 格式(如果在阶段二中启用了 `customNodeRenderer`)：
 
 ```typescript
 // 旧格式

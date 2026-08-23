@@ -179,7 +179,7 @@ const QueryInstanceEditor: React.FC<QueryInstanceEditorProps> = ({ expr, onChang
         <Alert
           type="info"
           showIcon
-          message={`命中名单 ${listName}（${listOption.size} 条）`}
+          message={`命中名单 ${listName}(${listOption.size} 条)`}
           description="执行时以服务端名单为准。"
         />
       )}
@@ -383,7 +383,7 @@ export const queryListNode = createJdmNode({
   kind: 'risk.query_list',
   displayName: '查询名单',
   group: '风险名单',
-  shortDescription: '在服务端名单中查询某个值（支持多个查询实例）',
+  shortDescription: '在服务端名单中查询某个值(支持多个查询实例)',
   icon: <ShieldSearchIcon className="size-4" />,
   generateNode: ({ index }) => ({
     name: `risk.query_list${index}`,

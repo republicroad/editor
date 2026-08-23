@@ -20,6 +20,7 @@ import { Badge } from '../reui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import css from './custom-node.module.css';
 
@@ -66,6 +67,10 @@ interface HttpRequestFields {
   method: HttpMethod;
   headersExpr: string;
   bodyExpr: string;
+  paramsExpr: string;
+  timeoutExpr: string;
+  retryExpr: string;
+  authExpr: string;
 }
 
 const parseHttpRequest = (expr?: CustomNodeExpression): HttpRequestFields => {
@@ -75,16 +80,36 @@ const parseHttpRequest = (expr?: CustomNodeExpression): HttpRequestFields => {
     method: normalizeMethod(unquote(args[2] ?? '')),
     headersExpr: args[3] ?? '',
     bodyExpr: args[4] ?? '',
+    paramsExpr: args[5] ?? '',
+    timeoutExpr: args[6] ?? '',
+    retryExpr: args[7] ?? '',
+    authExpr: args[8] ?? '',
   };
 };
 
-const toHttpRequestValue = (fields: HttpRequestFields): string[] => [
-  UDF_FUNC,
-  fields.urlExpr,
-  quote(fields.method),
-  fields.headersExpr,
-  fields.bodyExpr,
-];
+/**
+ * 变长序列化：可选尾部参数(params/timeout/retry/auth)按位置占位，末尾连续空值截断省略；
+ * 中段空值保留空串占位以保证后续参数位置正确，后端对空串回退默认值。
+ */
+const toHttpRequestValue = (fields: HttpRequestFields): string[] => {
+  const tail = [fields.paramsExpr, fields.timeoutExpr, fields.retryExpr, fields.authExpr];
+  let end = tail.length;
+  while (end > 0 && tail[end - 1].trim() === '') {
+    end -= 1;
+  }
+  return [UDF_FUNC, fields.urlExpr, quote(fields.method), fields.headersExpr, fields.bodyExpr, ...tail.slice(0, end)];
+};
+
+type AuthMode = 'none' | 'basic' | 'bearer';
+
+interface AuthState {
+  mode: AuthMode;
+  username: string;
+  passwordExpr: string;
+  tokenExpr: string;
+}
+
+const EMPTY_AUTH: AuthState = { mode: 'none', username: '', passwordExpr: '', tokenExpr: '' };
 
 const nextExprKey = (list: CustomNodeExpression[]): string => {
   const used = new Set(list.map((item) => item.key));
@@ -148,7 +173,7 @@ const StatusBadge: React.FC<{ result?: RequestResult }> = ({ result }) => {
   );
 };
 
-interface HeaderRow {
+interface KeyValueRow {
   key: string;
   valueExpr: string;
 }
@@ -255,7 +280,7 @@ const unquoteHeaderKey = (raw: string): string | null => {
   return null;
 };
 
-export const parseHeaderRows = (expr: string): HeaderRow[] | null => {
+export const parseObjectLiteralRows = (expr: string): KeyValueRow[] | null => {
   const trimmed = expr.trim();
   if (!trimmed) {
     return [];
@@ -267,7 +292,7 @@ export const parseHeaderRows = (expr: string): HeaderRow[] | null => {
   if (!inner) {
     return [];
   }
-  const rows: HeaderRow[] = [];
+  const rows: KeyValueRow[] = [];
   for (const part of splitTopLevel(inner, ',')) {
     const piece = part.trim();
     if (!piece) {
@@ -287,7 +312,7 @@ export const parseHeaderRows = (expr: string): HeaderRow[] | null => {
   return rows;
 };
 
-const serializeHeaderRows = (rows: HeaderRow[]): string => {
+const serializeObjectLiteralRows = (rows: KeyValueRow[]): string => {
   const kept = rows.filter((row) => row.key.trim() !== '' || row.valueExpr.trim() !== '');
   if (kept.length === 0) {
     return '';
@@ -296,12 +321,74 @@ const serializeHeaderRows = (rows: HeaderRow[]): string => {
   return `{ ${body} }`;
 };
 
-const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void }> = ({ value, onChange }) => {
+/** 解析 auth 表达式为结构化状态；非对象字面量或无法识别的 type 返回 null(交由界面提示保留原文) */
+const parseAuthState = (expr: string): AuthState | null => {
+  const trimmed = expr.trim();
+  if (!trimmed) {
+    return EMPTY_AUTH;
+  }
+  const rows = parseObjectLiteralRows(trimmed);
+  if (!rows) {
+    return null;
+  }
+  const findRow = (key: string): string => rows.find((row) => row.key === key)?.valueExpr.trim() ?? '';
+  const mode = unquote(findRow('type')) as AuthMode;
+  if (mode !== 'basic' && mode !== 'bearer') {
+    return null;
+  }
+  return {
+    mode,
+    username: unquote(findRow('username')),
+    passwordExpr: findRow('password'),
+    tokenExpr: findRow('token'),
+  };
+};
+
+const serializeAuthExpr = (state: AuthState): string => {
+  if (state.mode === 'none') {
+    return '';
+  }
+  if (state.mode === 'basic') {
+    const parts = ['type: "basic"'];
+    if (state.username || state.passwordExpr) {
+      parts.push(`username: ${quote(state.username)}`);
+    }
+    if (state.passwordExpr) {
+      parts.push(`password: ${state.passwordExpr}`);
+    }
+    return `{ ${parts.join(', ')} }`;
+  }
+  const parts = ['type: "bearer"'];
+  if (state.tokenExpr) {
+    parts.push(`token: ${state.tokenExpr}`);
+  }
+  return `{ ${parts.join(', ')} }`;
+};
+
+interface KeyValueEditorProps {
+  label: string;
+  addLabel: string;
+  deleteLabel: string;
+  valuePlaceholder: string;
+  rawPlaceholder: string;
+  value: string;
+  onChange: (next: string) => void;
+}
+
+const KeyValueEditor: React.FC<KeyValueEditorProps> = ({
+  label,
+  addLabel,
+  deleteLabel,
+  valuePlaceholder,
+  rawPlaceholder,
+  value,
+  onChange,
+}) => {
   const [mode, setMode] = useState<'structured' | 'raw'>(() =>
-    parseHeaderRows(value) !== null ? 'structured' : 'raw',
+    parseObjectLiteralRows(value) !== null ? 'structured' : 'raw',
   );
   const [hint, setHint] = useState('');
-  const [rows, setRows] = useState<HeaderRow[]>(() => parseHeaderRows(value) ?? []);
+  const [rows, setRows] = useState<KeyValueRow[]>(() => parseObjectLiteralRows(value) ?? []);
   const [syncedValue, setSyncedValue] = useState(value);
   const [lastEmitted, setLastEmitted] = useState<string | null>(null);
 
@@ -309,7 +396,7 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
     const isOwnEcho = lastEmitted !== null && lastEmitted === value.trim();
     if (!isOwnEcho) {
       setSyncedValue(value);
-      const parsed = parseHeaderRows(value);
+      const parsed = parseObjectLiteralRows(value);
       if (parsed === null) {
         setHint('');
         setMode('raw');
@@ -319,9 +406,9 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
     }
   }
 
-  const writeRows = (next: HeaderRow[]) => {
+  const writeRows = (next: KeyValueRow[]) => {
     setRows(next);
-    const serialized = serializeHeaderRows(next);
+    const serialized = serializeObjectLiteralRows(next);
     setLastEmitted(serialized.trim());
     onChange(serialized);
   };
@@ -332,7 +419,7 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
       setMode('raw');
       return;
     }
-    const parsed = parseHeaderRows(value);
+    const parsed = parseObjectLiteralRows(value);
     if (parsed !== null) {
       setHint('');
       setLastEmitted(null);
@@ -346,7 +433,7 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
   return (
     <div className={css.form}>
       <div className={css.httpHeaderLine}>
-        <span className="text-xs text-muted-foreground">Headers(键值对)</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
         <Hint label={mode === 'structured' ? '原始表达式模式' : '结构化模式'}>
           <Button
             type="button"
@@ -382,7 +469,7 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
                     next[index] = { ...row, valueExpr: nextValue };
                     writeRows(next);
                   }}
-                  placeholder="值(Zen 表达式)"
+                  placeholder={valuePlaceholder}
                   maxRows={1}
                 />
                 <Button
@@ -390,7 +477,7 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  aria-label="删除 Header"
+                  aria-label={deleteLabel}
                   onClick={() => writeRows(rows.filter((_, rowIndex) => rowIndex !== index))}
                 >
                   <TrashSquareIcon />
@@ -406,7 +493,7 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
             onClick={() => writeRows([...rows, { key: '', valueExpr: '' }])}
           >
             <PlusCircleIcon />
-            添加 Header
+            {addLabel}
           </Button>
         </>
       ) : (
@@ -416,7 +503,7 @@ const HeadersEditor: React.FC<{ value: string; onChange: (next: string) => void 
             setHint('');
             onChange(nextValue);
           }}
-          placeholder={'{"Authorization": "Bearer " + input.token} 或 input.headers'}
+          placeholder={rawPlaceholder}
           maxRows={3}
         />
       )}
@@ -574,7 +661,16 @@ export const HttpRequestTab: React.FC<{ id: string }> = ({ id }) => {
       {
         id: uid(),
         key: nextExprKey(expressions),
-        value: toHttpRequestValue({ urlExpr: '', method: 'GET', headersExpr: '', bodyExpr: '' }),
+        value: toHttpRequestValue({
+          urlExpr: '',
+          method: 'GET',
+          headersExpr: '',
+          bodyExpr: '',
+          paramsExpr: '',
+          timeoutExpr: '',
+          retryExpr: '',
+          authExpr: '',
+        }),
       },
     ];
     persistConfig(next);
@@ -597,6 +693,15 @@ export const HttpRequestTab: React.FC<{ id: string }> = ({ id }) => {
       return;
     }
     updateSelected({ ...selected, key });
+  };
+
+  const authState = selected ? parseAuthState(fields.authExpr) : null;
+
+  const persistAuth = (patch: Partial<AuthState>) => {
+    if (!authState) {
+      return;
+    }
+    persistFields({ authExpr: serializeAuthExpr({ ...authState, ...patch }) });
   };
 
   return (
@@ -661,28 +766,155 @@ export const HttpRequestTab: React.FC<{ id: string }> = ({ id }) => {
                   />
                 </div>
 
-                <HeadersEditor
-                  key={selected.id}
-                  value={fields.headersExpr}
-                  onChange={(value) => persistFields({ headersExpr: value })}
-                />
+                <Tabs defaultValue="headers" className="gap-2">
+                  <TabsList className="h-7 w-fit bg-muted/50 p-0.5">
+                    <TabsTrigger value="headers" className="h-6 px-2.5 text-xs">
+                      Headers
+                    </TabsTrigger>
+                    <TabsTrigger value="body" className="h-6 px-2.5 text-xs">
+                      {`Body${bodyIgnored ? '(忽略)' : ''}`}
+                    </TabsTrigger>
+                    <TabsTrigger value="params" className="h-6 px-2.5 text-xs">
+                      Params
+                    </TabsTrigger>
+                    <TabsTrigger value="advanced" className="h-6 px-2.5 text-xs">
+                      高级
+                    </TabsTrigger>
+                  </TabsList>
 
-                <span className="text-xs text-muted-foreground">
-                  Body{bodyIgnored ? `(${fields.method} 请求忽略)` : ''}
-                </span>
-                <CodeEditor
-                  value={bodyIgnored ? '' : fields.bodyExpr}
-                  onChange={(value) => persistFields({ bodyExpr: value })}
-                  placeholder={'{"name": input.name} 或 input.payload'}
-                  maxRows={6}
-                  disabled={bodyIgnored}
-                />
-                {bodyIgnored && (
-                  <Alert variant="info">
-                    <GlobeIcon />
-                    <AlertDescription>{`${fields.method} 请求不发送请求体`}</AlertDescription>
-                  </Alert>
-                )}
+                  <TabsContent value="headers">
+                    <KeyValueEditor
+                      key={`headers-${selected.id}`}
+                      label="Headers(键值对)"
+                      addLabel="添加 Header"
+                      deleteLabel="删除 Header"
+                      valuePlaceholder="值(Zen 表达式)"
+                      rawPlaceholder={'{"Authorization": "Bearer " + input.token} 或 input.headers'}
+                      value={fields.headersExpr}
+                      onChange={(value) => persistFields({ headersExpr: value })}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="body" className="flex flex-col gap-2">
+                    {bodyIgnored ? (
+                      <Alert variant="info">
+                        <GlobeIcon />
+                        <AlertDescription>{`${fields.method} 请求不发送请求体`}</AlertDescription>
+                      </Alert>
+                    ) : (
+                      <CodeEditor
+                        value={fields.bodyExpr}
+                        onChange={(value) => persistFields({ bodyExpr: value })}
+                        placeholder={'{"name": input.name} 或 input.payload'}
+                        maxRows={8}
+                      />
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="params">
+                    <KeyValueEditor
+                      key={`params-${selected.id}`}
+                      label="Params(查询参数)"
+                      addLabel="添加参数"
+                      deleteLabel="删除参数"
+                      valuePlaceholder="值(Zen 表达式)"
+                      rawPlaceholder={'{ page: input.page, size: 20 }'}
+                      value={fields.paramsExpr}
+                      onChange={(value) => persistFields({ paramsExpr: value })}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="advanced" className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex-none text-xs text-muted-foreground">超时(ms)</span>
+                      <Input
+                        className="h-8 w-28 text-xs"
+                        inputMode="numeric"
+                        placeholder="10000"
+                        value={fields.timeoutExpr}
+                        onChange={(event) => persistFields({ timeoutExpr: event.target.value.replace(/[^\d]/g, '') })}
+                      />
+                      <span className="flex-none text-xs text-muted-foreground">重试(次)</span>
+                      <Input
+                        className="h-8 w-20 text-xs"
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={fields.retryExpr}
+                        onChange={(event) => persistFields({ retryExpr: event.target.value.replace(/[^\d]/g, '') })}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      超时范围 100–60000ms，默认 10000；重试上限 5 次，仅网络异常/超时/5xx/429 触发并指数退避。
+                    </p>
+                    {authState ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="flex-none text-xs text-muted-foreground">认证</span>
+                          <Select
+                            value={authState.mode}
+                            onValueChange={(value) =>
+                              persistFields({ authExpr: serializeAuthExpr({ ...authState, mode: value as AuthMode }) })
+                            }
+                          >
+                            <SelectTrigger aria-label="认证类型" className="h-8 w-28 flex-none text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none" className="text-xs">
+                                无认证
+                              </SelectItem>
+                              <SelectItem value="basic" className="text-xs">
+                                Basic
+                              </SelectItem>
+                              <SelectItem value="bearer" className="text-xs">
+                                Bearer
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="text-xs text-muted-foreground">headers 显式 Authorization 时优先生效</span>
+                        </div>
+                        {authState.mode === 'basic' && (
+                          <div className="flex items-center gap-2">
+                            <span className="flex-none w-10 text-xs text-muted-foreground">用户名</span>
+                            <Input
+                              className="h-8 min-w-0 flex-1 text-xs"
+                              placeholder="username"
+                              value={authState.username}
+                              onChange={(event) => persistAuth({ username: event.target.value })}
+                            />
+                            <span className="flex-none text-xs text-muted-foreground">密码</span>
+                            <div className="min-w-0 flex-1">
+                              <CodeEditor
+                                value={authState.passwordExpr}
+                                onChange={(value) => persistAuth({ passwordExpr: value })}
+                                placeholder={'"pw" 或 input.password'}
+                                maxRows={1}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        {authState.mode === 'bearer' && (
+                          <div className="flex items-center gap-2">
+                            <span className="flex-none text-xs text-muted-foreground">Token</span>
+                            <div className="min-w-0 flex-1">
+                              <CodeEditor
+                                value={authState.tokenExpr}
+                                onChange={(value) => persistAuth({ tokenExpr: value })}
+                                placeholder={'"tk" 或 input.apiToken'}
+                                maxRows={1}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Alert variant="info">
+                        <GlobeIcon />
+                        <AlertDescription>认证配置为自定义表达式，已按原样保留，结构化编辑不可用</AlertDescription>
+                      </Alert>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
 
@@ -733,7 +965,16 @@ export const httpRequestNode = createJdmNode({
         {
           id: uid(),
           key: 'result',
-          value: toHttpRequestValue({ urlExpr: '', method: 'GET', headersExpr: '', bodyExpr: '' }),
+          value: toHttpRequestValue({
+            urlExpr: '',
+            method: 'GET',
+            headersExpr: '',
+            bodyExpr: '',
+            paramsExpr: '',
+            timeoutExpr: '',
+            retryExpr: '',
+            authExpr: '',
+          }),
         },
       ],
     },

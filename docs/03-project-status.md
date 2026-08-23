@@ -152,7 +152,7 @@
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；剩余：真实部署配置、错误处理统一
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线已建立：request-schema helpers 与 json-path-extractor，21 pass，见子模块 `f4e972d`；主项目新增 http-request 协议库单测(`bun test src` 共 62 pass)、zen-rule 名单注册表单测(17 pass)；继续向模拟器 hooks / 节点组件补充)
+- [~] 完善单元测试覆盖(bun test 基线已建立：request-schema helpers 与 json-path-extractor，21 pass，见子模块 `f4e972d`；主项目 http-request/crypto 协议库单测(`bun test src` 共 78 pass)、zen-rule 引擎单测(24 pass)；继续向模拟器 hooks / 节点组件补充)
 - [~] 补充 Storybook 组件文档(新增 simulator-request-panel stories(带/不带 InputNode 绑定)，`--smoke-test` 通过；其余组件沿用既有 stories)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
@@ -213,6 +213,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-23，第三批：crypto 自定义节点)：**
+- 新增 `contrib.crypto` 摘要签名节点(引擎+前端全链路)：zen-rule 注册 `crypto` UDF(md5/sha1/sha256/sha512，secret 非空启用 HMAC，hex/base64/base64url 编码，upper 大写 hex；非法值宽容回退不抛异常)，Bun.CryptoHasher 原生实现零新依赖，标准向量测试 7 pass
+- 前端双栏编辑器(实例行列表+详情表单)：算法/编码 Select、密钥 CodeEditor、HEX 大写 Switch、多实例支持；表达式协议 `['crypto', input, "algorithm", secret?, "encoding"?, upper?]` 变长尾参，抽取至 `src/lib/crypto-protocol.ts`(9 单测)
+- 引擎修复：register 的 jsonT2pyT string 转换器 null 安全(null→'' 而非字符串 "null"，避免空槽位被当作字面量)；string 型参数缺省值显式置空串
+- 主仓测试基线 78 pass(`bun test src`)，zen-rule 24 pass；lint/typecheck/build 全绿
 
 **最新变更(2026-08-23，第二批：编辑器功能 C+D)：**
 - Monaco 双实例类型冲突修复(子模块 tsconfig):直接 import `monaco-editor` 与 `@monaco-editor/react` 内部解析到两份不同拷贝导致 3 处 TS 冲突;`packages/jdm-editor/tsconfig.json` 增加 paths 钉死工作区副本，子模块 typecheck 归零

@@ -100,6 +100,51 @@
         "returns": { "type": "object", "title": "http_request 函数返回", "properties": {} },
         "namespace": "contrib",
         "kind": "contrib"
+      },
+      {
+        "name": "crypto",
+        "title": "crypto",
+        "type": "function",
+        "description": "计算字符串摘要或 HMAC 签名，返回摘要字符串. algorithm 支持 md5/sha1/sha256/sha512(非法值回退 sha256)，secret 非空时启用 HMAC 模式，encoding 支持 hex/base64/base64url(非法值回退 hex)，upper 仅对 hex 生效(大写输出).",
+        "parameters": {
+          "properties": {
+            "input": {
+              "description": "待摘要内容",
+              "title": "Input",
+              "type": "string"
+            },
+            "algorithm": {
+              "default": "sha256",
+              "description": "摘要算法(md5/sha1/sha256/sha512)，默认 sha256，非法值回退 sha256",
+              "title": "Algorithm",
+              "type": "string"
+            },
+            "secret": {
+              "default": "",
+              "description": "HMAC 密钥，非空启用 HMAC 模式，留空则为普通摘要",
+              "title": "Secret",
+              "type": "string"
+            },
+            "encoding": {
+              "default": "hex",
+              "description": "输出编码(hex/base64/base64url)，默认 hex，非法值回退 hex",
+              "title": "Encoding",
+              "type": "string"
+            },
+            "upper": {
+              "default": false,
+              "description": "hex 输出转大写(仅 encoding=hex 时生效)，默认 false",
+              "title": "Upper",
+              "type": "boolean"
+            }
+          },
+          "required": ["input"],
+          "title": "crypto",
+          "type": "object"
+        },
+        "returns": { "type": "string", "title": "crypto 函数返回", "properties": {} },
+        "namespace": "contrib",
+        "kind": "contrib"
       }
     ]
   }

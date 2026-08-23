@@ -1,6 +1,7 @@
 import type { CustomNodeSpecification } from '@gorules/jdm-editor';
 import { useEffect, useMemo, useState } from 'react';
 
+import { cryptoNode } from '../components/custom-node/crypto-node';
 import { httpRequestNode } from '../components/custom-node/http-request-node';
 import { queryListNode } from '../components/custom-node/query-list-node';
 import { customNodes as demoNodes } from '../context/customnode.tsx';
@@ -11,7 +12,7 @@ import type { CustomNodeNamespace } from '../lib/custom-node-types';
 type CustomNodeSpec = CustomNodeSpecification<object, any>;
 
 // 消费方自定义实现的节点 kind：从 schema 驱动结果中排除，避免侧边栏重复
-const overriddenKinds = new Set(['risk.query_list', 'contrib.http_request']);
+const overriddenKinds = new Set(['risk.query_list', 'contrib.http_request', 'contrib.crypto']);
 
 const filterOverridden = (schema: CustomNodeNamespace[]): CustomNodeNamespace[] =>
   schema
@@ -44,7 +45,7 @@ export function useCustomNodes(): {
   const customNodes = useMemo<CustomNodeSpec[]>(
     () =>
       schema
-        ? [...demoNodes, queryListNode, httpRequestNode, ...schemaToCustomNodes(filterOverridden(schema))]
+        ? [...demoNodes, queryListNode, httpRequestNode, cryptoNode, ...schemaToCustomNodes(filterOverridden(schema))]
         : demoNodes,
     [schema],
   );
@@ -56,6 +57,7 @@ export function useCustomNodes(): {
             ...demoNodes,
             queryListNode,
             httpRequestNode,
+            cryptoNode,
             ...schemaToCustomNodes(filterOverridden(schema), { summaryCard: true }),
           ]
         : demoNodes,

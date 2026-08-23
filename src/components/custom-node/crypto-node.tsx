@@ -108,7 +108,14 @@ interface CryptoInstanceEditorProps {
 
 const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onChange }) => {
   const fields: CryptoFields = parseCrypto(expr);
-  const mode = deriveCryptoMode(fields.secretExpr);
+  // 模式是显式选择而非实时推导：首次切到 HMAC 时密钥尚为空，
+  // 若按空槽位推导会立刻回落成普通摘要(触发器显示错误且序列化缺密钥)。
+  const [mode, setMode] = useState<CryptoMode>(() => deriveCryptoMode(fields.secretExpr));
+  // 外部把密钥填成非空(旧图/手改表达式)时，模式强制对齐为 HMAC。
+  if (mode !== 'hmac' && deriveCryptoMode(fields.secretExpr) === 'hmac') {
+    setMode('hmac');
+  }
+  const secretMissing = mode === 'hmac' && fields.secretExpr.trim() === '';
 
   const persistFields = (patch: Partial<CryptoFields>) => {
     onChange({ ...expr, value: toCryptoValue({ ...fields, ...patch }) });
@@ -119,6 +126,7 @@ const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onCha
     if (!parsed) {
       return;
     }
+    setMode(parsed.mode);
     persistFields(applyCryptoMode({ ...fields, algorithm: parsed.algorithm }, parsed.mode));
   };
 
@@ -141,6 +149,7 @@ const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onCha
           items={CASCAADER_ITEMS}
           value={leafValue(mode, fields.algorithm)}
           onValueChange={handleSelectionChange}
+          revealSelected={false}
         >
           <CascaderTrigger
             aria-label="摘要类型与算法"
@@ -149,7 +158,7 @@ const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onCha
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 w-[150px] flex-none justify-between px-2.5 text-xs font-normal"
+                className="h-8 w-[170px] flex-none justify-between px-2.5 text-xs font-normal"
               />
             }
           >
@@ -184,7 +193,11 @@ const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onCha
             onChange={(value) => persistFields({ secretExpr: value })}
             placeholder={'如 env.SECRET_KEY 或 "my-key"'}
             maxRows={1}
+            aria-invalid={secretMissing || undefined}
           />
+          {secretMissing && (
+            <span className="text-xs text-destructive">密钥为空时将按普通摘要执行，请填写密钥表达式。</span>
+          )}
         </div>
       )}
       <div className="flex items-center justify-between gap-2">

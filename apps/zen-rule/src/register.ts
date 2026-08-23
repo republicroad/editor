@@ -96,7 +96,7 @@ function jsonT2pyT(jsonType: string): (v: unknown) => unknown {
   const m: Record<string, (v: unknown) => unknown> = {
     null: () => null,
     boolean: (v) => Boolean(v),
-    string: (v) => String(v),
+    string: (v) => (v === null || v === undefined ? '' : String(v)),
     object: (v) => (typeof v === 'object' && v !== null ? v : {}),
     array: (v) => (Array.isArray(v) ? v : []),
     integer: (v) => {

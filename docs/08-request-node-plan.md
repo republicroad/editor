@@ -164,12 +164,11 @@
 | **B. 键值对表格** | Headers 默认结构化模式(可增删 key/value 行，value 为 Zen 表达式输入)；对象字面量无法解析时自动降级「原始表达式模式」，支持手动切换 |
 | **D. 分栏布局** | Tab 编辑器左右分栏：左侧请求配置表单，右侧同屏模拟响应(状态徽标 + 响应头折叠详情 + Body JSON 预览)，复用 query-list 的 tabSplit 布局思路 |
 
-### E. 页签分组(Roadmap，暂不实施)
+### E. 页签分组(已实施，2026-08-23)
 
-- [ ] **E1**：以 antd Tabs 将 Params / Headers / Body / 高级 / 响应 分页签展示，进一步降低单屏信息密度。
-- [ ] **E2**：预留高级配置扩展位——超时(timeout)、重试(retry)、Auth(Basic/Bearer)等未来参数以新页签接入。
-- 启动条件：请求节点需新增更多配置项(如 timeout/retry/auth)导致左侧纵向表单过长时再启动。
-- 前置依赖：无；与现有 A+B+D 实现兼容，届时仅需调整 `HttpRequestTab` 内部布局为页签容器。
+- [x] **E1**：左侧请求表单页签化——固定区保留 输出键 / method / URL，其下以 shadcn Tabs 分 **Headers | Body | Params | 高级** 四页签；右侧同屏模拟响应分栏(D)保留，E1 原文的「响应页签」由既有分栏取代。
+- [x] **E2**：高级配置扩展位落地为「高级」页签——超时(timeout，100–60000ms，默认 10000)、重试(retry，0–5)、Auth(Basic 用户名+密码表达式 / Bearer Token 表达式)；引擎(`apps/zen-rule` contrib.ts)同步支持 `params` 查询参数合并、按次尝试独立超时、5xx/429 与网络错误指数退避重试、Authorization 注入(headers 显式同名头优先)。
+- 实施说明：antd Tabs 原计划因主 app 已迁移 shadcn 而改用 shadcn Tabs(radix)；Params 采用后端 `params` kwarg 方案(引擎合并进 URL)而非前端 URL 字面量手术，前端完全复用 Headers 的对象字面量往返协议(公共 `parseObjectLiteralRows`/`serializeObjectLiteralRows` + `KeyValueEditor`)。
 
 ### F. 多实例并行请求(已实施)
 
@@ -180,7 +179,9 @@
 
 ### 关键实现约定
 
-- 表达式存储：每个请求实例为 `expressions[i] = { id, key: '该实例输出键', value: ['http_request', urlExpr, quote(method), headersExpr, bodyExpr] }`，位置参数与后端 `funcBindParams` 声明序严格一致，headers/body 空值也必须占位；多实例并行执行，输出按各实例 `key` 分别写入。
+- 表达式存储：每个请求实例为 `expressions[i] = { id, key: '该实例输出键', value: ['http_request', urlExpr, quote(method), headersExpr, bodyExpr, paramsExpr?, timeoutExpr?, retryExpr?, authExpr?] }`，位置参数与后端 `funcBindParams` 声明序严格一致；**可选尾部参数变长序列化——末尾连续空值截断省略，中段空值保留空串占位**(后端对空串/缺位回退默认值，旧图 5 参数表达式天然兼容)；headers/body 空值也必须占位；多实例并行执行，输出按各实例 `key` 分别写入。
 - KIND 与 UDF 注册名分离：`KIND = 'contrib.http_request'`(节点规范标识)，`UDF_FUNC = 'http_request'`(表达式首参，后端 udfManager 以此查找)。
-- Headers 往返协议：`{ k: expr, ... }` 对象字面量 ⇄ 行数组；键为合法标识符时裸写、否则 JSON 引号包裹，空键序列化为 `""` 保证编辑中不丢行；含整体引用(如 `input.headers`)或拼接表达式的内容无法拆行时保留原文并提示切换模式。
+- Headers 往返协议：`{ k: expr, ... }` 对象字面量 ⇄ 行数组；键为合法标识符时裸写、否则 JSON 引号包裹，空键序列化为 `""` 保证编辑中不丢行；含整体引用(如 `input.headers`)或拼接表达式的内容无法拆行时保留原文并提示切换模式。Params 查询参数复用同一协议(公共 `parseObjectLiteralRows`/`serializeObjectLiteralRows` + `KeyValueEditor`)。
+- Auth 序列化：无认证省略尾参；Basic → `{ type: "basic", username: "<字面量>", password: <表达式> }`；Bearer → `{ type: "bearer", token: <表达式> }`；无法解析的自定义 auth 表达式在「高级」页签原样保留并提示，结构化编辑不可用。
+- 引擎语义(`apps/zen-rule/src/contrib.ts`)：params 经 `new URL()` 后 `searchParams.set` 合并(URL 非法直接结构化报错且不重试)；timeout 为单次尝试上限；retry 仅网络异常/超时(status=0)/5xx/429 触发，退避 `200ms × 2ⁿ`。
 

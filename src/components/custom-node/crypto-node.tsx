@@ -15,18 +15,34 @@ import { uid } from '../../lib/custom-node-registry';
 import {
   CRYPTO_ALGORITHMS,
   CRYPTO_ENCODINGS,
+  applyCryptoMode,
+  deriveCryptoMode,
   parseCrypto,
   toCryptoValue,
   type CryptoAlgorithm,
   type CryptoEncoding,
+  type CryptoFields,
+  type CryptoMode,
 } from '../../lib/crypto-protocol';
 import type { CustomNodeConfig, CustomNodeExpression } from '../../lib/custom-node-types';
 import PlusCircleIcon from '../../reui/icons/default/outline/plus-circle';
 import TrashSquareIcon from '../../reui/icons/default/outline/trash-square';
+import {
+  Cascader,
+  CascaderContent,
+  CascaderEmpty,
+  CascaderList,
+  CascaderPanel,
+  CascaderStatus,
+  CascaderTrigger,
+} from '../reui/cascader/cascader';
+import { CascaderBreadcrumb, CascaderInput, CascaderNav, CascaderValue } from '../reui/cascader/cascader-nav';
+import { CascaderItems } from '../reui/cascader/cascader-item';
+import type { CascaderNode } from '../reui/cascader/cascader-types';
 import { Badge } from '../reui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { Switch } from '../ui/switch';
 import css from './custom-node.module.css';
 
@@ -43,6 +59,31 @@ const ENCODING_LABELS: Record<CryptoEncoding, string> = {
   hex: 'HEX',
   base64: 'Base64',
   base64url: 'Base64URL',
+};
+
+const MODE_LABELS: Record<CryptoMode, string> = {
+  plain: '普通摘要',
+  hmac: 'HMAC 签名',
+};
+
+const CASCAADER_ITEMS: CascaderNode[] = (['plain', 'hmac'] as const).map((mode) => ({
+  value: mode,
+  label: MODE_LABELS[mode],
+  children: (CRYPTO_ALGORITHMS as readonly CryptoAlgorithm[]).map((algorithm) => ({
+    value: `${mode}.${algorithm}`,
+    label: ALGORITHM_LABELS[algorithm],
+    description: mode === 'hmac' ? '需配置密钥' : undefined,
+  })),
+}));
+
+const leafValue = (mode: CryptoMode, algorithm: CryptoAlgorithm): string => `${mode}.${algorithm}`;
+
+const parseLeafValue = (value: string): { mode: CryptoMode; algorithm: CryptoAlgorithm } | null => {
+  const [mode, algorithm] = value.split('.');
+  if ((mode !== 'plain' && mode !== 'hmac') || !(CRYPTO_ALGORITHMS as readonly string[]).includes(algorithm)) {
+    return null;
+  }
+  return { mode, algorithm: algorithm as CryptoAlgorithm };
 };
 
 const useNodeConfig = (id: string): CustomNodeConfig | undefined =>
@@ -66,10 +107,19 @@ interface CryptoInstanceEditorProps {
 }
 
 const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onChange }) => {
-  const fields = parseCrypto(expr);
+  const fields: CryptoFields = parseCrypto(expr);
+  const mode = deriveCryptoMode(fields.secretExpr);
 
-  const persistFields = (patch: Partial<ReturnType<typeof parseCrypto>>) => {
+  const persistFields = (patch: Partial<CryptoFields>) => {
     onChange({ ...expr, value: toCryptoValue({ ...fields, ...patch }) });
+  };
+
+  const handleSelectionChange = (value: string) => {
+    const parsed = parseLeafValue(value);
+    if (!parsed) {
+      return;
+    }
+    persistFields(applyCryptoMode({ ...fields, algorithm: parsed.algorithm }, parsed.mode));
   };
 
   return (
@@ -85,22 +135,40 @@ const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onCha
           onChange={(event) => onChange({ ...expr, key: event.target.value })}
         />
       </div>
+      <span className="text-xs text-muted-foreground">摘要方式</span>
       <div className="flex gap-2">
-        <Select
-          value={fields.algorithm}
-          onValueChange={(value) => persistFields({ algorithm: value as CryptoAlgorithm })}
+        <Cascader
+          items={CASCAADER_ITEMS}
+          value={leafValue(mode, fields.algorithm)}
+          onValueChange={handleSelectionChange}
         >
-          <SelectTrigger aria-label="摘要算法" className="h-8 w-[100px] flex-none text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(CRYPTO_ALGORITHMS as readonly string[]).map((algorithm) => (
-              <SelectItem key={algorithm} value={algorithm} className="text-xs">
-                {ALGORITHM_LABELS[algorithm as CryptoAlgorithm]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <CascaderTrigger
+            aria-label="摘要类型与算法"
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-[150px] flex-none justify-between px-2.5 text-xs font-normal"
+              />
+            }
+          >
+            <CascaderValue placeholder="选择摘要" />
+          </CascaderTrigger>
+          <CascaderContent className="w-60">
+            <CascaderPanel>
+              <CascaderNav>
+                <CascaderInput />
+              </CascaderNav>
+              <CascaderBreadcrumb />
+              <CascaderEmpty />
+              <CascaderList>
+                <CascaderItems />
+              </CascaderList>
+              <CascaderStatus />
+            </CascaderPanel>
+          </CascaderContent>
+        </Cascader>
         <CodeEditor
           value={fields.inputExpr}
           onChange={(value) => persistFields({ inputExpr: value })}
@@ -108,28 +176,37 @@ const CryptoInstanceEditor: React.FC<CryptoInstanceEditorProps> = ({ expr, onCha
           maxRows={3}
         />
       </div>
-      <div className={css.form}>
-        <span className="text-xs text-muted-foreground">HMAC 密钥(留空则为普通摘要)</span>
-        <CodeEditor
-          value={fields.secretExpr}
-          onChange={(value) => persistFields({ secretExpr: value })}
-          placeholder={'如 env.SECRET_KEY 或 "my-key"'}
-          maxRows={1}
-        />
-      </div>
+      {mode === 'hmac' && (
+        <div className={css.form}>
+          <span className="text-xs text-muted-foreground">HMAC 密钥（必填）</span>
+          <CodeEditor
+            value={fields.secretExpr}
+            onChange={(value) => persistFields({ secretExpr: value })}
+            placeholder={'如 env.SECRET_KEY 或 "my-key"'}
+            maxRows={1}
+          />
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2">
-        <Select value={fields.encoding} onValueChange={(value) => persistFields({ encoding: value as CryptoEncoding })}>
-          <SelectTrigger aria-label="输出编码" className="h-8 w-[110px] flex-none text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(CRYPTO_ENCODINGS as readonly string[]).map((encoding) => (
-              <SelectItem key={encoding} value={encoding} className="text-xs">
-                {ENCODING_LABELS[encoding as CryptoEncoding]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={fields.encoding}
+          aria-label="输出编码"
+          className="justify-start gap-0"
+          onValueChange={(value) => {
+            if (value) {
+              persistFields({ encoding: value as CryptoEncoding });
+            }
+          }}
+        >
+          {(CRYPTO_ENCODINGS as readonly CryptoEncoding[]).map((encoding) => (
+            <ToggleGroupItem key={encoding} value={encoding} className="h-8 px-2.5 text-xs">
+              {ENCODING_LABELS[encoding]}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
         <label className="flex flex-1 items-center justify-end gap-2 text-xs text-muted-foreground">
           HEX 大写
           <Switch
@@ -153,6 +230,7 @@ interface CryptoRowProps {
 
 const CryptoRow: React.FC<CryptoRowProps> = ({ index, expr, selected, onSelect, onRemove }) => {
   const { algorithm, secretExpr } = parseCrypto(expr);
+  const mode = deriveCryptoMode(secretExpr);
 
   return (
     <div
@@ -162,11 +240,9 @@ const CryptoRow: React.FC<CryptoRowProps> = ({ index, expr, selected, onSelect, 
       <div className={css.listRowHeader}>
         <span className="text-xs font-medium">摘要 {index + 1}</span>
         <div className={css.listRowActions}>
-          {secretExpr.trim() !== '' && (
-            <Badge variant="info" size="xs" radius="full">
-              HMAC
-            </Badge>
-          )}
+          <Badge variant={mode === 'hmac' ? 'info' : 'secondary'} size="xs" radius="full">
+            {MODE_LABELS[mode]}
+          </Badge>
           <Button
             type="button"
             variant="ghost"
@@ -330,15 +406,14 @@ const CryptoNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpecif
           )}
           {expressions.map((expr, index) => {
             const { algorithm, secretExpr } = parseCrypto(expr);
+            const mode = deriveCryptoMode(secretExpr);
             return (
               <div className={css.row} key={expr.id}>
                 <span className={css.rowKey}>摘要 {index + 1}</span>
                 <span className={css.rowValue}>{ALGORITHM_LABELS[algorithm]}</span>
-                {secretExpr.trim() !== '' ? (
-                  <Badge variant="info" size="xs" radius="full">
-                    HMAC
-                  </Badge>
-                ) : null}
+                <Badge variant={mode === 'hmac' ? 'info' : 'secondary'} size="xs" radius="full">
+                  {MODE_LABELS[mode]}
+                </Badge>
               </div>
             );
           })}

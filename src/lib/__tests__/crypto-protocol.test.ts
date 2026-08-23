@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isUpperChecked, normalizeAlgorithm, normalizeEncoding, parseCrypto, toCryptoValue } from '../crypto-protocol';
+import {
+  applyCryptoMode,
+  deriveCryptoMode,
+  isUpperChecked,
+  normalizeAlgorithm,
+  normalizeEncoding,
+  parseCrypto,
+  toCryptoValue,
+} from '../crypto-protocol';
 
 const exprOf = (value: unknown[]) => ({ id: 'n1', value }) as never;
 
@@ -79,5 +87,32 @@ describe('parseCrypto / toCryptoValue 变长协议', () => {
 
   test('空表达式安全解析', () => {
     expect(toCryptoValue(parseCrypto(undefined))).toEqual(['crypto', '', '"sha256"', '', '"hex"']);
+  });
+});
+
+describe('deriveCryptoMode / applyCryptoMode', () => {
+  test('密钥非空推导 HMAC，空推导普通摘要', () => {
+    expect(deriveCryptoMode('env.KEY')).toBe('hmac');
+    expect(deriveCryptoMode('  ')).toBe('plain');
+    expect(deriveCryptoMode('')).toBe('plain');
+  });
+
+  test('切回普通摘要强制清空密钥槽位', () => {
+    const hmacFields = {
+      inputExpr: 'x',
+      algorithm: 'sha256' as const,
+      secretExpr: 'env.KEY',
+      encoding: 'hex' as const,
+      upperExpr: '',
+    };
+    expect(applyCryptoMode(hmacFields, 'plain').secretExpr).toBe('');
+    expect(applyCryptoMode(hmacFields, 'hmac').secretExpr).toBe('env.KEY');
+  });
+
+  test('模式归一后序列化与旧图兼容', () => {
+    const fields = parseCrypto(exprOf(['crypto', 'x', '"md5"', '"k"', '"hex"']));
+    expect(deriveCryptoMode(fields.secretExpr)).toBe('hmac');
+    const cleared = applyCryptoMode(fields, 'plain');
+    expect(toCryptoValue(cleared)).toEqual(['crypto', 'x', '"md5"', '', '"hex"']);
   });
 });

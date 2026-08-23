@@ -17,6 +17,17 @@ export interface CryptoFields {
   upperExpr: string;
 }
 
+export type CryptoMode = 'plain' | 'hmac';
+
+/** 密钥槽位非空即 HMAC(旧图兼容的隐式约定) */
+export const deriveCryptoMode = (secretExpr: string): CryptoMode => (secretExpr.trim() !== '' ? 'hmac' : 'plain');
+
+/** 显式模式归一：普通摘要强制清空密钥槽位，HMAC 保留原表达式 */
+export const applyCryptoMode = (fields: CryptoFields, mode: CryptoMode): CryptoFields => ({
+  ...fields,
+  secretExpr: mode === 'plain' ? '' : fields.secretExpr,
+});
+
 export const normalizeAlgorithm = (value: string): CryptoAlgorithm => {
   const lowered = value.trim().toLowerCase();
   return (CRYPTO_ALGORITHMS as readonly string[]).includes(lowered) ? (lowered as CryptoAlgorithm) : 'sha256';

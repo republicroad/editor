@@ -152,7 +152,7 @@
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；剩余：真实部署配置、错误处理统一
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线已建立：request-schema helpers 与 json-path-extractor，21 pass，见子模块 `f4e972d`；主项目 http-request/crypto 协议库单测(`bun test src` 共 78 pass)、zen-rule 引擎单测(24 pass)；继续向模拟器 hooks / 节点组件补充)
+- [~] 完善单元测试覆盖(bun test 基线：子模块 21 pass(`f4e972d`)；主仓协议库单测 93 pass + zen-rule 引擎单测 31 pass；模拟器 hooks 待补)
 - [~] 补充 Storybook 组件文档(新增 simulator-request-panel stories(带/不带 InputNode 绑定)，`--smoke-test` 通过；其余组件沿用既有 stories)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
@@ -213,6 +213,14 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-23，第五/六批：数据加工节点对 + 基建打磨)：**
+- 新增 `contrib.json_path`(JSONPath 提取，jsonpath-plus 标准语法，单命中返回值多命中数组，无命中回退 default；子模块 json-path-extractor 经核实为字段定位器而非查询引擎，故改用标准库)与 `contrib.template`(`${path}` 插值渲染，缺失变量空串)两节点，均含引擎向量测试
+- KeyValueEditor 抽取为共享组件 `key-value-editor.tsx`(含 Hint),http-request 节点同步瘦身；template 变量表直接复用
+- register 类型转换表新增 `any` 直通(json_path 的 input/default 需要)；夹具自动同步脚本 `bun run sync:schema`(udfManager→JSON,离线回退首次纳入 risk.query_list)
+- eslint 对 vendored cascader 关闭 react-refresh/no-explicit-any(警告 27→10);crypto 行与节点体显示模拟结果摘要徽章(Hint 全文)
+- 主仓测试基线 **93 pass**(`bun test src`)+ zen-rule **31 pass**；README 重写更新(API 一览/自定义节点协议表/质量门禁命令，移除过时 3001 与 tsc 报错说明)
+- 新增 `docs/13-custom-node-development.md` 自定义节点开发指南(管线沉淀 + 反模式备忘)
 
 **最新变更(2026-08-23，第四批：crypto 节点 UX 改造)：**
 - 摘要方式改为 ReUI Cascader 两级级联(普通摘要/HMAC 签名 × MD5/SHA1/SHA256/SHA512)，模式由显式选择驱动，选中 HMAC 才显示密钥输入框(必填)；旧图「secret 非空即 HMAC」推导兼容，零迁移

@@ -1,3 +1,5 @@
+import { JSONPath } from 'jsonpath-plus';
+
 import { registerUdf } from './register.js';
 
 export const inout = registerUdf('inout', 'contrib', {
@@ -305,4 +307,110 @@ export const cryptoDigest = registerUdf('crypto', 'contrib', {
   hasher.update(input);
   const digest = hasher.digest(encoding as 'hex' | 'base64' | 'base64url');
   return upper && encoding === 'hex' ? digest.toUpperCase() : digest;
+});
+
+export const jsonPath = registerUdf('json_path', 'contrib', {
+  description:
+    '按 JSONPath 表达式从数据中提取值(标准语法，支持通配符/下标/过滤)，单个命中返回该值，多个命中返回数组；' +
+    '无命中或表达式非法时返回 default. input 为对象，字符串会先尝试 JSON 解析.',
+  parametersSchema: {
+    properties: {
+      input: {
+        type: 'any',
+        title: 'Input',
+        description: '待提取的数据对象(字符串将尝试 JSON 解析)',
+      },
+      path: {
+        type: 'string',
+        title: 'Path',
+        description: 'JSONPath 表达式，如 $.cart.items[*].price',
+      },
+      default: {
+        type: 'any',
+        title: 'Default',
+        description: '无命中或解析失败时的回退值，默认 null',
+        default: null,
+      },
+    },
+    required: ['input', 'path'],
+    title: 'json_path',
+    type: 'object',
+  },
+  returnsSchema: { type: 'object', title: 'json_path 函数返回', properties: {} },
+})(function jsonPathUdf(kwargs: Record<string, unknown>) {
+  let data = kwargs?.input;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data) as unknown;
+    } catch {
+      data = kwargs?.input;
+    }
+  }
+  const path = String(kwargs?.path ?? '').trim();
+  const fallback = kwargs?.default ?? null;
+  if (!path || data == null || typeof data !== 'object') {
+    return fallback;
+  }
+  try {
+    const hits = JSONPath({ path, json: data, wrap: true }) as unknown[];
+    if (!hits || hits.length === 0) {
+      return fallback;
+    }
+    return hits.length === 1 ? hits[0] : hits;
+  } catch {
+    return fallback;
+  }
+});
+
+const TEMPLATE_VAR_PATTERN = /\$\{([^}]+)\}/g;
+
+/** 点路径 + [n] 数组下标取值，缺失返回 undefined */
+const resolveTemplatePath = (vars: Record<string, unknown>, path: string): unknown => {
+  const segments = path
+    .split('.')
+    .flatMap((segment) => {
+      const match = segment.match(/^(.*?)\[(\d+)\]$/);
+      return match ? [match[1], Number(match[2])] : [segment];
+    })
+    .filter((segment) => segment !== '');
+  let current: unknown = vars;
+  for (const segment of segments) {
+    if (current == null || typeof current !== 'object') {
+      return undefined;
+    }
+    current = (current as Record<string | number, unknown>)[segment as string];
+  }
+  return current;
+};
+
+export const templateRender = registerUdf('template', 'contrib', {
+  description:
+    '渲染模板字符串：${path} 形式插值 vars 对象(支持点路径与 [n] 数组下标)，缺失变量替换为空串；' +
+    '非字符串值按 String() 序列化.',
+  parametersSchema: {
+    properties: {
+      template: {
+        type: 'string',
+        title: 'Template',
+        description: '模板字符串，如 "您好 ${user.name}"',
+      },
+      vars: {
+        type: 'object',
+        title: 'Vars',
+        description: '插值变量键值对对象，默认空对象',
+        default: {},
+      },
+    },
+    required: ['template'],
+    title: 'template',
+    type: 'object',
+  },
+  returnsSchema: { type: 'string', title: 'template 函数返回', properties: {} },
+})(function templateUdf(kwargs: Record<string, unknown>) {
+  const tpl = String(kwargs?.template ?? '');
+  const vars = asRecord(kwargs?.vars);
+  return tpl.replace(TEMPLATE_VAR_PATTERN, (_match, expr: string) => {
+    const value = resolveTemplatePath(vars, expr.trim());
+    return value == null ? '' : String(value);
+  });
 });

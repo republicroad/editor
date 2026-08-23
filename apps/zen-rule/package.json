@@ -9,7 +9,8 @@
     "main": "bun run main.ts"
   },
   "dependencies": {
-    "@gorules/zen-engine": "^0.51.5"
+    "@gorules/zen-engine": "^0.51.5",
+    "jsonpath-plus": "^10.4.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

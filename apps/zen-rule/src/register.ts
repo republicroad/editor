@@ -95,6 +95,7 @@ type UdfFunction = (kwargs: Record<string, unknown>) => unknown;
 function jsonT2pyT(jsonType: string): (v: unknown) => unknown {
   const m: Record<string, (v: unknown) => unknown> = {
     null: () => null,
+    any: (v) => v,
     boolean: (v) => Boolean(v),
     string: (v) => (v === null || v === undefined ? '' : String(v)),
     object: (v) => (typeof v === 'object' && v !== null ? v : {}),

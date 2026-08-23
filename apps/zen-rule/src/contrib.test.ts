@@ -6,6 +6,10 @@ let server: ReturnType<typeof Bun.serve>;
 let baseUrl: string;
 let closedUrl: string;
 
+/** /flaky 连续失败计数(每个用例开始前重置)；/missing 命中计数(用于断言 4xx 不重试) */
+let flakyRemaining = 0;
+let missingHits = 0;
+
 beforeAll(() => {
   server = Bun.serve({
     port: 0,
@@ -16,16 +20,39 @@ beforeAll(() => {
           headers: { 'content-type': 'application/json' },
         });
       }
+      if (url.pathname === '/params') {
+        const query: Record<string, string> = {};
+        url.searchParams.forEach((value, key) => {
+          query[key] = value;
+        });
+        return new Response(JSON.stringify(query), { headers: { 'content-type': 'application/json' } });
+      }
       if (url.pathname === '/echo') {
         const bodyText = await request.text();
         return new Response(
           JSON.stringify({
             method: request.method,
             contentType: request.headers.get('content-type'),
+            authorization: request.headers.get('authorization'),
             body: bodyText ? JSON.parse(bodyText) : null,
           }),
           { headers: { 'content-type': 'application/json' } },
         );
+      }
+      if (url.pathname === '/slow') {
+        await Bun.sleep(500);
+        return new Response('late', { status: 200 });
+      }
+      if (url.pathname === '/flaky') {
+        if (flakyRemaining > 0) {
+          flakyRemaining -= 1;
+          return new Response('boom', { status: 500 });
+        }
+        return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } });
+      }
+      if (url.pathname === '/missing') {
+        missingHits += 1;
+        return new Response('not found', { status: 404 });
       }
       return new Response('not found', { status: 404 });
     },
@@ -59,6 +86,7 @@ describe('http_request udf', () => {
     expect(result['body']).toEqual({
       method: 'POST',
       contentType: 'application/json',
+      authorization: null,
       body: { a: 1 },
     });
   });
@@ -101,12 +129,81 @@ describe('http_request udf', () => {
     expect(result['error']).toBe("unsupported http method 'TRACE'");
   });
 
+  test('params 合并进 URL 查询串并覆盖同名参数', async () => {
+    const result = await callUdf({
+      url: `${baseUrl}/params?existing=keep&q=old`,
+      params: { q: 'new', page: '2' },
+    });
+    expect(result['status']).toBe(200);
+    expect(result['body']).toEqual({ existing: 'keep', q: 'new', page: '2' });
+  });
+
+  test('basic 认证生成 Authorization 头，显式头优先于 auth 配置', async () => {
+    const basic = await callUdf({
+      url: `${baseUrl}/echo`,
+      auth: { type: 'basic', username: 'alice', password: 's3cret' },
+    });
+    expect((basic['body'] as Record<string, unknown>)['authorization']).toBe(
+      `Basic ${Buffer.from('alice:s3cret', 'utf8').toString('base64')}`,
+    );
+
+    const overridden = await callUdf({
+      url: `${baseUrl}/echo`,
+      headers: { authorization: 'Bearer manual' },
+      auth: { type: 'bearer', token: 'auto' },
+    });
+    expect((overridden['body'] as Record<string, unknown>)['authorization']).toBe('Bearer manual');
+
+    const bearer = await callUdf({ url: `${baseUrl}/echo`, auth: { type: 'bearer', token: 'tk-1' } });
+    expect((bearer['body'] as Record<string, unknown>)['authorization']).toBe('Bearer tk-1');
+  });
+
+  test('timeout 超时返回结构化错误', async () => {
+    const result = await callUdf({ url: `${baseUrl}/slow`, timeout: 100 });
+    expect(result['status']).toBe(0);
+    expect(typeof result['error']).toBe('string');
+  });
+
+  test('retry 仅对 5xx 重试直至成功，4xx 不重试', async () => {
+    flakyRemaining = 2;
+    const recovered = await callUdf({ url: `${baseUrl}/flaky`, retry: 2 });
+    expect(recovered['status']).toBe(200);
+    expect(recovered['body']).toEqual({ ok: true });
+
+    flakyRemaining = 5;
+    const exhausted = await callUdf({ url: `${baseUrl}/flaky`, retry: 1 });
+    expect(exhausted['status']).toBe(500);
+
+    missingHits = 0;
+    const notRetried = await callUdf({ url: `${baseUrl}/missing`, retry: 3 });
+    expect(notRetried['status']).toBe(404);
+    expect(missingHits).toBe(1);
+  });
+
+  test('非法 URL 直接报错且不重试', async () => {
+    const result = await callUdf({ url: 'not-a-url', retry: 2 });
+    expect(result['status']).toBe(0);
+    expect(String(result['error'])).toContain('invalid url');
+  });
+
   test('引擎路径：funcBindParams 按声明顺序位置绑定，url 缺省参数回退默认值', async () => {
     const kwargs = udfManager.funcBindParams('http_request', [`${baseUrl}/json`]);
-    expect(Object.keys(kwargs)).toEqual(['url', 'method', 'headers', 'body']);
+    expect(Object.keys(kwargs)).toEqual(['url', 'method', 'headers', 'body', 'params', 'timeout', 'retry', 'auth']);
     expect(kwargs['method']).toBe('GET');
+    expect(kwargs['timeout']).toBe(10000);
+    expect(kwargs['retry']).toBe(0);
     const result = (await udfManager.call('http_request', kwargs)) as Record<string, unknown>;
     expect(result['status']).toBe(200);
     expect(result['body']).toEqual({ ok: true, q: null });
+  });
+
+  test('旧图兼容：仅前 4 个位置参数时新参数回退默认值并可正常执行', async () => {
+    const kwargs = udfManager.funcBindParams('http_request', [`${baseUrl}/json`, 'POST', { x: '1' }, { a: 1 }]);
+    expect(kwargs['params']).toEqual({});
+    expect(kwargs['auth']).toEqual({});
+    expect(kwargs['timeout']).toBe(10000);
+    expect(kwargs['retry']).toBe(0);
+    const result = (await udfManager.call('http_request', kwargs)) as Record<string, unknown>;
+    expect(result['status']).toBe(200);
   });
 });

@@ -3,6 +3,8 @@ import { JdmConfigProvider } from '@gorules/jdm-editor';
 import { ConfigProvider, theme } from 'antd';
 import { match } from 'ts-pattern';
 
+import { Toaster } from '../components/ui/sonner';
+
 const colorMediaQuery = () => window.matchMedia('(prefers-color-scheme: dark)');
 
 export enum ThemePreference {
@@ -62,7 +64,10 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
   return (
     <ConfigProvider theme={{ algorithm: isDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
       <ThemeContext.Provider value={{ themePreference, setThemePreference, isDarkTheme }}>
-        <JdmConfigProvider theme={{ mode: isDarkTheme ? 'dark' : 'light' }}>{children}</JdmConfigProvider>
+        <JdmConfigProvider theme={{ mode: isDarkTheme ? 'dark' : 'light' }}>
+          {children}
+          <Toaster />
+        </JdmConfigProvider>
       </ThemeContext.Provider>
     </ConfigProvider>
   );

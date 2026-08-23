@@ -13,11 +13,12 @@ export type PageHeaderProps = {
   ghost?: boolean;
   children?: React.ReactNode;
   style?: React.CSSProperties;
+  className?: string;
 };
 
-export const PageHeader: React.FC<PageHeaderProps> = ({ title, subTitle, extra, onBack, children, style }) => {
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, subTitle, extra, onBack, children, style, ...rest }) => {
   return (
-    <Stack style={style}>
+    <Stack style={style} {...rest}>
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
         <Stack horizontal gap={12} verticalAlign="center">
           {onBack && (

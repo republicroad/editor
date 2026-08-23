@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Divider, Dropdown, message, Modal, Switch, theme, Typography } from 'antd';
-import { BulbOutlined, CheckOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { CirclePlay, Lightbulb } from 'lucide-react';
+import { toast } from 'sonner';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError } from '../helpers/error-message.ts';
 import { DecisionContent, DecisionEdge, DecisionNode, normalizeGraphNodes } from '../helpers/graph.ts';
@@ -14,6 +14,27 @@ import {
   Simulation,
 } from '@gorules/jdm-editor';
 import { PageHeader } from '../components/page-header.tsx';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
+import { Button } from '../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { Separator } from '../components/ui/separator';
+import { Switch } from '../components/ui/switch';
 import { DirectedGraph } from 'graphology';
 import { hasCycle } from 'graphology-dag';
 import { Stack } from '../components/stack.tsx';
@@ -31,8 +52,66 @@ enum DocumentFileTypes {
 
 const supportFSApi = Object.hasOwn(window, 'showSaveFilePicker');
 
+const THEME_LABELS: Record<ThemePreference, string> = {
+  [ThemePreference.Automatic]: 'Automatic',
+  [ThemePreference.Dark]: 'Dark',
+  [ThemePreference.Light]: 'Light',
+};
+
+const EditableTitle: React.FC<{ value: string; onChange: (value: string) => void }> = ({ value, onChange }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [prevValue, setPrevValue] = useState(value);
+  if (!editing && prevValue !== value) {
+    setPrevValue(value);
+    setDraft(value);
+  }
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== value) {
+      onChange(trimmed);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        title={value}
+        className="max-w-56 truncate rounded text-left text-base font-normal outline-none hover:bg-accent focus-visible:bg-accent"
+        onClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+      >
+        {value}
+      </button>
+    );
+  }
+
+  return (
+    <input
+      autoFocus
+      value={draft}
+      maxLength={24}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') {
+          commit();
+        }
+        if (event.key === 'Escape') {
+          setEditing(false);
+        }
+      }}
+      className="w-56 rounded-md border border-input bg-transparent px-1.5 py-0.5 text-base outline-none focus-visible:ring-1 focus-visible:ring-ring"
+    />
+  );
+};
+
 export const DecisionSimplePage: React.FC = () => {
-  const { token } = theme.useToken();
   const fileInput = useRef<HTMLInputElement>(null);
   const graphRef = React.useRef<DecisionGraphRef>(null);
   const { themePreference, setThemePreference } = useTheme();
@@ -59,6 +138,11 @@ export const DecisionSimplePage: React.FC = () => {
   const [graph, setGraph] = useState<DecisionGraphType>({ nodes: [], edges: [] });
   const [fileName, setFileName] = useState('Untitled Decision');
   const [graphTrace, setGraphTrace] = useState<Simulation>();
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   useEffect(() => {
     const templateParam = searchParams.get('template');
@@ -122,7 +206,7 @@ export const DecisionSimplePage: React.FC = () => {
       setFileHandle(handle);
       const file = await handle.getFile();
       setFileName(file.name);
-      message.success('File saved');
+      toast.success('File saved');
     } catch (e) {
       displayError(e);
     } finally {
@@ -132,7 +216,7 @@ export const DecisionSimplePage: React.FC = () => {
 
   const saveFile = async () => {
     if (!supportFSApi) {
-      message.error('Unsupported file system API');
+      toast.error('Unsupported file system API');
       return;
     }
 
@@ -144,7 +228,7 @@ export const DecisionSimplePage: React.FC = () => {
 
         const json = JSON.stringify({ contentType: DocumentFileTypes.Decision, ...graph }, null, 2);
         await writable.write(json);
-        message.success('File saved');
+        toast.success('File saved');
       } catch (e) {
         displayError(e);
       } finally {
@@ -154,16 +238,23 @@ export const DecisionSimplePage: React.FC = () => {
   };
 
   const handleNew = async () => {
-    Modal.confirm({
+    setPendingConfirm({
       title: 'New decision',
-      icon: false,
-      content: <div>Are you sure you want to create new blank decision, your current work might be lost?</div>,
-      onOk: async () => {
+      description: 'Are you sure you want to create new blank decision, your current work might be lost?',
+      onConfirm: () => {
         setGraph({
           nodes: [],
           edges: [],
         });
       },
+    });
+  };
+
+  const confirmTemplate = (key: string) => {
+    setPendingConfirm({
+      title: 'Open example',
+      description: 'Are you sure you want to open example decision, your current work might be lost?',
+      onConfirm: () => loadTemplateGraph(key),
     });
   };
 
@@ -174,12 +265,7 @@ export const DecisionSimplePage: React.FC = () => {
         break;
       default: {
         if (Object.hasOwn(decisionTemplates, e.key)) {
-          Modal.confirm({
-            title: 'Open example',
-            icon: false,
-            content: <div>Are you sure you want to open example decision, your current work might be lost?</div>,
-            onOk: async () => loadTemplateGraph(e.key),
-          });
+          confirmTemplate(e.key);
         }
         break;
       }
@@ -269,84 +355,61 @@ export const DecisionSimplePage: React.FC = () => {
       />
       <div className={classes.page}>
         <PageHeader
-          style={{
-            padding: '8px',
-            background: token.colorBgLayout,
-            boxSizing: 'border-box',
-            borderBottom: `1px solid ${token.colorBorder}`,
-          }}
+          className="border-b bg-muted/50 p-2"
           title={
             <div className={classes.heading}>
-              <Button
-                type="text"
-                target="_blank"
-                href="https://gorules.io"
-                icon={<img height={32} width={32} src={'/favicon.svg'} />}
-              />
-              <Divider type="vertical" style={{ margin: 0 }} />
+              <Button asChild variant="ghost" size="icon" className="size-8" aria-label="GoRules">
+                <a href="https://gorules.io" target="_blank" rel="noreferrer">
+                  <img height={32} width={32} src={'/favicon.svg'} alt="" />
+                </a>
+              </Button>
+              <Separator orientation="vertical" className="h-5 self-center" />
               <div className={classes.headingContent}>
-                <Typography.Title
-                  level={4}
-                  style={{ margin: 0, fontWeight: 400 }}
-                  className={classes.headingTitle}
-                  editable={{
-                    text: fileName,
-                    maxLength: 24,
-                    autoSize: { maxRows: 1 },
-                    onChange: (value) => setFileName(value.trim()),
-                    triggerType: ['text'],
-                  }}
-                >
-                  {fileName}
-                </Typography.Title>
+                <EditableTitle value={fileName} onChange={(value) => setFileName(value.trim())} />
                 <Stack horizontal verticalAlign="center" gap={8}>
-                  <Button onClick={handleNew} type={'text'} size={'small'}>
+                  <Button type="button" onClick={handleNew} variant="ghost" size="sm">
                     New
                   </Button>
-                  <Dropdown
-                    menu={{
-                      onClick: handleOpenMenu,
-                      items: [
-                        {
-                          label: 'File system',
-                          key: 'file-system',
-                        },
-                        {
-                          type: 'divider',
-                        },
-                        {
-                          label: 'Fintech: Company analysis',
-                          key: 'company-analysis',
-                        },
-                        {
-                          label: 'Fintech: AML',
-                          key: 'aml',
-                        },
-                        {
-                          label: 'Retail: Shipping fees',
-                          key: 'shipping-fees',
-                        },
-                      ],
-                    }}
-                  >
-                    <Button type={'text'} size={'small'}>
-                      Open
-                    </Button>
-                  </Dropdown>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="ghost" size="sm">
+                        Open
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="min-w-44" align="start">
+                      <DropdownMenuItem onSelect={() => openFile()}>File system</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {[
+                        { label: 'Fintech: Company analysis', key: 'company-analysis' },
+                        { label: 'Fintech: AML', key: 'aml' },
+                        { label: 'Retail: Shipping fees', key: 'shipping-fees' },
+                      ].map((item) => (
+                        <DropdownMenuItem key={item.key} onSelect={() => handleOpenMenu({ key: item.key })}>
+                          {item.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   {supportFSApi && (
-                    <Button onClick={saveFile} type={'text'} size={'small'}>
+                    <Button type="button" onClick={saveFile} variant="ghost" size="sm">
                       Save
                     </Button>
                   )}
-                  <Button onClick={saveFileAs} type={'text'} size={'small'}>
+                  <Button type="button" onClick={saveFileAs} variant="ghost" size="sm">
                     Save as
                   </Button>
-                  <Button size="small" type={mode === 'dev' ? 'primary' : 'default'} onClick={() => setMode('dev')}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={mode === 'dev' ? 'default' : 'outline'}
+                    onClick={() => setMode('dev')}
+                  >
                     Dev
                   </Button>
                   <Button
-                    size="small"
-                    type={mode === 'business' ? 'primary' : 'default'}
+                    type="button"
+                    size="sm"
+                    variant={mode === 'business' ? 'default' : 'outline'}
                     onClick={() => setMode('business')}
                   >
                     Business
@@ -357,50 +420,32 @@ export const DecisionSimplePage: React.FC = () => {
           }
           ghost={false}
           extra={[
-            <span
-              key="summary-switch"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
-            >
-              <Typography.Text style={{ fontSize: token.fontSizeSM }}>摘要卡片</Typography.Text>
-              <Switch size="small" checked={summaryCard} onChange={toggleSummaryCard} />
+            <span key="summary-switch" className="inline-flex items-center gap-2 whitespace-nowrap">
+              <span className="text-xs text-muted-foreground">摘要卡片</span>
+              <Switch
+                checked={summaryCard}
+                onCheckedChange={toggleSummaryCard}
+                className="h-4 w-7 data-[state=checked]:bg-primary [&>span]:size-3 data-[state=checked]:[&>span]:translate-x-3"
+              />
             </span>,
-            <Dropdown
-              overlayStyle={{ minWidth: 150 }}
-              menu={{
-                onClick: ({ key }) => setThemePreference(key as ThemePreference),
-                items: [
-                  {
-                    label: 'Automatic',
-                    key: ThemePreference.Automatic,
-                    icon: (
-                      <CheckOutlined
-                        style={{ visibility: themePreference === ThemePreference.Automatic ? 'visible' : 'hidden' }}
-                      />
-                    ),
-                  },
-                  {
-                    label: 'Dark',
-                    key: ThemePreference.Dark,
-                    icon: (
-                      <CheckOutlined
-                        style={{ visibility: themePreference === ThemePreference.Dark ? 'visible' : 'hidden' }}
-                      />
-                    ),
-                  },
-                  {
-                    label: 'Light',
-                    key: ThemePreference.Light,
-                    icon: (
-                      <CheckOutlined
-                        style={{ visibility: themePreference === ThemePreference.Light ? 'visible' : 'hidden' }}
-                      />
-                    ),
-                  },
-                ],
-              }}
-            >
-              <Button type="text" icon={<BulbOutlined />} />
-            </Dropdown>,
+            <DropdownMenu key="theme-preference">
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="size-8" aria-label="切换主题">
+                  <Lightbulb />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[150px]">
+                {(Object.values(ThemePreference) as ThemePreference[]).map((preference) => (
+                  <DropdownMenuCheckboxItem
+                    key={preference}
+                    checked={themePreference === preference}
+                    onCheckedChange={() => setThemePreference(preference)}
+                  >
+                    {THEME_LABELS[preference]}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>,
           ]}
         />
         <div className={classes.contentWrapper}>
@@ -419,7 +464,7 @@ export const DecisionSimplePage: React.FC = () => {
                 {
                   id: 'simulator',
                   title: 'Simulator',
-                  icon: <PlayCircleOutlined />,
+                  icon: <CirclePlay />,
                   renderPanel: () => (
                     <GraphSimulator
                       onClear={() => setGraphTrace(undefined)}
@@ -449,7 +494,7 @@ export const DecisionSimplePage: React.FC = () => {
                             .with({ message: P.string }, (d) => d.message)
                             .otherwise(() => 'Unknown error occurred');
 
-                          message.error(errorMessage);
+                          toast.error(errorMessage);
                           if (axios.isAxiosError(e)) {
                             console.log(e);
                             setGraphTrace({
@@ -475,6 +520,25 @@ export const DecisionSimplePage: React.FC = () => {
           </div>
         </div>
       </div>
+      <AlertDialog open={pendingConfirm !== null} onOpenChange={(open) => (!open ? setPendingConfirm(null) : null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{pendingConfirm?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{pendingConfirm?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                pendingConfirm?.onConfirm();
+                setPendingConfirm(null);
+              }}
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

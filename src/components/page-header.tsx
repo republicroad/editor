@@ -1,7 +1,8 @@
+import { ChevronLeft } from 'lucide-react';
 import React from 'react';
+
 import { Stack } from './stack.tsx';
-import { Button, Typography } from 'antd';
-import { LeftOutlined } from '@ant-design/icons';
+import { Button } from './ui/button';
 
 export type PageHeaderProps = {
   title?: React.ReactNode;
@@ -19,13 +20,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subTitle, extra, 
     <Stack style={style}>
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
         <Stack horizontal gap={12} verticalAlign="center">
-          {onBack && <Button type="text" icon={<LeftOutlined />} onClick={onBack} />}
-          {title}
-          {subTitle && (
-            <Typography.Text type="secondary" style={{ margin: 0 }}>
-              {subTitle}
-            </Typography.Text>
+          {onBack && (
+            <Button type="button" variant="ghost" size="icon" className="size-8" aria-label="返回" onClick={onBack}>
+              <ChevronLeft />
+            </Button>
           )}
+          {title}
+          {subTitle && <span className="text-sm text-muted-foreground">{subTitle}</span>}
         </Stack>
         {extra && (
           <Stack width="auto" horizontal gap={12}>

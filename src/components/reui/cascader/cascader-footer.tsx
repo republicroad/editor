@@ -470,7 +470,6 @@ function CascaderSubmenuTrigger({
   // cannot express against @types/react 18; a plain forwarder is safe here.
   const submenuTriggerRef = ((node: unknown) => {
     rowRef.current = node as HTMLButtonElement | null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any;
 
   return (

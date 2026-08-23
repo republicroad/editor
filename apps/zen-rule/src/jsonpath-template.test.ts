@@ -11,7 +11,10 @@ const call = async (name: string, ...args: unknown[]): Promise<unknown> => {
 const STORE_JSON = {
   store: {
     bicycle: { color: 'red' },
-    book: [{ price: 10, title: 'a' }, { price: 20, title: 'b' }],
+    book: [
+      { price: 10, title: 'a' },
+      { price: 20, title: 'b' },
+    ],
   },
 };
 

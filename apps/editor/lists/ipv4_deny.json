@@ -1,6 +1,6 @@
 {
   "name": "ipv4_deny",
-  "description": "IPv4 封禁名单（示例）",
+  "description": "IPv4 封禁名单(示例)",
   "items": [
     "10.20.30.40",
     "172.16.1.1",

@@ -39,8 +39,8 @@ const store = {
   input: { num: 19 },
   db: { users: [], hits: 0 },
   zenDecisions: {
-    // ZenRule 封装了 customHandlerFunc（执行 customNode 的 UDF 表达式）与 graphAddons，
-    // 决策对象缓存由 ZenRule 内部维护（createDecisionWithCacheKey / getDecisionCache）。
+    // ZenRule 封装了 customHandlerFunc(执行 customNode 的 UDF 表达式)与 graphAddons，
+    // 决策对象缓存由 ZenRule 内部维护(createDecisionWithCacheKey / getDecisionCache)。
     engine: new ZenRule(),
   },
 };
@@ -57,7 +57,7 @@ async function requestLogger(c: Context, next: Next) {
   );
 }
 
-// 名单文件目录：apps/editor/lists/*.json（{ name, description, items }），启动时注册进 zen-rule 名单存储。
+// 名单文件目录：apps/editor/lists/*.json({ name, description, items })，启动时注册进 zen-rule 名单存储。
 const LISTS_DIR = path.resolve(import.meta.dir ?? process.cwd(), '../lists');
 
 async function loadLists(): Promise<void> {
@@ -126,7 +126,7 @@ const simulateRoute = createRoute({
       content: {
         'application/json': { schema: SimulateResponseSchema },
       },
-      description: '决策模拟执行结果（含 trace）',
+      description: '决策模拟执行结果(含 trace)',
     },
     500: {
       content: {
@@ -207,12 +207,12 @@ const getSessionRoute = createRoute({
       content: {
         'application/json': { schema: GetSessionResponseSchema },
       },
-      description: '当前会话（Mock 开发用户）',
+      description: '当前会话(Mock 开发用户)',
     },
   },
 });
 
-// 自定义节点/自定义函数 JSON Schema（namespace/tools 格式，与 brdeapi.geetest.com/zen_custom_node_function.json 对齐）。
+// 自定义节点/自定义函数 JSON Schema(namespace/tools 格式，与 brdeapi.geetest.com/zen_custom_node_function.json 对齐)。
 // 内容本身是 JSON Schema，因此外层用宽松的 record 数组描述。
 const CustomNodeFunctionSchema = z.array(z.record(z.string(), z.unknown())).openapi('CustomNodeFunctionSchema');
 
@@ -224,7 +224,7 @@ const customNodesSchemaRoute = createRoute({
       content: {
         'application/json': { schema: CustomNodeFunctionSchema },
       },
-      description: '自定义节点与自定义函数 JSON Schema（namespace/tools 格式）',
+      description: '自定义节点与自定义函数 JSON Schema(namespace/tools 格式)',
     },
   },
 });
@@ -253,7 +253,7 @@ const listsRoute = createRoute({
       content: {
         'application/json': { schema: z.array(ListSummarySchema) },
       },
-      description: '服务端名单名称列表（支持 q 关键词搜索，供查询名单节点下拉动态加载）',
+      description: '服务端名单名称列表(支持 q 关键词搜索，供查询名单节点下拉动态加载)',
     },
   },
 });
@@ -310,15 +310,15 @@ app.get('/state', (c) => {
   return c.json(store);
 });
 
-// 自定义节点/自定义函数 JSON Schema 下发：GET /api/custom-nodes/schema（见 customNodesSchemaRoute）。
-// 前端加载该 schema 后，可动态生成对应的自定义函数组件（createJdmNode）。
+// 自定义节点/自定义函数 JSON Schema 下发：GET /api/custom-nodes/schema(见 customNodesSchemaRoute)。
+// 前端加载该 schema 后，可动态生成对应的自定义函数组件(createJdmNode)。
 app.get('/input', (c) => {
   return c.json({ num: 19 });
 });
 
 // /api 以后使用 prefix 或者 plugin 来使用.
 app.openapi(simulateRoute, async (c) => {
-  // 动态加载规则文件（含自定义节点执行：ZenRule.graphAddons + customHandlerFunc）
+  // 动态加载规则文件(含自定义节点执行：ZenRule.graphAddons + customHandlerFunc)
   const body = c.req.valid('json');
   console.log('body:', body);
   const zr = store.zenDecisions.engine;
@@ -335,7 +335,7 @@ app.openapi(simulateRoute, async (c) => {
 
 app.openapi(decisionRoute, async (c) => {
   // 线上规则推理时需要把通过content获得的decision规则对象缓存起来，
-  // 避免每次都重新创建规则对象（缓存由 ZenRule 内部维护）
+  // 避免每次都重新创建规则对象(缓存由 ZenRule 内部维护)
   const body = c.req.valid('json');
   console.log('body:', body);
   const zr = store.zenDecisions.engine;
@@ -359,7 +359,7 @@ app.openapi(decisionRoute, async (c) => {
     if (!body.content) {
       return c.json({ error: 'content is required' }, 400);
     }
-    debug('创建临时decision对象（不缓存）');
+    debug('创建临时decision对象(不缓存)');
     decision = zr.createDecision(body.content);
   }
   const result = await decision.evaluate(body.context, { trace: false });
@@ -397,7 +397,7 @@ app.openapi(customNodesSchemaRoute, (c) => {
   return c.json(customNodeFunctionSchema);
 });
 
-// 名单名称列表下发（查询名单节点下拉数据源）
+// 名单名称列表下发(查询名单节点下拉数据源)
 app.openapi(listsRoute, (c) => {
   const q = c.req.query('q');
   const lists = listLists(q).map((list) => ({ name: list.name, size: list.items.length }));

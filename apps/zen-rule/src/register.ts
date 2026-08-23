@@ -1,6 +1,6 @@
 /**
- * 完整 JSON Schema 属性（与 brdeapi.geetest.com/zen_custom_node_function.json 对齐）。
- * index signature 允许嵌套 schema（properties/items/$defs/anyOf 等）。
+ * 完整 JSON Schema 属性(与 brdeapi.geetest.com/zen_custom_node_function.json 对齐)。
+ * index signature 允许嵌套 schema(properties/items/$defs/anyOf 等)。
  */
 export interface JsonSchemaProperty {
   type?: string;
@@ -34,14 +34,14 @@ export interface JsonSchema {
   [key: string]: unknown;
 }
 
-/** 扁平参数 schema（执行/绑定用，funcBindParams 依赖） */
+/** 扁平参数 schema(执行/绑定用，funcBindParams 依赖) */
 export interface UdfSchemaParameter {
   type?: string;
   description?: string;
   default?: unknown;
 }
 
-/** 单个自定义函数（namespace/tools 格式中的 tool），对应 createJdmNode 的 kind */
+/** 单个自定义函数(namespace/tools 格式中的 tool)，对应 createJdmNode 的 kind */
 export interface CustomFunctionTool {
   name: string;
   title: string;
@@ -58,7 +58,7 @@ export interface CustomFunctionTool {
   kind: string;
 }
 
-/** 自定义节点命名空间（namespace/tools 格式），对应侧边栏 group */
+/** 自定义节点命名空间(namespace/tools 格式)，对应侧边栏 group */
 export interface CustomNodeNamespace {
   type: 'namespace';
   title: string;
@@ -67,12 +67,12 @@ export interface CustomNodeNamespace {
   tools: CustomFunctionTool[];
 }
 
-/** UDF 声明 schema（向后兼容：扁平 parameters 与完整 parametersSchema 二选一或并存） */
+/** UDF 声明 schema(向后兼容：扁平 parameters 与完整 parametersSchema 二选一或并存) */
 export interface UdfSchema {
   parameters?: Record<string, UdfSchemaParameter>;
   returns?: { type?: string; description?: string };
   namespace?: string;
-  /** 完整 JSON Schema 形式的参数定义（用于 /api/custom-nodes/schema 下发） */
+  /** 完整 JSON Schema 形式的参数定义(用于 /api/custom-nodes/schema 下发) */
   parametersSchema?: {
     properties: Record<string, JsonSchemaProperty>;
     required?: string[];
@@ -89,7 +89,7 @@ interface UdfEntry {
   schema: UdfSchema;
 }
 
-/** 可注册的 UDF 函数签名（动态注册表，运行时统一以单个 kwargs 对象调用） */
+/** 可注册的 UDF 函数签名(动态注册表，运行时统一以单个 kwargs 对象调用) */
 type UdfFunction = (kwargs: Record<string, unknown>) => unknown;
 
 function jsonT2pyT(jsonType: string): (v: unknown) => unknown {
@@ -110,8 +110,8 @@ function jsonT2pyT(jsonType: string): (v: unknown) => unknown {
 
 /**
  * 归一化 UdfSchema：
- * - 提供了 parametersSchema 时，自动派生扁平 parameters（供 funcBindParams 绑定/执行）
- * - 只提供扁平 parameters 时，自动合成 parametersSchema（供 schema 下发，保持旧调用方兼容）
+ * - 提供了 parametersSchema 时，自动派生扁平 parameters(供 funcBindParams 绑定/执行)
+ * - 只提供扁平 parameters 时，自动合成 parametersSchema(供 schema 下发，保持旧调用方兼容)
  */
 function normalizeUdfSchema(schema: UdfSchema): UdfSchema {
   const normalized: UdfSchema = {
@@ -222,7 +222,7 @@ class UDFManager {
     return result instanceof Promise ? await result : result;
   }
 
-  /** 扁平 schema 数组（旧接口，保持兼容） */
+  /** 扁平 schema 数组(旧接口，保持兼容) */
   udfFunctionSchemaTools(): unknown[] {
     const funcTools: unknown[] = [];
     for (const entry of this.functions.values()) {

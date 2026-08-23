@@ -1,6 +1,6 @@
 {
   "name": "whitelist",
-  "description": "内部账号白名单（示例）",
+  "description": "内部账号白名单(示例)",
   "items": [
     "admin",
     "ops",

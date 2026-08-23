@@ -36,7 +36,7 @@ registerUdf('query_list', 'risk', {
       listName: {
         type: 'string',
         title: '名单',
-        description: '服务端名单名称（从名单下拉中动态选择）',
+        description: '服务端名单名称(从名单下拉中动态选择)',
       },
       value: {
         type: 'string',

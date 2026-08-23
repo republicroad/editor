@@ -73,7 +73,7 @@ def udf(namespace=None):
 **TypeScript 设计:**
 
 ```typescript
-// 显式定义的 UDF 信息 schema（可选, 不传时不做类型检查/转换）
+// 显式定义的 UDF 信息 schema(可选, 不传时不做类型检查/转换)
 interface UdfSchema {
   parameters?: Record<string, { type?: string; description?: string; default?: any }>;
   returns?: { type?: string; description?: string };
@@ -99,9 +99,9 @@ class UDFManager {
 
 **关键差异说明:**
 - Python 通过 `inspect.signature()` + `docstring_parser` 自动提取参数 schema
-- TypeScript 无法在运行时反射函数参数类型（类型在编译期被擦除）
-- 因此 schema 为**可选参数**：有 schema 时做类型转换（`funcBindParams`），无 schema 时直接传参
-- `registerFunction` 不再依赖装饰器语法（TS 函数装饰器非标准），通过 `registerUdf(name, schema?)` 工厂函数实现
+- TypeScript 无法在运行时反射函数参数类型(类型在编译期被擦除)
+- 因此 schema 为**可选参数**：有 schema 时做类型转换(`funcBindParams`)，无 schema 时直接传参
+- `registerFunction` 不再依赖装饰器语法(TS 函数装饰器非标准)，通过 `registerUdf(name, schema?)` 工厂函数实现
 
 ```typescript
 // 工厂函数替代装饰器
@@ -128,7 +128,7 @@ export function registerUdf(name: string, namespace?: string, schema?: UdfSchema
 | `evaluate(key, ctx, options?)` | `evaluate(key, ctx, options?)` | TS `decision.evaluate()` 是同步的 |
 | `async_evaluate(key, ctx, options?)` | `evaluateAsync(key, ctx, options?)` | 相同返回 Promise |
 | `graph_addons(graphContent)` | `graphAddons(graphContent)` | 向 customNode 注入 inputNode name、meta、expr_asts |
-| `parse_oprator_expr(expr)` | `parseOperatorExpr(expr)` | 支持 `list`（数组原样返回）与字符串（正则拆分 `;;` 分隔, 兼容旧格式） |
+| `parse_oprator_expr(expr)` | `parseOperatorExpr(expr)` | 支持 `list`(数组原样返回)与字符串(正则拆分 `;;` 分隔, 兼容旧格式) |
 
 **ZenRule 主逻辑流程:**
 
@@ -185,7 +185,7 @@ flowchart TD
     J --> K["return {output: results}"]
 ```
 
-**executeExpr 详细流程（UDF 调用器）:**
+**executeExpr 详细流程(UDF 调用器):**
 
 ```mermaid
 flowchart TD
@@ -194,7 +194,7 @@ flowchart TD
     C --> D{"udfManager 中\n存在 funcName?"}
     D -->|"否"| E["return {error: 'udf not found'}"]
     D -->|"是"| F["对每个 arg 表达式求值:\n  evaluateExpressionSync(arg, nodeInput)"]
-    F --> G["funcBindParams(funcName, argValues)\n  类型转换（如有 schema）"]
+    F --> G["funcBindParams(funcName, argValues)\n  类型转换(如有 schema)"]
     G --> H["组装 kwargs:\n  ...boundParams,\n  ...context,\n  func_id, expr_id,\n  _node_input_"]
     H --> I["await udfManager.call(funcName, ...kwargs)"]
     I --> J["return result"]

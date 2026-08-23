@@ -14,6 +14,9 @@ export const registerList = (list: NamedList): void => {
 
 export const getList = (name: string): NamedList | undefined => lists.get(name);
 
+/** 删除名单；返回是否存在(便于 API 层区分 404) */
+export const deleteList = (name: string): boolean => lists.delete(name);
+
 export const listLists = (query?: string): NamedList[] => {
   const q = query?.trim().toLowerCase() ?? '';
   const all = [...lists.values()];

@@ -26,13 +26,7 @@ export const uid = (): string =>
     ? globalThis.crypto.randomUUID()
     : `expr-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-export const parseOperatorArgs = (expr: string | string[]): string[] => {
-  if (Array.isArray(expr)) {
-    return expr.map((s) => s.trim());
-  }
-  const pattern = /;;(?=(?:[^"'`]*["'`][^"'`]*["'`])*[^"'`]*$)/;
-  return expr.split(pattern).map((s) => s.trim());
-};
+export { parseOperatorArgs } from './http-request-protocol';
 
 export const toFunctionCallValue = (toolName: string, args: string[]): string[] => [toolName, ...args];
 

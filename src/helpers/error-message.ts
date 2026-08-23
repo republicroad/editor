@@ -1,4 +1,4 @@
-import { message } from 'antd';
+import { toast } from 'sonner';
 import { match, P } from 'ts-pattern';
 
 export const errorMessage = (e: unknown): string => {
@@ -11,4 +11,4 @@ export const errorMessage = (e: unknown): string => {
     .otherwise(() => 'Unknown error');
 };
 
-export const displayError = (e: unknown) => message.error(errorMessage(e));
+export const displayError = (e: unknown) => toast.error(errorMessage(e));

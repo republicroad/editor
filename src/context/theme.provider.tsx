@@ -14,6 +14,7 @@ export enum ThemePreference {
 type ThemeContextState = {
   themePreference: ThemePreference;
   setThemePreference: (preference: ThemePreference) => void;
+  isDarkTheme: boolean;
 };
 
 // eslint-disable-next-line
@@ -60,7 +61,7 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   return (
     <ConfigProvider theme={{ algorithm: isDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
-      <ThemeContext.Provider value={{ themePreference, setThemePreference }}>
+      <ThemeContext.Provider value={{ themePreference, setThemePreference, isDarkTheme }}>
         <JdmConfigProvider theme={{ mode: isDarkTheme ? 'dark' : 'light' }}>{children}</JdmConfigProvider>
       </ThemeContext.Provider>
     </ConfigProvider>

@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { cryptoNode } from '../components/custom-node/crypto-node';
 import { httpRequestNode } from '../components/custom-node/http-request-node';
+import { jsonPathNode } from '../components/custom-node/json-path-node';
 import { queryListNode } from '../components/custom-node/query-list-node';
+import { templateNode } from '../components/custom-node/template-node';
 import { customNodes as demoNodes } from '../context/customnode.tsx';
 import { fetchCustomNodeSchema, schemaToCustomNodes } from '../lib/custom-node-registry';
 import type { CustomNodeNamespace } from '../lib/custom-node-types';
@@ -12,7 +14,13 @@ import type { CustomNodeNamespace } from '../lib/custom-node-types';
 type CustomNodeSpec = CustomNodeSpecification<object, any>;
 
 // 消费方自定义实现的节点 kind：从 schema 驱动结果中排除，避免侧边栏重复
-const overriddenKinds = new Set(['risk.query_list', 'contrib.http_request', 'contrib.crypto']);
+const overriddenKinds = new Set([
+  'risk.query_list',
+  'contrib.http_request',
+  'contrib.crypto',
+  'contrib.json_path',
+  'contrib.template',
+]);
 
 const filterOverridden = (schema: CustomNodeNamespace[]): CustomNodeNamespace[] =>
   schema
@@ -45,7 +53,15 @@ export function useCustomNodes(): {
   const customNodes = useMemo<CustomNodeSpec[]>(
     () =>
       schema
-        ? [...demoNodes, queryListNode, httpRequestNode, cryptoNode, ...schemaToCustomNodes(filterOverridden(schema))]
+        ? [
+            ...demoNodes,
+            queryListNode,
+            httpRequestNode,
+            cryptoNode,
+            jsonPathNode,
+            templateNode,
+            ...schemaToCustomNodes(filterOverridden(schema)),
+          ]
         : demoNodes,
     [schema],
   );
@@ -58,6 +74,8 @@ export function useCustomNodes(): {
             queryListNode,
             httpRequestNode,
             cryptoNode,
+            jsonPathNode,
+            templateNode,
             ...schemaToCustomNodes(filterOverridden(schema), { summaryCard: true }),
           ]
         : demoNodes,

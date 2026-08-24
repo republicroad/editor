@@ -4,6 +4,7 @@ import { join } from 'path';
 import { debug } from 'console';
 import type { ZenDecision } from '@gorules/zen-engine';
 import { deleteList, getList, registerList, listLists, ZenRule } from 'zen-rule';
+import { cors } from 'hono/cors';
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
@@ -11,38 +12,23 @@ import { Scalar } from '@scalar/hono-api-reference';
 import { serveStatic } from 'hono/bun';
 import { customNodeFunctionSchema } from './custom-node-schema';
 
-// Function to recursively list files in a directory
-async function getFilesRecursively(dir: string, fileList: string[] = [], rootDir: string = dir): Promise<string[]> {
-  const files = await readdir(dir, { withFileTypes: true });
-  for (const file of files) {
-    const fullPath = join(dir, file.name);
-    if (file.isDirectory()) {
-      await getFilesRecursively(fullPath, fileList, rootDir);
-    } else {
-      // Add the file path relative to the root directory
-      const relativePath = path.relative(rootDir, fullPath);
-      fileList.push(relativePath);
-    }
-  }
-
-  return fileList;
-}
+// 环境配置：PORT 监听端口、CORS_ORIGINS 跨域白名单(逗号分隔，未设则全放行)、LISTS_DIR 名单落盘目录
+const PORT = Number(process.env.PORT ?? 3000);
+const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+const LISTS_DIR = process.env.LISTS_DIR
+  ? path.resolve(process.env.LISTS_DIR)
+  : path.resolve(import.meta.dir, '../lists');
 
 const staticConfig = {
   assets: 'public', // Directory to serve static files from
-  prefix: '/', // URL prefix to access static files
 };
 
-// assets 默认是 public
-const store = {
-  input: { num: 19 },
-  db: { users: [], hits: 0 },
-  zenDecisions: {
-    // ZenRule 封装了 customHandlerFunc(执行 customNode 的 UDF 表达式)与 graphAddons，
-    // 决策对象缓存由 ZenRule 内部维护(createDecisionWithCacheKey / getDecisionCache)。
-    engine: new ZenRule(),
-  },
-};
+// ZenRule 封装了 customHandlerFunc(执行 customNode 的 UDF 表达式)与 graphAddons，
+// 决策对象缓存由 ZenRule 内部维护(createDecisionWithCacheKey / getDecisionCache)。
+const zenRuleEngine = new ZenRule();
 
 // 请求日志中间件：打印每个请求的方法、路径、状态码与耗时
 async function requestLogger(c: Context, next: Next) {
@@ -56,9 +42,7 @@ async function requestLogger(c: Context, next: Next) {
   );
 }
 
-// 名单文件目录：apps/editor/lists/*.json({ name, description, items })，启动时注册进 zen-rule 名单存储。
-const LISTS_DIR = path.resolve(import.meta.dir ?? process.cwd(), '../lists');
-
+// 名单文件目录：$LISTS_DIR/*.json({ name, description, items })，启动时注册进 zen-rule 名单存储。
 async function loadLists(): Promise<void> {
   try {
     const entries = await readdir(LISTS_DIR, { withFileTypes: true });
@@ -420,6 +404,20 @@ const app = new OpenAPIHono();
 
 app.use(requestLogger);
 
+// 跨域：未设 CORS_ORIGINS 时全放行(本地/镜像开发)；设置后仅白名单内 origin 反射放行(带凭证)
+if (CORS_ORIGINS.length > 0) {
+  app.use(
+    '*',
+    cors({
+      origin: (origin) => (CORS_ORIGINS.includes(origin) ? origin : undefined),
+      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      credentials: true,
+    }),
+  );
+} else {
+  app.use('*', cors());
+}
+
 // 统一错误日志：打印堆栈并返回结构化错误响应
 app.onError((err, c) => {
   console.error(`[${new Date().toISOString()}] ERROR ${c.req.method} ${c.req.path}:`, err);
@@ -430,73 +428,27 @@ app.onError((err, c) => {
   return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
 });
 
-// GET / 必须在 serveStatic 之前注册，否则会被静态文件中间件直接返回 index.html
-app.get('/', async (c) => {
-  if (!('files' in c.req.query())) {
-    // 如果没有传 files 参数，则返回 index.html
-    const url = path.resolve(staticConfig.assets, 'index.html');
-    return new Response(Bun.file(url));
-  }
-  const directoryPath = join(process.cwd(), staticConfig.assets); // Adjust 'public' to your directory name
-  try {
-    const files = await getFilesRecursively(directoryPath);
-    // Generate an HTML list
-    let htmlResponse = '<h1>File List</h1><ul>';
-    for (const file of files) {
-      // Create a link to the actual static file path
-      let fileUrl;
-      if (file === 'index.html') {
-        fileUrl = staticConfig.prefix; // Root URL for index.html
-      } else {
-        fileUrl = path.resolve(staticConfig.prefix, file);
-      }
-      htmlResponse += `<li><a href="${fileUrl}">${file}</a></li>`;
-    }
-    htmlResponse += '</ul>';
-
-    return c.html(htmlResponse);
-  } catch (error) {
-    console.error(error);
-    return c.text('Error reading directory', 500);
-  }
+// GET / 返回编辑器入口(须在 serveStatic 之前注册，否则会被静态文件中间件直接返回 index.html)
+app.get('/', () => {
+  const url = path.resolve(staticConfig.assets, 'index.html');
+  return new Response(Bun.file(url));
 });
 
 app.use('/*', serveStatic({ root: './public' }));
-
-app.get('/state', (c) => {
-  console.log('store in /state:', store);
-  return c.json(store);
-});
-
-// 自定义节点/自定义函数 JSON Schema 下发：GET /api/custom-nodes/schema(见 customNodesSchemaRoute)。
-// 前端加载该 schema 后，可动态生成对应的自定义函数组件(createJdmNode)。
-app.get('/input', (c) => {
-  return c.json({ num: 19 });
-});
-
 // /api 以后使用 prefix 或者 plugin 来使用.
 app.openapi(simulateRoute, async (c) => {
-  // 动态加载规则文件(含自定义节点执行：ZenRule.graphAddons + customHandlerFunc)
+  // 动态加载规则文件(含自定义节点执行：ZenRule.graphAddons + customHandlerFunc)；执行失败由 onError 统一返回 {error} 500
   const body = c.req.valid('json');
-  console.log('body:', body);
-  const zr = store.zenDecisions.engine;
-  const decision = zr.createDecision(body.content);
-  try {
-    // 考虑把 trace 做成一个url?后的参数
-    const result = await decision.evaluate(body.context, { trace: true });
-    return c.json(result);
-  } catch (error) {
-    console.error(error);
-    return c.json({ error: String(error) }, 500);
-  }
+  const decision = zenRuleEngine.createDecision(body.content);
+  const result = await decision.evaluate(body.context, { trace: true });
+  return c.json(result);
 });
 
 app.openapi(decisionRoute, async (c) => {
   // 线上规则推理时需要把通过content获得的decision规则对象缓存起来，
   // 避免每次都重新创建规则对象(缓存由 ZenRule 内部维护)
   const body = c.req.valid('json');
-  console.log('body:', body);
-  const zr = store.zenDecisions.engine;
+  const zr = zenRuleEngine;
   const decisionId = body.decisionId;
   let decision: ZenDecision;
   if (decisionId) {
@@ -511,17 +463,16 @@ app.openapi(decisionRoute, async (c) => {
       debug(`创建新的decision对象并缓存: ${decisionId}`);
       decision = zr.createDecisionWithCacheKey(decisionId, body.content);
     } else {
-      return c.json({ error: 'content is required when decision is not cached' }, 400);
+      throw new HTTPException(400, { message: 'content is required when decision is not cached' });
     }
   } else {
     if (!body.content) {
-      return c.json({ error: 'content is required' }, 400);
+      throw new HTTPException(400, { message: 'content is required' });
     }
     debug('创建临时decision对象(不缓存)');
     decision = zr.createDecision(body.content);
   }
   const result = await decision.evaluate(body.context, { trace: false });
-  console.log('result:', result);
   return c.json(result);
 });
 
@@ -571,7 +522,7 @@ app.openapi(listDetailRoute, (c) => {
   const { name } = c.req.valid('param');
   const list = getList(name);
   if (!list) {
-    return c.json({ error: `list '${name}' not found` }, 404);
+    throw new HTTPException(404, { message: `list '${name}' not found` });
   }
   return c.json({ name: list.name, description: list.description, items: list.items }, 200);
 });
@@ -585,14 +536,13 @@ app.openapi(listCreateRoute, async (c) => {
     items: body.items.map((item) => String(item)),
   };
   if (!list.name) {
-    return c.json({ error: 'name is required' }, 400);
+    throw new HTTPException(400, { message: 'name is required' });
   }
   registerList(list);
   try {
     await writeListFile(list);
   } catch (error) {
-    console.error(`[lists] failed to persist ${list.name}:`, error);
-    return c.json({ error: `failed to persist list file: ${String(error)}` }, 500);
+    throw new HTTPException(500, { message: `failed to persist list file: ${String(error)}` });
   }
   return c.json(list, 200);
 });
@@ -603,7 +553,7 @@ app.openapi(listUpdateRoute, async (c) => {
   const body = c.req.valid('json');
   const existing = getList(name);
   if (!existing) {
-    return c.json({ error: `list '${name}' not found` }, 404);
+    throw new HTTPException(404, { message: `list '${name}' not found` });
   }
   const list = {
     name: existing.name,
@@ -614,8 +564,7 @@ app.openapi(listUpdateRoute, async (c) => {
   try {
     await writeListFile(list);
   } catch (error) {
-    console.error(`[lists] failed to persist ${list.name}:`, error);
-    return c.json({ error: `failed to persist list file: ${String(error)}` }, 500);
+    throw new HTTPException(500, { message: `failed to persist list file: ${String(error)}` });
   }
   return c.json(list, 200);
 });
@@ -624,7 +573,7 @@ app.openapi(listUpdateRoute, async (c) => {
 app.openapi(listDeleteRoute, async (c) => {
   const { name } = c.req.valid('param');
   if (!getList(name)) {
-    return c.json({ error: `list '${name}' not found` }, 404);
+    throw new HTTPException(404, { message: `list '${name}' not found` });
   }
   deleteList(name);
   const filePath = await findListFile(name);
@@ -651,10 +600,15 @@ app.get('/openapi', Scalar({ url: '/openapi/json' }));
 
 await loadLists();
 
-const server = Bun.serve({
-  port: Number(process.env.PORT ?? 3000),
-  fetch: app.fetch,
-});
-console.log(`Hono is running at http://${server.hostname}:${server.port}`);
-console.log(`openapi UI is running at http://${server.hostname}:${server.port}/openapi`);
-console.log(`openapi schema is running at http://${server.hostname}:${server.port}/openapi/json`);
+export { app, LISTS_DIR };
+
+// 仅直接运行时启动 HTTP 服务；被测试/其他模块导入时只暴露 app
+if (import.meta.main) {
+  const server = Bun.serve({
+    port: PORT,
+    fetch: app.fetch,
+  });
+  console.log(`Hono is running at http://${server.hostname}:${server.port}`);
+  console.log(`openapi UI is running at http://${server.hostname}:${server.port}/openapi`);
+  console.log(`openapi schema is running at http://${server.hostname}:${server.port}/openapi/json`);
+}

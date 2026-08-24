@@ -152,12 +152,12 @@
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线：根仓库 **126 pass** 含子模块 **37 pass**(第七批新增模拟器三 hooks 单测与 apps/editor 13 项路由单测)；模拟器组件级交互待补)
+- [~] 完善单元测试覆盖(bun test 基线：主仓 **136 pass**(含子模块 37)；zen-rule **35 pass**；apps/editor **16 pass**(第八批)；模拟器组件级交互待补)
 - [~] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓暂无 Storybook 配置)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
-- [ ] 第八批(已规划待启动)：A AuthAdapter 抽取 / B ExecCtx 执行上下文通道 → 见 docs/14-batch-eight-plan.md；C 名单 owner 隔离仅设计存档于同文档，暂缓实施
+- [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离仅设计存档于同文档，**暂缓实施待放行**
 
 ---
 
@@ -214,6 +214,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-24，第八批：鉴权适配层 + ExecCtx 执行上下文通道)：**
+- 计划先行(`cd7ea65`)：完整方案存档于 docs/14-batch-eight-plan.md；C 项(名单 owner 隔离)仅设计存档、暂缓实施，待单独放行
+- A AuthAdapter 抽取(`515c3f7`)：新增 `src/lib/auth/adapter.ts`——`AuthAdapter = () => Promise<AuthUser|null>` 接口 + `createAnonymousAdapter`/`createBetterAuthAdapter` 内置实现(宿主自定义直接传函数)；`user-resolver.ts` 改为薄封装 `createUserResolver(adapter)`，`createBetterAuthResolver` 保留兼容别名；decision-simple 经 useMemo 稳定 resolver 引用(顺带修复每 render 重建导致的 effect 反复触发)；better-auth 从硬依赖降为可选实现；+5 单测
+- B ExecCtx 通道(`638105f`)：ALS spike 验证 Bun 下 AsyncLocalStorage 并发隔离 PASS；zen-rule 新增 `exec-context.ts`(`getExecContext`/`runWithExecContext`)并从包入口转出——**禁用实例字段**(ZenRule 单例并发竞态)，UDF 直接 import getter，engine.ts 签名不变；apps/editor 新增 `resolveExecContext`：`TRUST_PROXY_HEADERS=true` 时信任网关 `X-User-Id`/`X-Request-Id`(缺省回退 Mock 用户 mock-user-1)，simulate/decision 两处 evaluate 以 `runWithExecContext` 包裹；+4 zen-rule 用例(含并发交错与 UDF 探针)+3 editor 用例
+- 测试基线更新：主仓 **126→136 pass**(+5 auth adapter/+4 exec-context/+3 resolveExecContext... 净增 10)，zen-rule **31→35 pass**，apps/editor **13→16 pass**；lint 0 错误/17 警告
+- 安全边界：不信任客户端明文 userId(网关头需显式开启信任开关)；凭证不出编辑器——http_request 出站携带用户 token 明确不做(见 docs/14)
 
 **最新变更(2026-08-24，第七批：生产化打磨 + 质量补全 + 库化第一步)：**
 - 定位校准：编辑器以「通用无状态库」为目标(未来作为库发布、可被其他应用引用)，暂缓真实会话/鉴权与规则持久化；本批按此目标做生产化与可复用性改造

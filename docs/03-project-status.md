@@ -149,14 +149,14 @@
 - lezer-zen / lezer-zen-template / zen-engine-wasm 源码已从工作区移除(opencode 与 zrule 分支均如此)，改为外部 npm 固定版本依赖
 
 ### 6.2 待办事项
-- [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；剩余：真实部署配置、错误处理统一
+- [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线：子模块 21 pass(`f4e972d`)；主仓协议库单测 93 pass + zen-rule 引擎单测 31 pass；模拟器 hooks 待补)
-- [~] 补充 Storybook 组件文档(新增 simulator-request-panel stories(带/不带 InputNode 绑定)，`--smoke-test` 通过；其余组件沿用既有 stories)
+- [~] 完善单元测试覆盖(bun test 基线：根仓库 **126 pass** 含子模块 **37 pass**(第七批新增模拟器三 hooks 单测与 apps/editor 13 项路由单测)；模拟器组件级交互待补)
+- [~] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓暂无 Storybook 配置)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
-- [ ] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)
+- [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
 
 ---
 
@@ -213,6 +213,15 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-24，第七批：生产化打磨 + 质量补全 + 库化第一步)：**
+- 定位校准：编辑器以「通用无状态库」为目标(未来作为库发布、可被其他应用引用)，暂缓真实会话/鉴权与规则持久化；本批按此目标做生产化与可复用性改造
+- 后端生产化(apps/editor)：新增 env 配置(`PORT`/`CORS_ORIGINS` 白名单，未设则全放行；`LISTS_DIR` 名单目录可覆盖)；hono/cors 中间件接入；simulate/lists/decision 的散落错误响应统一改抛 `HTTPException` 走 onError(响应形状不变)；删除调试端点 `/state`、`/input`、根路由 `files=` 目录列表及 store 内存泄漏日志；服务启动加 `import.meta.main` 守卫并导出 app 供测试
+- apps/editor 首个路由单测 `index.test.ts`(13 pass)：openapi/CORS 头/preflight/simulate 信封与 zod 校验/lists CRUD 全链路(临时 LISTS_DIR)/mock session/schema 下发
+- 模拟器 hooks 单测(jdm-editor 子模块 `44102b4`)：use-simulator-request-binding/use-request-example-persistence/use-simulator-request-editor 三 hooks 全覆盖，子模块测试基线 **21→37 pass**；引入 happy-dom GlobalRegistrator(bunfig preload)并在注册后还原 fetch/AbortSignal 等原生全局，避免污染真实网络用例
+- Storybook：新增 simulator-nodes-panel stories(空态/成功 trace/错误 trace/loading 四场景)，`storybook dev --ci --smoke-test` 通过(`48f1b8a`)
+- 库化第一步(主仓 `c50aea4`)：schema 加载拆出轻量模块 `custom-node-schema-source.ts`——`fetchCustomNodeSchema(source)` 支持 URL 字符串或宿主注入加载函数(默认同源 `/api/custom-nodes/schema` 不变，失败回退离线夹具)；`useCustomNodes({ schemaSource })` 可选注入；registry tsx 转出保持既有导入路径兼容；+6 单测
+- 测试基线更新：根仓库 `bun test src` 因路径子串过滤连带运行子模块用例，根 bunfig.toml 复用同一 DOM 预加载脚本，基线 **93→126 pass**(含子模块 37)；lint 0 错误/17 警告(均为节点文件 react-refresh 既有类别)
 
 **最新变更(2026-08-23，第五/六批：数据加工节点对 + 基建打磨)：**
 - 新增 `contrib.json_path`(JSONPath 提取，jsonpath-plus 标准语法，单命中返回值多命中数组，无命中回退 default；子模块 json-path-extractor 经核实为字段定位器而非查询引擎，故改用标准库)与 `contrib.template`(`${path}` 插值渲染，缺失变量空串)两节点，均含引擎向量测试

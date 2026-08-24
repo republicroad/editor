@@ -157,6 +157,7 @@
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
+- [ ] 第八批(已规划待启动)：A AuthAdapter 抽取 / B ExecCtx 执行上下文通道 → 见 docs/14-batch-eight-plan.md；C 名单 owner 隔离仅设计存档于同文档，暂缓实施
 
 ---
 

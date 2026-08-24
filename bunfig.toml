@@ -1,0 +1,4 @@
+# 根仓库 bun test 预加载：`bun test src` 会按路径子串连带运行 jdm-editor 子模块内测试，
+# 与子模块一致注册 happy-dom 全局，保证 @testing-library/react 可用
+[test]
+preload = ["./jdm-editor/packages/jdm-editor/src/setupBunDom.ts"]

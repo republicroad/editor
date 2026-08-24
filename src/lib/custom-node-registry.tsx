@@ -1,8 +1,6 @@
 import { createJdmNode, jsonSchemaToVariableType } from '@gorules/jdm-editor';
 import React from 'react';
 
-import fallbackSchema from '../assets/custom-node-schema.json';
-
 import { CustomNodeSummaryCard } from '../components/custom-node/custom-node-summary-card';
 import css from '../components/custom-node/custom-node.module.css';
 import CodeIcon from '../components/icons/code';
@@ -107,19 +105,10 @@ export function schemaToCustomNodes(
   );
 }
 
-export async function fetchCustomNodeSchema(): Promise<CustomNodeNamespace[]> {
-  try {
-    const response = await fetch('/api/custom-nodes/schema', { headers: { Accept: 'application/json' } });
-    if (!response.ok) {
-      throw new Error(`schema request failed: ${response.status}`);
-    }
-    const json: unknown = await response.json();
-    if (!Array.isArray(json)) {
-      throw new Error('schema response is not an array');
-    }
-    return json as CustomNodeNamespace[];
-  } catch (error) {
-    console.warn('[custom-node] fetch schema failed, using bundled fallback', error);
-    return fallbackSchema as CustomNodeNamespace[];
-  }
-}
+// 自定义节点 schema 来源(轻量实现见 custom-node-schema-source.ts；此处转出保持既有导入路径兼容)
+export {
+  DEFAULT_SCHEMA_URL,
+  fetchCustomNodeSchema,
+  parseCustomNodeSchemaPayload,
+  type CustomNodeSchemaSource,
+} from './custom-node-schema-source';

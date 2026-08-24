@@ -7,7 +7,7 @@ import { jsonPathNode } from '../components/custom-node/json-path-node';
 import { queryListNode } from '../components/custom-node/query-list-node';
 import { templateNode } from '../components/custom-node/template-node';
 import { customNodes as demoNodes } from '../context/customnode.tsx';
-import { fetchCustomNodeSchema, schemaToCustomNodes } from '../lib/custom-node-registry';
+import { fetchCustomNodeSchema, schemaToCustomNodes, type CustomNodeSchemaSource } from '../lib/custom-node-registry';
 import type { CustomNodeNamespace } from '../lib/custom-node-types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 与 jdm-editor 内部 customNodes 类型约定一致
@@ -30,17 +30,23 @@ const filterOverridden = (schema: CustomNodeNamespace[]): CustomNodeNamespace[] 
     }))
     .filter((namespace) => namespace.tools.length > 0);
 
-export function useCustomNodes(): {
+export type UseCustomNodesOptions = {
+  /** 自定义节点 schema 来源：默认同源 /api/custom-nodes/schema；可传自定义 URL 或加载函数(库复用) */
+  schemaSource?: CustomNodeSchemaSource;
+};
+
+export function useCustomNodes(options?: UseCustomNodesOptions): {
   customNodes: CustomNodeSpec[];
   summaryCustomNodes: CustomNodeSpec[];
   schema: CustomNodeNamespace[] | null;
   ready: boolean;
 } {
+  const { schemaSource } = options ?? {};
   const [schema, setSchema] = useState<CustomNodeNamespace[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void fetchCustomNodeSchema().then((value) => {
+    void fetchCustomNodeSchema(schemaSource).then((value) => {
       if (!cancelled) {
         setSchema(value);
       }
@@ -48,7 +54,7 @@ export function useCustomNodes(): {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [schemaSource]);
 
   const customNodes = useMemo<CustomNodeSpec[]>(
     () =>

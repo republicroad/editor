@@ -13,7 +13,7 @@ afterAll(async () => {
   await rm(listsDir, { recursive: true, force: true });
 });
 
-const { app } = await import('./index.js');
+const { app, resolveExecContext } = await import('./index.js');
 
 const simulateBody = {
   content: {
@@ -184,5 +184,37 @@ describe('mock session and custom node schema', () => {
     expect(Array.isArray(body)).toBe(true);
     expect(body.length).toBeGreaterThan(0);
     expect(body[0]?.tools?.length ?? 0).toBeGreaterThan(0);
+  });
+});
+
+describe('resolveExecContext', () => {
+  const getterFrom = (headers: Record<string, string>) => (name: string) => headers[name];
+
+  test('默认回退 Mock 开发用户并生成 requestId', () => {
+    delete process.env.TRUST_PROXY_HEADERS;
+    const ctx = resolveExecContext(getterFrom({ 'x-user-id': 'spoofed' }));
+    expect(ctx.userId).toBe('mock-user-1');
+    expect(ctx.requestId).toBeTruthy();
+  });
+
+  test('TRUST_PROXY_HEADERS=true 时信任网关头', () => {
+    process.env.TRUST_PROXY_HEADERS = 'true';
+    try {
+      const ctx = resolveExecContext(getterFrom({ 'x-user-id': 'gw-user-7', 'x-request-id': 'req-9' }));
+      expect(ctx.userId).toBe('gw-user-7');
+      expect(ctx.requestId).toBe('req-9');
+    } finally {
+      delete process.env.TRUST_PROXY_HEADERS;
+    }
+  });
+
+  test('TRUST_PROXY_HEADERS=true 但缺 X-User-Id 时仍回退 Mock 用户', () => {
+    process.env.TRUST_PROXY_HEADERS = 'true';
+    try {
+      const ctx = resolveExecContext(getterFrom({}));
+      expect(ctx.userId).toBe('mock-user-1');
+    } finally {
+      delete process.env.TRUST_PROXY_HEADERS;
+    }
   });
 });

@@ -3,7 +3,7 @@ import path from 'path';
 import { join } from 'path';
 import { debug } from 'console';
 import type { ZenDecision } from '@gorules/zen-engine';
-import { deleteList, getList, registerList, listLists, ZenRule } from 'zen-rule';
+import { deleteList, getList, registerList, listLists, runWithExecContext, type ExecContext, ZenRule } from 'zen-rule';
 import { cors } from 'hono/cors';
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
@@ -21,6 +21,22 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? '')
 const LISTS_DIR = process.env.LISTS_DIR
   ? path.resolve(process.env.LISTS_DIR)
   : path.resolve(import.meta.dir, '../lists');
+
+const MOCK_USER_ID = 'mock-user-1';
+
+// 执行上下文解析：TRUST_PROXY_HEADERS=true 时信任网关注入的 X-User-Id/X-Request-Id，
+// 否则回退到 Mock 开发用户(与 /api/auth/get-session 一致)。UDF 经 getExecContext() 读取。
+type HeaderGetter = (name: string) => string | undefined;
+export const resolveExecContext = (getHeader: HeaderGetter): ExecContext => {
+  const requestId = getHeader('x-request-id') ?? crypto.randomUUID();
+  if (process.env.TRUST_PROXY_HEADERS === 'true') {
+    const userId = getHeader('x-user-id');
+    if (userId) {
+      return { userId, requestId };
+    }
+  }
+  return { userId: MOCK_USER_ID, requestId };
+};
 
 const staticConfig = {
   assets: 'public', // Directory to serve static files from
@@ -440,7 +456,10 @@ app.openapi(simulateRoute, async (c) => {
   // 动态加载规则文件(含自定义节点执行：ZenRule.graphAddons + customHandlerFunc)；执行失败由 onError 统一返回 {error} 500
   const body = c.req.valid('json');
   const decision = zenRuleEngine.createDecision(body.content);
-  const result = await decision.evaluate(body.context, { trace: true });
+  const result = await runWithExecContext(
+    resolveExecContext((name) => c.req.header(name)),
+    () => decision.evaluate(body.context, { trace: true }),
+  );
   return c.json(result);
 });
 
@@ -472,7 +491,10 @@ app.openapi(decisionRoute, async (c) => {
     debug('创建临时decision对象(不缓存)');
     decision = zr.createDecision(body.content);
   }
-  const result = await decision.evaluate(body.context, { trace: false });
+  const result = await runWithExecContext(
+    resolveExecContext((name) => c.req.header(name)),
+    () => decision.evaluate(body.context, { trace: false }),
+  );
   return c.json(result);
 });
 
@@ -484,13 +506,13 @@ app.openapi(getSessionRoute, (c) => {
     session: {
       id: 'mock-session-1',
       token: 'mock-token-1',
-      userId: 'mock-user-1',
+      userId: MOCK_USER_ID,
       expiresAt,
       createdAt: now,
       updatedAt: now,
     },
     user: {
-      id: 'mock-user-1',
+      id: MOCK_USER_ID,
       name: 'Mock User',
       email: 'mock@example.com',
       emailVerified: false,

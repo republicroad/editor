@@ -44,7 +44,8 @@ import classes from './decision-simple.module.css';
 import axios from 'axios';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
 import { useCustomNodes } from '../hooks/useCustomNodes.ts';
-import { createBetterAuthResolver } from '../lib/user-resolver.ts';
+import { createBetterAuthAdapter } from '../lib/auth/adapter.ts';
+import { createUserResolver } from '../lib/user-resolver.ts';
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
@@ -138,6 +139,7 @@ export const DecisionSimplePage: React.FC = () => {
   const [graph, setGraph] = useState<DecisionGraphType>({ nodes: [], edges: [] });
   const [fileName, setFileName] = useState('Untitled Decision');
   const [graphTrace, setGraphTrace] = useState<Simulation>();
+  const userResolver = React.useMemo(() => createUserResolver(createBetterAuthAdapter()), []);
   const [pendingConfirm, setPendingConfirm] = useState<{
     title: string;
     description: string;
@@ -459,7 +461,7 @@ export const DecisionSimplePage: React.FC = () => {
               onChange={(value) => setGraph(value)}
               reactFlowProOptions={{ hideAttribution: true }}
               simulate={graphTrace}
-              userResolver={createBetterAuthResolver()}
+              userResolver={userResolver}
               panels={[
                 {
                   id: 'simulator',

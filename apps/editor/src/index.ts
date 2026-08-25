@@ -1,4 +1,4 @@
-import { readdir, readFile, unlink, writeFile } from 'fs/promises';
+import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 import { join } from 'path';
 import { debug } from 'console';
@@ -21,10 +21,11 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? '')
 const LISTS_DIR = process.env.LISTS_DIR
   ? path.resolve(process.env.LISTS_DIR)
   : path.resolve(import.meta.dir, '../lists');
-
+const SHARED_LISTS_DIR = join(LISTS_DIR, 'shared');
+const USERS_LISTS_DIR = join(LISTS_DIR, 'users');
 const MOCK_USER_ID = 'mock-user-1';
 
-// 执行上下文解析：TRUST_PROXY_HEADERS=true 时信任网关注入的 X-User-Id/X-Request-Id，
+// 执行上下文解析：TRUST_PROXY_HEADERS=true 时信任网关头(X-User-Id/X-Request-Id)，
 // 否则回退到 Mock 开发用户(与 /api/auth/get-session 一致)。UDF 经 getExecContext() 读取。
 type HeaderGetter = (name: string) => string | undefined;
 export const resolveExecContext = (getHeader: HeaderGetter): ExecContext => {
@@ -58,21 +59,49 @@ async function requestLogger(c: Context, next: Next) {
   );
 }
 
-// 名单文件目录：$LISTS_DIR/*.json({ name, description, items })，启动时注册进 zen-rule 名单存储。
-async function loadLists(): Promise<void> {
+// 名单文件布局: $LISTS_DIR/shared/*.json(共享) + $LISTS_DIR/users/{owner}/*.json(私有)
+// + 存量扁平 $LISTS_DIR/*.json(无 owner 字段, 视为共享, 只读兼容并在写回时原位更新)。
+async function registerListFile(filePath: string): Promise<void> {
   try {
-    const entries = await readdir(LISTS_DIR, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
-      const raw = await readFile(join(LISTS_DIR, entry.name), 'utf-8');
-      const list = JSON.parse(raw) as { name?: string; description?: string; items?: string[] };
-      if (!list.name || !Array.isArray(list.items)) continue;
-      const items = list.items.map((item) => String(item));
-      registerList({ name: list.name, description: list.description, items });
-      console.log(`[lists] loaded ${list.name} (${items.length} items) from ${entry.name}`);
+    const raw = await readFile(filePath, 'utf-8');
+    const list = JSON.parse(raw) as { name?: string; description?: string; items?: string[]; owner?: string };
+    if (!list.name || !Array.isArray(list.items)) return;
+    const items = list.items.map((item) => String(item));
+    registerList({ name: list.name, description: list.description, items, owner: list.owner });
+  } catch {
+    // 单个文件损坏不阻塞其余装载
+  }
+}
+
+async function loadLists(): Promise<void> {
+  const roots: string[][] = [];
+  try {
+    roots.push(
+      (await readdir(LISTS_DIR, { withFileTypes: true }))
+        .filter((e) => e.isFile() && e.name.endsWith('.json'))
+        .map((e) => join(LISTS_DIR, e.name)),
+    );
+    roots.push(
+      (await readdir(SHARED_LISTS_DIR, { withFileTypes: true }))
+        .filter((e) => e.isFile() && e.name.endsWith('.json'))
+        .map((e) => join(SHARED_LISTS_DIR, e.name)),
+    );
+    const userDirs = (await readdir(USERS_LISTS_DIR, { withFileTypes: true })).filter((e) => e.isDirectory());
+    for (const dir of userDirs) {
+      const userPath = join(USERS_LISTS_DIR, dir.name);
+      roots.push(
+        (await readdir(userPath, { withFileTypes: true }))
+          .filter((e) => e.isFile() && e.name.endsWith('.json'))
+          .map((e) => join(userPath, e.name)),
+      );
     }
-  } catch (error) {
-    console.warn(`[lists] failed to load list files from ${LISTS_DIR}:`, error);
+  } catch {
+    // 目录缺失时按空处理
+  }
+  for (const files of roots) {
+    for (const filePath of files) {
+      await registerListFile(filePath);
+    }
   }
 }
 
@@ -80,13 +109,19 @@ async function loadLists(): Promise<void> {
 const sanitizeListFilename = (name: string): string =>
   name.replace(/[^\p{L}\p{N}_-]+/gu, '_').replace(/^[-_]+|[-_]+$/g, '') || 'unnamed';
 
-/** 按内容中的 name 字段定位名单文件(装载时 name 与文件名并无强制对应) */
-async function findListFile(name: string): Promise<string | null> {
-  try {
-    const entries = await readdir(LISTS_DIR, { withFileTypes: true });
+/** 按内容中的 name 字段定位名单文件; 扫描顺序 自有目录 → shared → 存量扁平根 */
+async function findListFile(name: string, owner?: string): Promise<string | null> {
+  const roots = [...(owner ? [join(USERS_LISTS_DIR, sanitizeListFilename(owner))] : []), SHARED_LISTS_DIR, LISTS_DIR];
+  for (const root of roots) {
+    let entries;
+    try {
+      entries = await readdir(root, { withFileTypes: true });
+    } catch {
+      continue;
+    }
     for (const entry of entries) {
       if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
-      const filePath = join(LISTS_DIR, entry.name);
+      const filePath = join(root, entry.name);
       try {
         const raw = await readFile(filePath, 'utf-8');
         const parsed = JSON.parse(raw) as { name?: string };
@@ -97,17 +132,26 @@ async function findListFile(name: string): Promise<string | null> {
         // 单个文件损坏不阻塞查找
       }
     }
-  } catch {
-    // 目录缺失时按新文件处理
   }
   return null;
 }
 
-async function writeListFile(list: { name: string; description?: string; items: string[] }): Promise<void> {
-  const existing = await findListFile(list.name);
-  const filePath = existing ?? join(LISTS_DIR, `${sanitizeListFilename(list.name)}.json`);
+interface PersistableList {
+  name: string;
+  description?: string;
+  items: string[];
+  owner?: string;
+}
+
+async function writeListFile(list: PersistableList): Promise<void> {
+  const existing = await findListFile(list.name, list.owner);
+  const canonicalDir = list.owner ? join(USERS_LISTS_DIR, sanitizeListFilename(list.owner)) : SHARED_LISTS_DIR;
+  const filePath = existing ?? join(canonicalDir, `${sanitizeListFilename(list.name)}.json`);
+  if (!existing) {
+    await mkdir(canonicalDir, { recursive: true });
+  }
   await writeFile(filePath, `${JSON.stringify({ ...list }, null, 2)}\n`, 'utf-8');
-  console.log(`[lists] persisted ${list.name} -> ${path.basename(filePath)}`);
+  console.log(`[lists] persisted ${list.name} -> ${path.relative(LISTS_DIR, filePath)}`);
 }
 
 // --- OpenAPI schemas ---
@@ -528,10 +572,11 @@ app.openapi(customNodesSchemaRoute, (c) => {
   return c.json(customNodeFunctionSchema);
 });
 
-// 名单名称列表下发(查询名单节点下拉数据源)
+// 名单名称列表下发(查询名单节点下拉数据源)；按会话用户过滤: 自有私有 + 共享
 app.openapi(listsRoute, (c) => {
   const q = c.req.query('q');
-  const lists = listLists(q).map((list) => ({
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const lists = listLists(q, execCtx.userId).map((list) => ({
     name: list.name,
     description: list.description,
     size: list.items.length,
@@ -539,23 +584,26 @@ app.openapi(listsRoute, (c) => {
   return c.json(lists);
 });
 
-// 名单详情
+// 名单详情；他人私有一律 404(防名字探测)
 app.openapi(listDetailRoute, (c) => {
   const { name } = c.req.valid('param');
-  const list = getList(name);
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const list = getList(name, execCtx.userId);
   if (!list) {
     throw new HTTPException(404, { message: `list '${name}' not found` });
   }
-  return c.json({ name: list.name, description: list.description, items: list.items }, 200);
+  return c.json({ name: list.name, description: list.description, items: list.items, owner: list.owner }, 200);
 });
 
-// 名单保存(upsert)：注册进 zen-rule 存储并回写 JSON 文件(重启后经 loadLists 恢复)
+// 名单保存(upsert)：owner 由服务端注入为会话用户(新建默认私有)，客户端传入的归属字段被 schema 剥离
 app.openapi(listCreateRoute, async (c) => {
   const body = c.req.valid('json');
-  const list = {
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const list: PersistableList = {
     name: body.name.trim(),
     description: body.description?.trim() || undefined,
     items: body.items.map((item) => String(item)),
+    owner: execCtx.userId,
   };
   if (!list.name) {
     throw new HTTPException(400, { message: 'name is required' });
@@ -569,18 +617,20 @@ app.openapi(listCreateRoute, async (c) => {
   return c.json(list, 200);
 });
 
-// 名单更新(仅已存在的名单；name 不可变)
+// 名单更新(仅已存在的名单；name 不可变；保留原 owner，共享名单编辑后仍共享)
 app.openapi(listUpdateRoute, async (c) => {
   const { name } = c.req.valid('param');
   const body = c.req.valid('json');
-  const existing = getList(name);
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const existing = getList(name, execCtx.userId);
   if (!existing) {
     throw new HTTPException(404, { message: `list '${name}' not found` });
   }
-  const list = {
+  const list: PersistableList = {
     name: existing.name,
     description: body.description?.trim() || undefined,
     items: body.items.map((item) => String(item)),
+    owner: existing.owner,
   };
   registerList(list);
   try {
@@ -591,18 +641,19 @@ app.openapi(listUpdateRoute, async (c) => {
   return c.json(list, 200);
 });
 
-// 名单删除：内存存储 + 对应 JSON 文件一并移除
+// 名单删除：内存存储 + 对应 JSON 文件一并移除；他人私有一律 404
 app.openapi(listDeleteRoute, async (c) => {
   const { name } = c.req.valid('param');
-  if (!getList(name)) {
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const list = getList(name, execCtx.userId);
+  if (!list || !deleteList(name, execCtx.userId)) {
     throw new HTTPException(404, { message: `list '${name}' not found` });
   }
-  deleteList(name);
-  const filePath = await findListFile(name);
+  const filePath = await findListFile(name, list.owner);
   if (filePath) {
     try {
       await unlink(filePath);
-      console.log(`[lists] removed file ${path.basename(filePath)} for ${name}`);
+      console.log(`[lists] removed file ${path.relative(LISTS_DIR, filePath)} for ${name}`);
     } catch (error) {
       console.warn(`[lists] failed to remove file for ${name}:`, error);
     }

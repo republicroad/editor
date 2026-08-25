@@ -47,22 +47,20 @@ export const getExecContext = (): ExecContext | undefined;
 - apps/editor 会话解析中间件:优先读网关头(`X-User-*`,仅 `TRUST_PROXY_HEADERS=true` 时信任),否则走现有 mock 会话(`/api/auth/get-session` 形状不变);simulate/decision 路由内 `execStorage.run(ctx, () => evaluate(...))`。
 - 测试:zen-rule 并发隔离用例(两个不同 ctx 的 evaluate 交错执行,各 UDF 读到各自 userId);apps/editor 补 2-3 个路由用例。
 
-## C. 名单 owner 隔离(apps/zen-rule/lists.ts + apps/editor 路由)【仅记录,暂缓实施】
+## C. 名单 owner 隔离(apps/zen-rule/lists.ts + apps/editor 路由)【已实施(2026-08-25，第九批)】
 
-> 设计存档如下,**待用户显式放行后才可实施**。ExecCtx(B)是其前置依赖。
+> 实施提交:zen-rule `8360714` + apps/editor `eaadb0c`。以下为落地语义(与原存档的差异已标注)。
 
-- `NamedList` 增加 `owner?: string`,文件持久化同步;存量文件无 owner 视为 public,向后兼容。
-- 访问器加可选 `actor` 参数(**不传=管理员视角全可见**,既有测试零改动):
-
-```
-listLists(query?, actor?)      → 自己的 + public
-getList(name, actor?)          → 同上过滤
-queryList(name, value, actor?) → 同上过滤
-deleteList(name, actor?)       → 仅 owner 可删
-```
-
-- `query_list` UDF 以 `getExecContext()?.userId` 作为 actor。
-- apps/editor lists CRUD:`GET /api/lists` 按会话用户过滤,POST 写入 `owner`,PUT/DELETE 校验归属;不可见一律 404(防名字探测)。
+- `NamedList` 增加 `owner?: string`;**存储改为双层作用域 Map**(''=共享,其余=owner id),同名名单跨用户互不覆盖,解析时自有遮蔽共享
+- 访问器加可选尾参 `actor`(不传=管理员视角全可见,既有测试零改动):
+    - `listLists(query?, actor?)` → 自己的私有 + 全部共享
+    - `getList(name, actor?)` / `queryList(name, value, actor?)` → 自有优先回落共享;他人私有不可见
+    - `deleteList(name, actor?)` → 私有仅 owner/管理员可删,**共享任意 actor 可删**(拍板语义)
+    - `registerList(list, owner?)` → owner 亦可经对象字段传入
+- `query_list` UDF 以 `getExecContext()?.userId` 作为 actor(经 ALS 并发隔离,有单测覆盖)
+- 存储布局:`LISTS_DIR/shared/*.json`(共享)+ `LISTS_DIR/users/{owner}/*.json`(私有);存量扁平文件视为共享兼容读取,写回时原位更新防重复
+- API 行为:GET 列表按会话用户过滤(响应形状 `{name,size}[]` 不变,前端零改动);detail 附 `owner?` 字段;POST 由服务端注入 `owner=会话用户`(**新建默认私有**,拍板语义),客户端归属字段被 schema 剥离;PUT 保留原 owner(共享编辑后仍共享);他人私有一律 404 防名字探测
+- 测试:zen-rule **35→40 pass**(+5:可见性矩阵/自有遮蔽/删除权限矩阵/双传参兼容/并发 UDF 双 ctx 命中);apps/editor **16→21 pass**(+5:落盘目录/列表过滤/跨用户 404 矩阵/存量共享可删/同名互不干扰)
 
 ## 明确不做(除 C 外留下批)
 

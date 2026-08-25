@@ -152,12 +152,12 @@
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线：主仓 **136 pass**(含子模块 37)；zen-rule **35 pass**；apps/editor **16 pass**(第八批)；模拟器组件级交互待补)
+- [~] 完善单元测试覆盖(bun test 基线：主仓 **143 pass**(含子模块 37)；zen-rule **40 pass**；apps/editor **21 pass**(第九批)；模拟器组件级交互待补)
 - [~] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓暂无 Storybook 配置)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
-- [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离仅设计存档于同文档，**暂缓实施待放行**
+- [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(``8360714``+``eaadb0c``)
 
 ---
 
@@ -214,6 +214,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-25，第九批：名单 owner 用户级隔离)：**
+- C 项落地(计划存档 docs/14-batch-eight-plan.md，语义经用户拍板：共享名单任意登录用户可写可删、新建默认私有)
+- zen-rule(`8360714`)：`NamedList` 增加 `owner?`；存储改双层作用域 Map(''=共享/其余=owner)，**同名跨用户互不覆盖、自有遮蔽共享**；五访问器加可选 `actor`(不传=管理员全可见，既有测试零改动)；`query_list` UDF 经 B 批 ALS 读 `getExecContext()?.userId` 并发安全取 actor；测试 **35→40 pass**
+- apps/editor(`eaadb0c`)：名单存储布局升级为 `shared/` + `users/{owner}/` 子目录(存量扁平文件视为共享兼容读取、写回原位更新防重复)；CRUD 全部按会话 actor 过滤——POST 服务端注入 owner(客户端字段被 schema 剥离防伪造)、PUT 保留原 owner、他人私有一律 404 防名字探测；GET 响应形状 `{name,size}[]` 不变前端零改动；测试 **16→21 pass**
+- 安全边界：owner 由服务端会话注入不可伪造；无 actor 视角仅限内部直调(引擎/CLI)，API 路径恒有 ExecCtx
+- lint 0 错误/17 警告；typecheck×2 绿
 
 **最新变更(2026-08-24，第八批：鉴权适配层 + ExecCtx 执行上下文通道)：**
 - 计划先行(`cd7ea65`)：完整方案存档于 docs/14-batch-eight-plan.md；C 项(名单 owner 隔离)仅设计存档、暂缓实施，待单独放行

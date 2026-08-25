@@ -100,7 +100,8 @@ describe('lists owner scoping', () => {
     registerList({ name: 'o_udf_a', items: ['ip-a'] }, 'udf-user-a');
     registerList({ name: 'o_udf_b', items: ['ip-b'] }, 'udf-user-b');
 
-    const call = () => udfManager.call('query_list', { listName: 'o_udf_a', value: 'ip-a' }) as Promise<{ hit: boolean }>;
+    const call = () =>
+      udfManager.call('query_list', { listName: 'o_udf_a', value: 'ip-a' }) as Promise<{ hit: boolean }>;
     const [asA, asB] = await Promise.all([
       runWithExecContext({ userId: 'udf-user-a' }, call),
       runWithExecContext({ userId: 'udf-user-b' }, call),

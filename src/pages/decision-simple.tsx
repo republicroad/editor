@@ -42,6 +42,7 @@ import { match, P } from 'ts-pattern';
 
 import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
+import { readStorage, writeStorage } from '../lib/storage-key.ts';
 import { EditorShellProvider, useEditorShell } from '../shell';
 
 enum DocumentFileTypes {
@@ -123,20 +124,10 @@ const DecisionSimpleInner: React.FC = () => {
   const { themePreference, setThemePreference } = useTheme();
 
   const { customNodes, summaryCustomNodes, schema, userResolver, runSimulate } = useEditorShell();
-  const [summaryCard, setSummaryCard] = useState(() => {
-    try {
-      return localStorage.getItem('custom-node-summary-card') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [summaryCard, setSummaryCard] = useState(() => readStorage('custom-node-summary-card') === 'true');
   const toggleSummaryCard = (checked: boolean) => {
     setSummaryCard(checked);
-    try {
-      localStorage.setItem('custom-node-summary-card', String(checked));
-    } catch {
-      // noop
-    }
+    writeStorage('custom-node-summary-card', String(checked));
   };
 
   const [searchParams] = useSearchParams();

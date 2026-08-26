@@ -4,6 +4,7 @@ import { ConfigProvider, theme } from 'antd';
 import { match } from 'ts-pattern';
 
 import { Toaster } from '../components/ui/sonner';
+import { readStorage, writeStorage } from '../lib/storage-key';
 
 const colorMediaQuery = () => window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -24,7 +25,7 @@ export const ThemeContext = createContext<ThemeContextState>({} as any);
 
 export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themePreference, setThemePreferenceInternal] = useState<ThemePreference>(() => {
-    return match(localStorage.getItem('themePreference'))
+    return match(readStorage('themePreference'))
       .with('dark', () => ThemePreference.Dark)
       .with('light', () => ThemePreference.Light)
       .otherwise(() => ThemePreference.Automatic);
@@ -58,7 +59,7 @@ export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const setThemePreference = (preference: ThemePreference) => {
     setThemePreferenceInternal(preference);
-    localStorage.setItem('themePreference', preference);
+    writeStorage('themePreference', preference);
   };
 
   return (

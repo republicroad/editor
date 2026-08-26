@@ -33,7 +33,21 @@ const filterOverridden = (schema: CustomNodeNamespace[]): CustomNodeNamespace[] 
 export type UseCustomNodesOptions = {
   /** 自定义节点 schema 来源：默认同源 /api/custom-nodes/schema；可传自定义 URL 或加载函数(库复用) */
   schemaSource?: CustomNodeSchemaSource;
+  /** 追加宿主自定义节点(置于内置业务节点之前、schema 驱动节点之前) */
+  extraNodes?: CustomNodeSpec[];
+  /** 排除内置 demo 展示节点(纯库复用场景) */
+  excludeDemoNodes?: boolean;
 };
+
+const composeBaseNodes = (extraNodes?: CustomNodeSpec[], excludeDemoNodes?: boolean): CustomNodeSpec[] => [
+  ...(excludeDemoNodes ? [] : demoNodes),
+  ...(extraNodes ?? []),
+  queryListNode,
+  httpRequestNode,
+  cryptoNode,
+  jsonPathNode,
+  templateNode,
+];
 
 export function useCustomNodes(options?: UseCustomNodesOptions): {
   customNodes: CustomNodeSpec[];
@@ -41,7 +55,7 @@ export function useCustomNodes(options?: UseCustomNodesOptions): {
   schema: CustomNodeNamespace[] | null;
   ready: boolean;
 } {
-  const { schemaSource } = options ?? {};
+  const { schemaSource, extraNodes, excludeDemoNodes } = options ?? {};
   const [schema, setSchema] = useState<CustomNodeNamespace[] | null>(null);
 
   useEffect(() => {
@@ -56,36 +70,17 @@ export function useCustomNodes(options?: UseCustomNodesOptions): {
     };
   }, [schemaSource]);
 
+  const baseNodes = useMemo(() => composeBaseNodes(extraNodes, excludeDemoNodes), [extraNodes, excludeDemoNodes]);
+
   const customNodes = useMemo<CustomNodeSpec[]>(
-    () =>
-      schema
-        ? [
-            ...demoNodes,
-            queryListNode,
-            httpRequestNode,
-            cryptoNode,
-            jsonPathNode,
-            templateNode,
-            ...schemaToCustomNodes(filterOverridden(schema)),
-          ]
-        : demoNodes,
-    [schema],
+    () => (schema ? [...baseNodes, ...schemaToCustomNodes(filterOverridden(schema))] : baseNodes),
+    [baseNodes, schema],
   );
 
   const summaryCustomNodes = useMemo<CustomNodeSpec[]>(
     () =>
-      schema
-        ? [
-            ...demoNodes,
-            queryListNode,
-            httpRequestNode,
-            cryptoNode,
-            jsonPathNode,
-            templateNode,
-            ...schemaToCustomNodes(filterOverridden(schema), { summaryCard: true }),
-          ]
-        : demoNodes,
-    [schema],
+      schema ? [...baseNodes, ...schemaToCustomNodes(filterOverridden(schema), { summaryCard: true })] : baseNodes,
+    [baseNodes, schema],
   );
 
   return { customNodes, summaryCustomNodes, schema, ready: schema !== null };

@@ -152,12 +152,13 @@
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线：主仓 **143 pass**(含子模块 37)；zen-rule **40 pass**；apps/editor **21 pass**(第九批)；模拟器组件级交互待补)
+- [~] 完善单元测试覆盖(bun test 基线：主仓 **155 pass**(含子模块 37)；zen-rule **40 pass**；apps/editor **21 pass**；模拟器组件级交互待补)
 - [~] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓暂无 Storybook 配置)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
-- [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(``8360714``+``eaadb0c``)
+- [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(`8360714`+`eaadb0c`)
+- [x] 库化第二步(第十批)：EditorShell Provider(schemaSource/authAdapter/simulate 注入)+ useCustomNodes 组合选项 + storage 键命名空间化 + docs/14-auth-integration.md 集成指南；完整托管 DecisionGraph 的复合组件待 persistence 接口定型后另批
 
 ---
 
@@ -214,6 +215,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-25，第十批：库化第二步 —— EditorShell Provider + 残余解耦)：**
+- EditorShell Provider 第一版(`e0c3a40`)：新建 `src/shell/`——`EditorShellOptions{schemaSource, authAdapter, simulate}` 三注入点 + `EditorShellProvider`/`useEditorShell` Context；默认 simulate 从 decision-simple 抽出为 `createDefaultSimulate`(axios 错误映射为 Simulation 信封+errorMessage，行为零变)；decision-simple 改走 shell(506→约 470 行)，页面级状态(graph 值/文件对话框)保留在页
+- Provider 渲染测试因 jdm-editor 全量桶(monaco)在 bun 下不可渲染而调整为针对 `createDefaultSimulate` 的 Bun.serve 集成用例(+3：成功信封 snapshot 透传/失败不抛出返回 errorMessage/网络不可达降级)；Provider 薄胶水由 tsc 与页面实际使用覆盖
+- 残余解耦(`11c6c3d`)：`useCustomNodes` 选项扩展 `{extraNodes?, excludeDemoNodes?}`(组合逻辑抽 `composeBaseNodes`,默认行为不变)；localStorage 键命名空间化——`src/lib/storage-key.ts`(`jdm:` 前缀+历史键回退读)，迁移 summary-card 开关与主题偏好两处，用户既有状态不丢失；+4 单测
+- 文档(`e6fe571` 后续)：新增 `docs/14-auth-integration.md` 宿主鉴权集成指南(npm 嵌入/iframe/网关三模式 + AuthAdapter/ExecCtx 用法 + 五条安全红线)
+- 根 devDeps 新增 @testing-library/react@16.3.0(为后续组件测试预留)；测试基线 **148→155 pass**(含子模块 37)；lint 0 错误
 
 **最新变更(2026-08-25，第九批：名单 owner 用户级隔离)：**
 - C 项落地(计划存档 docs/14-batch-eight-plan.md，语义经用户拍板：共享名单任意登录用户可写可删、新建默认私有)

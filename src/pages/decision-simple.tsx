@@ -41,11 +41,8 @@ import { Stack } from '../components/stack.tsx';
 import { match, P } from 'ts-pattern';
 
 import classes from './decision-simple.module.css';
-import axios from 'axios';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
-import { useCustomNodes } from '../hooks/useCustomNodes.ts';
-import { createBetterAuthAdapter } from '../lib/auth/adapter.ts';
-import { createUserResolver } from '../lib/user-resolver.ts';
+import { EditorShellProvider, useEditorShell } from '../shell';
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
@@ -113,11 +110,19 @@ const EditableTitle: React.FC<{ value: string; onChange: (value: string) => void
 };
 
 export const DecisionSimplePage: React.FC = () => {
+  return (
+    <EditorShellProvider>
+      <DecisionSimpleInner />
+    </EditorShellProvider>
+  );
+};
+
+const DecisionSimpleInner: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
   const graphRef = React.useRef<DecisionGraphRef>(null);
   const { themePreference, setThemePreference } = useTheme();
 
-  const { customNodes, summaryCustomNodes, schema } = useCustomNodes();
+  const { customNodes, summaryCustomNodes, schema, userResolver, runSimulate } = useEditorShell();
   const [summaryCard, setSummaryCard] = useState(() => {
     try {
       return localStorage.getItem('custom-node-summary-card') === 'true';
@@ -139,7 +144,6 @@ export const DecisionSimplePage: React.FC = () => {
   const [graph, setGraph] = useState<DecisionGraphType>({ nodes: [], edges: [] });
   const [fileName, setFileName] = useState('Untitled Decision');
   const [graphTrace, setGraphTrace] = useState<Simulation>();
-  const userResolver = React.useMemo(() => createUserResolver(createBetterAuthAdapter()), []);
   const [pendingConfirm, setPendingConfirm] = useState<{
     title: string;
     description: string;
@@ -471,48 +475,11 @@ export const DecisionSimplePage: React.FC = () => {
                     <GraphSimulator
                       onClear={() => setGraphTrace(undefined)}
                       onRun={async ({ graph, context }) => {
-                        try {
-                          const { data } = await axios.post('/api/simulate', {
-                            context,
-                            content: graph,
-                          });
-
-                          setGraphTrace({ result: { ...data, snapshot: graph } });
-                        } catch (e) {
-                          const errorMessage = match(e)
-                            .with(
-                              {
-                                response: {
-                                  data: {
-                                    type: P.string,
-                                    source: P.string,
-                                  },
-                                },
-                              },
-                              ({ response: { data: d } }) => `${d.type}: ${d.source}`,
-                            )
-                            .with({ response: { data: { source: P.string } } }, (d) => d.response.data.source)
-                            .with({ response: { data: { message: P.string } } }, (d) => d.response.data.message)
-                            .with({ message: P.string }, (d) => d.message)
-                            .otherwise(() => 'Unknown error occurred');
-
+                        const { simulation, errorMessage } = await runSimulate(graph, context);
+                        if (errorMessage) {
                           toast.error(errorMessage);
-                          if (axios.isAxiosError(e)) {
-                            console.log(e);
-                            setGraphTrace({
-                              result: {
-                                result: null,
-                                trace: e.response?.data?.trace,
-                                snapshot: graph,
-                                performance: '',
-                              },
-                              error: {
-                                message: e.response?.data?.source,
-                                data: e.response?.data,
-                              },
-                            });
-                          }
                         }
+                        setGraphTrace(simulation);
                       }}
                     />
                   ),

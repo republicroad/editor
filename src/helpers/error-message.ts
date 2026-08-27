@@ -12,3 +12,6 @@ export const errorMessage = (e: unknown): string => {
 };
 
 export const displayError = (e: unknown) => toast.error(errorMessage(e));
+
+/** File System Access API 的 picker 被用户取消(AbortError)——正常交互，不视为错误 */
+export const isUserAbort = (e: unknown): boolean => e instanceof DOMException && e.name === 'AbortError';

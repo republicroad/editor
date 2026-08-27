@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { CirclePlay, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 import { decisionTemplates } from '../assets/decision-templates';
-import { displayError } from '../helpers/error-message.ts';
+import { displayError, isUserAbort } from '../helpers/error-message.ts';
 import { DecisionContent, DecisionEdge, DecisionNode, normalizeGraphNodes } from '../helpers/graph.ts';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -192,7 +192,9 @@ const DecisionSimpleInner: React.FC = () => {
         edges: parsed?.edges || [],
       });
     } catch (err) {
-      displayError(err);
+      if (!isUserAbort(err)) {
+        displayError(err);
+      }
     }
   };
 
@@ -239,7 +241,9 @@ const DecisionSimpleInner: React.FC = () => {
       setFileName(file.name);
       toast.success('File saved');
     } catch (e) {
-      displayError(e);
+      if (!isUserAbort(e)) {
+        displayError(e);
+      }
     } finally {
       writable?.close?.();
     }

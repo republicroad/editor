@@ -31,6 +31,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { Separator } from '../components/ui/separator';
@@ -43,6 +46,7 @@ import { match, P } from 'ts-pattern';
 import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
 import { readStorage, writeStorage } from '../lib/storage-key.ts';
+import { loadFromRemote, saveToRemote, type GraphLike } from '../lib/graph-persistence.ts';
 import { EditorShellProvider, useEditorShell } from '../shell';
 
 enum DocumentFileTypes {
@@ -123,7 +127,7 @@ const DecisionSimpleInner: React.FC = () => {
   const graphRef = React.useRef<DecisionGraphRef>(null);
   const { themePreference, setThemePreference } = useTheme();
 
-  const { customNodes, summaryCustomNodes, schema, userResolver, runSimulate } = useEditorShell();
+  const { customNodes, summaryCustomNodes, schema, userResolver, runSimulate, persistence } = useEditorShell();
   const [summaryCard, setSummaryCard] = useState(() => readStorage('custom-node-summary-card') === 'true');
   const toggleSummaryCard = (checked: boolean) => {
     setSummaryCard(checked);
@@ -134,6 +138,9 @@ const DecisionSimpleInner: React.FC = () => {
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle>();
   const [graph, setGraph] = useState<DecisionGraphType>({ nodes: [], edges: [] });
   const [fileName, setFileName] = useState('Untitled Decision');
+  // 当前打开来源：remote = 宿主存储(persistence)，local = 浏览器本地文件
+  const [remoteSource, setRemoteSource] = useState<{ id: string; revision?: string }>();
+  const [libraryGraphs, setLibraryGraphs] = useState<Array<{ id: string; name: string; updatedAt?: string }>>();
   const [graphTrace, setGraphTrace] = useState<Simulation>();
   const [pendingConfirm, setPendingConfirm] = useState<{
     title: string;
@@ -185,6 +192,28 @@ const DecisionSimpleInner: React.FC = () => {
   };
 
   const saveFileAs = async () => {
+    if (persistence) {
+      try {
+        checkCyclic();
+        const result = await saveToRemote(persistence, {
+          graph: graph as unknown as GraphLike,
+          name: fileName.replaceAll('.json', ''),
+          id: remoteSource?.id,
+          baseRevision: remoteSource?.revision,
+        });
+        if (result.kind === 'conflict') {
+          toast.error('This graph was modified by someone else. Refresh before saving to avoid overwriting.');
+          return;
+        }
+        setRemoteSource({ id: result.id, revision: result.revision });
+        setFileName(`${result.id}.json`);
+        toast.success('Saved to graph library');
+      } catch (e) {
+        displayError(e);
+      }
+      return;
+    }
+
     if (!supportFSApi) {
       return await handleDownload();
     }
@@ -212,6 +241,10 @@ const DecisionSimpleInner: React.FC = () => {
   };
 
   const saveFile = async () => {
+    if (persistence) {
+      return saveFileAs();
+    }
+
     if (!supportFSApi) {
       toast.error('Unsupported file system API');
       return;
@@ -243,6 +276,8 @@ const DecisionSimpleInner: React.FC = () => {
           nodes: [],
           edges: [],
         });
+        setRemoteSource(undefined);
+        setFileName('Untitled Decision');
       },
     });
   };
@@ -253,6 +288,35 @@ const DecisionSimpleInner: React.FC = () => {
       description: 'Are you sure you want to open example decision, your current work might be lost?',
       onConfirm: () => loadTemplateGraph(key),
     });
+  };
+
+  const refreshLibrary = async () => {
+    if (!persistence?.list) return;
+    try {
+      const graphs = await persistence.list();
+      setLibraryGraphs(graphs.map(({ id, name, updatedAt }) => ({ id, name, updatedAt })));
+    } catch (e) {
+      displayError(e);
+    }
+  };
+
+  const openRemoteGraph = async (id: string) => {
+    if (!persistence) return;
+    try {
+      const content = await loadFromRemote(persistence, id);
+      if (!content) {
+        toast.error('Graph not found');
+        return;
+      }
+      setGraph({
+        nodes: normalizeGraphNodes((content as { nodes?: DecisionNode[] }).nodes ?? []),
+        edges: (content as { edges?: DecisionEdge[] }).edges ?? [],
+      });
+      setRemoteSource({ id });
+      setFileName(id);
+    } catch (e) {
+      displayError(e);
+    }
   };
 
   const handleOpenMenu = async (e: { key: string }) => {
@@ -374,6 +438,26 @@ const DecisionSimpleInner: React.FC = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="min-w-44" align="start">
+                      {persistence?.list && (
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger onSelect={() => void refreshLibrary()}>
+                            Graph library
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent className="min-w-52">
+                            {libraryGraphs === undefined ? (
+                              <DropdownMenuItem disabled>Loading…</DropdownMenuItem>
+                            ) : libraryGraphs.length === 0 ? (
+                              <DropdownMenuItem disabled>No graphs</DropdownMenuItem>
+                            ) : (
+                              libraryGraphs.map((g) => (
+                                <DropdownMenuItem key={g.id} onSelect={() => void openRemoteGraph(g.id)}>
+                                  {g.name}
+                                </DropdownMenuItem>
+                              ))
+                            )}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      )}
                       <DropdownMenuItem onSelect={() => openFile()}>File system</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       {[
@@ -387,7 +471,7 @@ const DecisionSimpleInner: React.FC = () => {
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  {supportFSApi && (
+                  {(supportFSApi || persistence) && (
                     <Button type="button" onClick={saveFile} variant="ghost" size="sm">
                       Save
                     </Button>

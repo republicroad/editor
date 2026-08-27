@@ -7,6 +7,7 @@ import { createUserResolver } from '../lib/user-resolver';
 import type { CustomNodeNamespace } from '../lib/custom-node-types';
 
 import { createDefaultSimulate } from './default-simulate';
+import type { GraphPersistenceAdapter } from './persistence';
 import type { EditorShellOptions, SimulateHandler } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 与 jdm-editor 内部 customNodes 类型约定一致
@@ -19,6 +20,8 @@ export interface EditorShellContextValue {
   ready: boolean;
   userResolver: UserResolver;
   runSimulate: SimulateHandler;
+  /** 图持久化适配器：注入后页面打开/另存走宿主存储；未注入则回退浏览器本地文件 */
+  persistence?: GraphPersistenceAdapter;
 }
 
 const EditorShellContext = createContext<EditorShellContextValue | null>(null);
@@ -27,15 +30,15 @@ export const EditorShellProvider: React.FC<{ options?: EditorShellOptions; child
   options,
   children,
 }) => {
-  const { schemaSource, authAdapter, simulate } = options ?? {};
+  const { schemaSource, authAdapter, simulate, persistence } = options ?? {};
   const { customNodes, summaryCustomNodes, schema, ready } = useCustomNodes({ schemaSource });
 
   const userResolver = useMemo(() => createUserResolver(authAdapter ?? createAnonymousAdapter()), [authAdapter]);
   const runSimulate = useMemo(() => simulate ?? createDefaultSimulate(), [simulate]);
 
   const value = useMemo<EditorShellContextValue>(
-    () => ({ customNodes, summaryCustomNodes, schema, ready, userResolver, runSimulate }),
-    [customNodes, summaryCustomNodes, schema, ready, userResolver, runSimulate],
+    () => ({ customNodes, summaryCustomNodes, schema, ready, userResolver, runSimulate, persistence }),
+    [customNodes, summaryCustomNodes, schema, ready, userResolver, runSimulate, persistence],
   );
 
   return <EditorShellContext.Provider value={value}>{children}</EditorShellContext.Provider>;

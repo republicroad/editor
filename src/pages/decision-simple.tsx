@@ -46,7 +46,7 @@ import { match, P } from 'ts-pattern';
 import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
 import { readStorage, writeStorage } from '../lib/storage-key.ts';
-import { loadFromRemote, saveToRemote, type GraphLike } from '../lib/graph-persistence.ts';
+import { loadFromRemote, listRemoteVersions, saveToRemote, type GraphLike } from '../lib/graph-persistence.ts';
 import { EditorShellProvider, useEditorShell } from '../shell';
 
 enum DocumentFileTypes {
@@ -141,6 +141,7 @@ const DecisionSimpleInner: React.FC = () => {
   // 当前打开来源：remote = 宿主存储(persistence)，local = 浏览器本地文件
   const [remoteSource, setRemoteSource] = useState<{ id: string; revision?: string }>();
   const [libraryGraphs, setLibraryGraphs] = useState<Array<{ id: string; name: string; updatedAt?: string }>>();
+  const [remoteVersions, setRemoteVersions] = useState<Array<{ revision: string; updatedAt?: string }>>([]);
   const [graphTrace, setGraphTrace] = useState<Simulation>();
   const [pendingConfirm, setPendingConfirm] = useState<{
     title: string;
@@ -300,10 +301,10 @@ const DecisionSimpleInner: React.FC = () => {
     }
   };
 
-  const openRemoteGraph = async (id: string) => {
+  const openRemoteGraph = async (id: string, revision?: string) => {
     if (!persistence) return;
     try {
-      const content = await loadFromRemote(persistence, id);
+      const content = await loadFromRemote(persistence, id, revision ? { revision } : undefined);
       if (!content) {
         toast.error('Graph not found');
         return;
@@ -312,11 +313,29 @@ const DecisionSimpleInner: React.FC = () => {
         nodes: normalizeGraphNodes((content as { nodes?: DecisionNode[] }).nodes ?? []),
         edges: (content as { edges?: DecisionEdge[] }).edges ?? [],
       });
-      setRemoteSource({ id });
+      setRemoteSource(revision ? { id, revision } : { id });
       setFileName(id);
     } catch (e) {
       displayError(e);
     }
+  };
+
+  const refreshVersions = async (id: string) => {
+    if (!persistence?.listVersions) return;
+    try {
+      const versions = await listRemoteVersions(persistence, id);
+      setRemoteVersions(versions);
+    } catch (e) {
+      displayError(e);
+    }
+  };
+
+  const confirmOpenVersion = (id: string, revision: string) => {
+    setPendingConfirm({
+      title: 'Open historical version',
+      description: `Load version ${revision} of this graph? Current unsaved changes will be replaced.`,
+      onConfirm: () => void openRemoteGraph(id, revision),
+    });
   };
 
   const handleOpenMenu = async (e: { key: string }) => {
@@ -471,6 +490,37 @@ const DecisionSimpleInner: React.FC = () => {
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  {persistence?.listVersions && remoteSource && (
+                    <DropdownMenu
+                      onOpenChange={(open) => {
+                        if (open) void refreshVersions(remoteSource.id);
+                      }}
+                    >
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="ghost" size="sm">
+                          Versions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="min-w-52" align="start">
+                        {remoteVersions.length === 0 ? (
+                          <DropdownMenuItem disabled>No versions</DropdownMenuItem>
+                        ) : (
+                          remoteVersions.map((v) => (
+                            <DropdownMenuItem
+                              key={v.revision}
+                              disabled={v.revision === remoteSource.revision}
+                              onSelect={() => confirmOpenVersion(remoteSource.id, v.revision)}
+                            >
+                              <span className="flex w-full items-center justify-between gap-3">
+                                <span>{v.revision}</span>
+                                <span className="text-muted-foreground">{v.updatedAt ?? ''}</span>
+                              </span>
+                            </DropdownMenuItem>
+                          ))
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                   {(supportFSApi || persistence) && (
                     <Button type="button" onClick={saveFile} variant="ghost" size="sm">
                       Save

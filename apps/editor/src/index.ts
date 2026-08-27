@@ -11,6 +11,15 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { serveStatic } from 'hono/bun';
 import { customNodeFunctionSchema } from './custom-node-schema';
+import {
+  deleteGraph,
+  GRAPHS_DIR,
+  GraphPersistenceError,
+  listGraphVersions,
+  listGraphs,
+  loadGraph,
+  saveGraph,
+} from './graphs-store';
 
 // 环境配置：PORT 监听端口、CORS_ORIGINS 跨域白名单(逗号分隔，未设则全放行)、LISTS_DIR 名单落盘目录
 const PORT = Number(process.env.PORT ?? 3000);
@@ -460,6 +469,198 @@ const listDeleteRoute = createRoute({
   },
 });
 
+// --- Graph persistence routes (reference implementation of GraphPersistenceAdapter) ---
+
+const GraphMetaSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    owner: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    extensions: z.record(z.string(), z.unknown()).optional(),
+    revision: z.string(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+  })
+  .openapi('GraphMeta');
+
+const GraphContentSchema = z
+  .object({
+    contentType: z.string().optional(),
+    nodes: z.array(z.record(z.string(), z.unknown())),
+    edges: z.array(z.record(z.string(), z.unknown())).optional(),
+  })
+  .openapi('GraphContent');
+
+const GraphSaveSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    extensions: z.record(z.string(), z.unknown()).optional(),
+    content: GraphContentSchema,
+    baseRevision: z.string().optional(),
+  })
+  .openapi('GraphSave');
+
+const GraphVersionSchema = z
+  .object({
+    revision: z.string(),
+    updatedAt: z.string(),
+  })
+  .openapi('GraphVersion');
+
+const graphsRoute = createRoute({
+  method: 'get',
+  path: '/api/graphs',
+  request: {
+    query: ListQuerySchema,
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.array(GraphMetaSchema) },
+      },
+      description: '当前用户可见图的 head 元数据列表(不含 content)',
+    },
+  },
+});
+
+const graphDetailRoute = createRoute({
+  method: 'get',
+  path: '/api/graphs/{id}',
+  request: {
+    params: z.object({ id: z.string() }),
+    query: z.object({ revision: z.string().optional() }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: GraphMetaSchema.extend({ content: z.record(z.string(), z.unknown()) }),
+        },
+      },
+      description: '图明细(head 或指定历史版本)',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '图不存在或不可见',
+    },
+  },
+});
+
+const graphCreateRoute = createRoute({
+  method: 'post',
+  path: '/api/graphs',
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: GraphSaveSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.object({ id: z.string(), revision: z.string() }) },
+      },
+      description: '已创建(服务端注入 owner，revision=v1)',
+    },
+    400: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '请求体不合法',
+    },
+    500: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: 'JSON 文件写入失败',
+    },
+  },
+});
+
+const graphUpdateRoute = createRoute({
+  method: 'put',
+  path: '/api/graphs/{id}',
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        'application/json': { schema: GraphSaveSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.object({ id: z.string(), revision: z.string() }) },
+      },
+      description: '已更新(保留原 owner；baseRevision 乐观锁)',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '图不存在或不可见',
+    },
+    409: {
+      content: {
+        'application/json': { schema: z.object({ error: z.object({ code: z.string() }) }) },
+      },
+      description: 'baseRevision 与 head 不匹配(乐观锁冲突)',
+    },
+  },
+});
+
+const graphDeleteRoute = createRoute({
+  method: 'delete',
+  path: '/api/graphs/{id}',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.object({ deleted: z.boolean() }) },
+      },
+      description: '已删除(含全部历史版本文件)',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '图不存在或不可见',
+    },
+  },
+});
+
+const graphVersionsRoute = createRoute({
+  method: 'get',
+  path: '/api/graphs/{id}/versions',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': { schema: z.array(GraphVersionSchema) },
+      },
+      description: '历史版本列表(不含 head)',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '图不存在或不可见',
+    },
+  },
+});
+
 const app = new OpenAPIHono();
 
 app.use(requestLogger);
@@ -673,7 +874,108 @@ app.get('/openapi', Scalar({ url: '/openapi/json' }));
 
 await loadLists();
 
-export { app, LISTS_DIR };
+// --- Graph persistence handlers (reference implementation) ---
+
+// 图列表：返回当前用户可见的 head 元数据(自有 + 共享)，不含 content；按 updatedAt 降序
+app.openapi(graphsRoute, async (c) => {
+  const q = c.req.query('q');
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const graphs = await listGraphs(execCtx.userId, { q });
+  return c.json(graphs);
+});
+
+// 图明细；他人私有一律 404(防探测)；?revision=vN 加载历史版本
+app.openapi(graphDetailRoute, async (c) => {
+  const { id } = c.req.valid('param');
+  const { revision } = c.req.valid('query');
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const graph = await loadGraph(id, execCtx.userId, { revision });
+  if (!graph) {
+    throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
+  }
+  const { content, ...meta } = graph;
+  return c.json({ ...meta, content: content as Record<string, unknown> }, 200);
+});
+
+// 图新建：owner 由服务端注入(默认私有)，revision 初始为 v1
+app.openapi(graphCreateRoute, async (c) => {
+  const body = c.req.valid('json');
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const id = crypto.randomUUID();
+  try {
+    const result = await saveGraph(
+      {
+        name: body.name.trim(),
+        description: body.description?.trim() || undefined,
+        tags: body.tags,
+        extensions: body.extensions,
+        content: body.content,
+      },
+      execCtx.userId,
+      { newId: id },
+    );
+    console.log(`[graphs] created ${result.id} -> ${result.revision}`);
+    return c.json(result, 200);
+  } catch (error) {
+    throw new HTTPException(500, { message: `failed to persist graph file: ${String(error)}` });
+  }
+});
+
+// 图更新：保留原 owner；baseRevision 乐观锁，不匹配抛 409 CONFLICT；他人私有一律 404
+app.openapi(graphUpdateRoute, async (c) => {
+  const { id } = c.req.valid('param');
+  const body = c.req.valid('json');
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  try {
+    const result = await saveGraph(
+      {
+        id,
+        name: body.name.trim(),
+        description: body.description?.trim() || undefined,
+        tags: body.tags,
+        extensions: body.extensions,
+        content: body.content,
+      },
+      execCtx.userId,
+      { baseRevision: body.baseRevision },
+    );
+    console.log(`[graphs] updated ${result.id} -> ${result.revision}`);
+    return c.json(result, 200);
+  } catch (error) {
+    if (error instanceof GraphPersistenceError) {
+      if (error.code === 'CONFLICT') {
+        throw new HTTPException(409, { message: `conflict: ${error.message}` });
+      }
+      throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
+    }
+    throw new HTTPException(500, { message: `failed to persist graph file: ${String(error)}` });
+  }
+});
+
+// 图删除：删除 head 与全部历史版本文件；不可见或不存在返回 false → 404
+app.openapi(graphDeleteRoute, async (c) => {
+  const { id } = c.req.valid('param');
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const deleted = await deleteGraph(id, execCtx.userId);
+  if (!deleted) {
+    throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
+  }
+  return c.json({ deleted: true }, 200);
+});
+
+// 历史版本列表(不含 head)
+app.openapi(graphVersionsRoute, async (c) => {
+  const { id } = c.req.valid('param');
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const head = await loadGraph(id, execCtx.userId);
+  if (!head) {
+    throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
+  }
+  const versions = await listGraphVersions(id, execCtx.userId);
+  return c.json(versions, 200);
+});
+
+export { app, LISTS_DIR, GRAPHS_DIR };
 
 // 仅直接运行时启动 HTTP 服务；被测试/其他模块导入时只暴露 app
 if (import.meta.main) {

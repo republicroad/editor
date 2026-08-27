@@ -56,3 +56,13 @@ export const loadFromRemote = async (
   if (!record) return null;
   return (record.content ?? {}) as GraphLike;
 };
+
+/** 列出指定图的历史版本；适配器未实现时返回空列表 */
+export const listRemoteVersions = async (
+  adapter: GraphPersistenceAdapter,
+  id: string,
+): Promise<Array<{ revision: string; updatedAt?: string }>> => {
+  if (!adapter.listVersions) return [];
+  const versions = await adapter.listVersions(id);
+  return (versions ?? []).map(({ revision, updatedAt }) => ({ revision, updatedAt }));
+};

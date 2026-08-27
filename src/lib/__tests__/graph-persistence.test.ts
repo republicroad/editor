@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { GraphPersistenceError, type GraphPersistenceAdapter } from '../../shell/persistence';
-import { loadFromRemote, saveToRemote } from '../graph-persistence';
+import { listRemoteVersions, loadFromRemote, saveToRemote } from '../graph-persistence';
 
 const graph = { nodes: [{ id: 'in' }], edges: [] };
 
@@ -75,5 +75,43 @@ describe('loadFromRemote', () => {
       save: async () => ({ id: 'x', revision: 'v1' }),
     };
     expect(await loadFromRemote(adapter, 'nope')).toBeNull();
+  });
+
+  test('load 透传 revision 到 adapter.load', async () => {
+    let seen: { revision?: string } | undefined;
+    const adapter: GraphPersistenceAdapter = {
+      load: async (_id, opts) => {
+        seen = opts;
+        return { id: 'g1', name: 'n', revision: 'v2', content: graph };
+      },
+      save: async () => ({ id: 'x', revision: 'v1' }),
+    };
+    await loadFromRemote(adapter, 'g1', { revision: 'v2' });
+    expect(seen).toEqual({ revision: 'v2' });
+  });
+});
+
+describe('listRemoteVersions', () => {
+  test('透传 adapter.listVersions 的结果', async () => {
+    const adapter: GraphPersistenceAdapter = {
+      load: async () => null,
+      save: async () => ({ id: 'x', revision: 'v1' }),
+      listVersions: async () => [
+        { revision: 'v1', updatedAt: '2026-01-01' },
+        { revision: 'v2', updatedAt: '2026-01-02' },
+      ],
+    };
+    expect(await listRemoteVersions(adapter, 'g1')).toEqual([
+      { revision: 'v1', updatedAt: '2026-01-01' },
+      { revision: 'v2', updatedAt: '2026-01-02' },
+    ]);
+  });
+
+  test('适配器未实现 listVersions 时返回空数组', async () => {
+    const adapter: GraphPersistenceAdapter = {
+      load: async () => null,
+      save: async () => ({ id: 'x', revision: 'v1' }),
+    };
+    expect(await listRemoteVersions(adapter, 'g1')).toEqual([]);
   });
 });

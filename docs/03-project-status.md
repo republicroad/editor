@@ -152,7 +152,7 @@
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线：主仓 **155 pass**(含子模块 37)；zen-rule **40 pass**；apps/editor **21 pass**；模拟器组件级交互待补)
+- [~] 完善单元测试覆盖(bun test 基线：主仓 **170 pass**；apps(zen-rule+editor) **67 pass**；模拟器组件级交互待补)
 - [~] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓暂无 Storybook 配置)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
@@ -162,7 +162,8 @@
 - [x] 库化第三步(第十一批)：Graph Persistence 接口契约(`src/shell/persistence.ts`)+ 设计提案(`docs/15-persistence-interface-proposal.md`)——图+配置打包(extensions)、历史版本(revision 必选语义)、乐观锁(baseRevision)
 - [x] 第十二批：实施 `/api/graphs` 参考实现(`graphs-store.ts` 存储层 + 六端点路由 + `graphs-http-adapter.ts` 适配器 + 6 集成用例)——参考实现落地、宿主持久化可复用
 - [x] 第十三批(方向A)：`EditorShellProvider` 把 `persistence` 暴露进 context(`d529c03`)；页面 open/save 接持久化(`a5dbb0e`)——注入适配器后 Open 出现 "Graph library" 子菜单、Save/Save-as 走宿主存储且带 baseRevision 乐观锁，冲突提示刷新；纯逻辑抽到 `src/lib/graph-persistence.ts` 并补 6 单测
-- [ ] 第十三批待接线：版本历史子面板(`adapter.listVersions`)页面 UI(契约与参考实现已具备，仅缺页面)
+- [x] 第十三批待接线：版本历史子面板——已由第十四批落地（见下）
+- [x] 第十四批(方向A)：版本历史子面板 UI——`listRemoteVersions` 纯逻辑(`src/lib/graph-persistence.ts`)+单测；打开宿主图后顶栏 "Versions" 下拉列版本(`adapter.listVersions(id)`)、选中确认后 `adapter.load(id,{revision})` 加载历史、以该版本为 `baseRevision` 乐观锁；契约与参考实现此前已具备，本批闭合第十三批唯一开放项
 
 ---
 
@@ -219,6 +220,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-27，第十四批方向A：版本历史子面板 UI)：**
+- 纯逻辑(`5bbc289`)：`src/lib/graph-persistence.ts` 新增 `listRemoteVersions(adapter,id)`——有 `listVersions` 时透传、否则返回 `[]`(宿主无版本能力则不渲染历史面板)；`loadFromRemote` 已支持 `{revision}` 透传；单测 +3(透传/无实现→[]/load revision 透传)，本套件 9 pass
+- 页面 UI(`e79d179`)：打开宿主图后顶栏出现 "Versions" 下拉(仅当 `persistence?.listVersions` 且 `remoteSource` 已设)——打开时 `listRemoteVersions(id)` 列版本、当前加载版本禁用、选中某版 AlertDialog 确认后 `openRemoteGraph(id,revision)` 加载历史，并把 `remoteSource.revision` 记为保存的 `baseRevision` 乐观锁；复用现有 DropdownMenu/AlertDialog 无新 UI 依赖
+- 保存语义：打开历史版本后保存以该版本为 baseRevision，head 若已更新→CONFLICT 提示刷新(安全默认，防覆盖)
+- 文档：docs/15 §5 状态翻转【版本历史面板已实施】、页头部状态、docs/03 changelog；闭合第十三批唯一开放项
+- 门禁：lint 0 errors、typecheck/apps 绿、主仓 test 170 pass、apps 67 pass、build 待跑
 
 **最新变更(2026-08-27，第十三批方向A：把 persistence 接入 shell 与页面)：**
 - Shell context 暴露 `persistence?`(`d529c03`)：`EditorShellProvider` 读取 options.persistence 并随 useEditorShell 转发；页面据此在「宿主存储 / 浏览器本地文件」间分支

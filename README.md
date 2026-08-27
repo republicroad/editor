@@ -173,7 +173,7 @@ import { EditorShellProvider, createGraphsHttpAdapter, createDefaultSimulate } f
 </EditorShellProvider>
 ```
 
-注入 `persistence` 后，页面 Open 出现 "Graph library"(宿主存储)、Save/Save-as 走宿主并带 `baseRevision` 乐观锁；不注入则回退浏览器 File System Access API。契约见 `src/shell/persistence.ts`、宿主集成见 `docs/15`、页面接线见 `src/lib/graph-persistence.ts`。
+注入 `persistence` 后，页面 Open 出现 "Graph library"(宿主存储)、Save/Save-as 走宿主并带 `baseRevision` 乐观锁；宿主若实现 `listVersions`，打开图后顶栏会出现 "Versions" 下拉以查看/加载历史版本。不注入则回退浏览器 File System Access API。契约见 `src/shell/persistence.ts`、宿主集成见 `docs/15`、页面接线见 `src/lib/graph-persistence.ts`。
 
 ## 自定义节点(zrule)
 

@@ -1,6 +1,6 @@
 # Graph Persistence 接口设计提案
 
-> 状态：契约已定型(第十二批)；页面已接线(第十三批)。
+> 状态：契约已定型(第十二批)；页面已接线(第十三批)；版本历史面板已实施(第十四批)。
 > 相关类型：`src/shell/persistence.ts` · 参考实现 `apps/editor/src/graphs-store.ts` + 路由 `apps/editor/src/index.ts` · HTTP 适配器 `src/shell/graphs-http-adapter.ts` · 页面接线 `src/lib/graph-persistence.ts` + `src/pages/decision-simple.tsx`
 
 ## 1. 背景与目标
@@ -132,7 +132,7 @@ Shell 行为分支（decision-simple 实际代码路径）：
 | 已注入 | Open 菜单多出 "Graph library" 子菜单=`adapter.list()` → `adapter.load(id)` | `saveToRemote` → `adapter.save()`；已打开图 upsert 带 `baseRevision` 乐观锁 | 返回 `{kind:'conflict'}` → 提示刷新后再存 |
 | 未注入 | 浏览器 showOpenFilePicker / 模板 | 浏览器 showSaveFilePicker / 下载 | 无 |
 
-> 版本历史子面板(`adapter.listVersions`)已入契约与参考实现，但页面 UI 尚未接线，属后续批次（见 docs/03 §6.2 开放项）。
+> 版本历史子面板（第十四批）：打开宿主图后，若适配器具备 `listVersions`，顶栏出现 "Versions" 下拉——列出版本、选中后经 AlertDialog 确认、以 `adapter.load(id, {revision})` 加载历史，并将该版本记为 `remoteSource.revision` 作为后续保存的 `baseRevision` 乐观锁（防覆盖更新的 head）。
 
 ## 6. 服务端参考实现（已实施，第十二批 `5576820`）
 

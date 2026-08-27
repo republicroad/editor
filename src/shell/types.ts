@@ -1,6 +1,7 @@
 import type { DecisionGraphType, Simulation } from '@gorules/jdm-editor';
 import type { AuthAdapter } from '../lib/auth/adapter';
 import type { CustomNodeSchemaSource } from '../lib/custom-node-schema-source';
+import type { GraphPersistenceAdapter } from './persistence';
 
 export interface ShellSimulateResult {
   simulation: Simulation;
@@ -17,4 +18,6 @@ export interface EditorShellOptions {
   authAdapter?: AuthAdapter;
   /** 模拟执行实现：默认同源 POST /api/simulate；宿主可注入本地 WASM 引擎或远程服务 */
   simulate?: SimulateHandler;
+  /** 图持久化适配器：未提供时 shell 回退到浏览器本地文件(File System Access API) */
+  persistence?: GraphPersistenceAdapter;
 }

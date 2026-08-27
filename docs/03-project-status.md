@@ -158,7 +158,8 @@
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
 - [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(`8360714`+`eaadb0c`)
-- [x] 库化第二步(第十批)：EditorShell Provider(schemaSource/authAdapter/simulate 注入)+ useCustomNodes 组合选项 + storage 键命名空间化 + docs/14-auth-integration.md 集成指南；完整托管 DecisionGraph 的复合组件待 persistence 接口定型后另批
+- [x] 库化第二步(第十批)：EditorShell Provider(schemaSource/authAdapter/simulate 注入)+ useCustomNodes 组合选项 + storage 键命名空间化 + docs/14-auth-integration.md 集成指南
+- [x] 库化第三步(第十一批)：Graph Persistence 接口契约(`src/shell/persistence.ts`)+ 设计提案(`docs/15-persistence-interface-proposal.md`)——图+配置打包(extensions)、历史版本( revision 必选语义)、乐观锁(baseRevision)、服务端参考路线已规划待实施
 
 ---
 
@@ -215,6 +216,11 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-26，第十一批：Graph Persistence 接口设计提案)：**
+- 新增 `src/shell/persistence.ts`(`f3b0d87`)：定义 `GraphRecordMeta`(id/name/description/owner/tags/extensions/revision/timestamps) / `GraphRecord extends Meta {content}` / `GraphPersistenceAdapter`(list?/load/save/delete?/listVersions?) / `GraphPersistenceError`(NOT_FOUND/CONFLICT/FORBIDDEN)；`load` 返回 null(404 语义防探测)、`save` 支持 `baseRevision` 乐观锁、`extensions` 为图+配置打包预留字段；`EditorShellOptions` 新增 `persistence?`(未注入时 shell 回退浏览器 File System Access API)
+- 新增 `docs/15-persistence-interface-proposal.md`：设计原则(宿主管存储·宿主管身份·404 防探测·最小接入) / 契约逐项说明 / Shell 行为分支(有 persistence→打开另存为版本历史面板走宿主；无→现状本地文件) / 服务端参考路线(`/api/graphs`+`GRAPHS_DIR`，owner 语义同名单，待实施) / 并发策略(revision 单调+baseRevision 乐观锁+last-write-wins 默认) / 安全红线 / 五个开放问题(含已拍板的 Rust 遗留删除决策)
+- 测试/lint/typecheck/build 无变化(纯类型+文档增量)；主仓 155 pass 维持
 
 **最新变更(2026-08-25，第十批：库化第二步 —— EditorShell Provider + 残余解耦)：**
 - EditorShell Provider 第一版(`e0c3a40`)：新建 `src/shell/`——`EditorShellOptions{schemaSource, authAdapter, simulate}` 三注入点 + `EditorShellProvider`/`useEditorShell` Context；默认 simulate 从 decision-simple 抽出为 `createDefaultSimulate`(axios 错误映射为 Simulation 信封+errorMessage，行为零变)；decision-simple 改走 shell(506→约 470 行)，页面级状态(graph 值/文件对话框)保留在页

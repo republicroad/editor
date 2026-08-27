@@ -22,11 +22,11 @@ GoRules Editor 采用三层架构设计：
 │  │  (Monaco)   │  │  (CM/Monaco)│  │  (Rust→WASM)    │  │
 │  └─────────────┘  └─────────────┘  └─────────────────┘  │
 ├─────────────────────────────────────────────────────────┤
-│                    后端引擎                               │
-│  ┌─────────────────────┐  ┌─────────────────────────┐   │
-│  │ Rust/Axum (主后端)   │  │ Bun/Hono (替代后端)      │   │
-│  │ zen-engine 0.53     │  │ @gorules/zen-engine     │   │
-│  └─────────────────────┘  └─────────────────────────┘   │
+│                    后端引擎 (Bun/Hono)                    │
+│  ┌───────────────────────────────────────────────────┐   │
+│  │ apps/editor · zen-rule(@gorules/zen-engine)       │   │
+│  │ simulate / decision / graphs / lists / openapi    │   │
+│  └───────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -55,18 +55,14 @@ editor/
 │   └── assets/                   # 静态资源
 │       └── decision-templates.ts # 决策模板
 ├── jdm-editor/                   # 核心组件库(git submodule)
-├── backend/                      # Rust/Axum 后端
-│   └── src/main.rs               # 后端入口
-├── apps/                         # 替代后端
-│   ├── editor/                   # Bun/Hono 后端
+├── apps/                         # 后端与应用
+│   ├── editor/                   # Bun/Hono 后端(唯一后端)
 │   └── zen-rule/                 # 规则执行工具
 ├── static/                       # 构建输出
 ├── vite.config.ts                # Vite 构建配置
 ├── tsconfig.json                 # TypeScript 配置
 ├── package.json                  # 项目配置
-├── Cargo.toml                    # Rust 工作空间配置
-├── Dockerfile                    # Docker 构建文件
-└── Makefile                      # Rust 开发命令
+└── Dockerfile                    # Docker 构建文件
 ```
 
 ### 2.2 jdm-editor 组件库
@@ -90,7 +86,6 @@ jdm-editor/
 │       │   ├── theme.tsx         # 主题配置
 │       │   └── index.ts          # 库入口
 │       └── package.json          # v1.52.0
-├── Cargo.toml                    # Rust 工作空间(WASM 相关，保留)
 ├── pnpm-workspace.yaml           # 与上游对齐(bun 读根 workspaces 字段)
 ├── lerna.json                    # Lerna 配置
 └── package.json                  # monorepo 配置
@@ -126,13 +121,10 @@ jdm-editor/
 
 | 技术 | 版本 | 用途 |
 |------|------|------|
-| Rust | 2021 edition | 主后端语言 |
-| Axum | 0.7 | HTTP 框架 |
-| Tokio | 1 | 异步运行时 |
-| zen-engine | 0.53 | GoRules 决策引擎 |
-| Tower HTTP | 0.5 | HTTP 中间件 |
-| Bun | 1.3+ | 替代后端运行时 |
-| Hono | 4.12 | Bun HTTP 框架 |
+| Bun | 1.3+ | 后端运行时 |
+| Hono | 4.12 | HTTP 框架 |
+| Zod | 4 | 请求/响应校验(OpenAPI) |
+| zen-rule | - | GoRules 决策引擎(纯 TS) |
 
 ### 3.3 WASM 技术栈
 
@@ -148,16 +140,14 @@ jdm-editor/
 
 ### 4.1 Strategy 策略模式
 
-双后端实现，共享相同的 API 接口：
-- **Rust/Axum**: 生产环境主后端
-- **Bun/Hono**: 开发/实验环境替代后端
+Bun/Hono 后端(`apps/editor`)是唯一后端，暴露统一的 `/api` 端点：
 
-两者都暴露相同的 `/api/simulate` 端点。Hono 替代后端(`apps/editor`)额外提供：
+- `POST /api/simulate`：决策仿真
 - `POST /api/decision`：决策推理(支持按 `decisionId` 缓存规则对象复用)
 - `GET /api/auth/get-session`：会话查询(当前为 Mock 开发用户，better-auth 兼容格式)
+- `GET /api/graphs`：图持久化(**第五批**，宿主管存储，revision + baseRevision 乐观锁)
 - `GET /openapi/json`：OpenAPI schema；`GET /openapi`：Scalar API Reference 文档页
 - `GET /state`、`GET /input`、`GET /?files`(静态目录文件列表)
-- 另起 admin 服务(端口 3001，`GET /`、`GET /admin`)
 - 每个请求打印方法/路径/状态/耗时日志，未处理异常经 `onError` 统一记录堆栈
 
 ### 4.2 Context Provider 模式
@@ -261,16 +251,14 @@ src/ → Vite (SWC) → static/ (HTML + JS + CSS + WASM)
 ### 6.2 后端构建
 
 ```
-backend/src/main.rs → Cargo build → target/debug/editor
-backend/src/main.rs → Cargo build --release → target/release/editor
+apps/editor/src/index.ts → bun src/index.ts   # Bun/Hono 后端
 ```
 
 ### 6.3 Docker 构建
 
 ```
-Stage 1: Rust builder → 编译后端二进制
-Stage 2: React builder → 构建前端静态文件
-Stage 3: Debian slim → 运行时(复制二进制 + 静态文件)
+Stage 1: Bun builder → bun install + bun run build(前端静态产物)
+Stage 2: Bun slim → 运行时(复制后端源码 + node_modules + 前端静态产物)
 ```
 
 ---
@@ -281,7 +269,7 @@ Stage 3: Debian slim → 运行时(复制二进制 + 静态文件)
 
 | 工作流 | 触发条件 | 功能 |
 |--------|----------|------|
-| `validate.yml` | PR / push to master | Bun 流水线(`setup-bun` 1.3.14)：lint + typecheck + typecheck:apps + zen-rule 冒烟测试 + Rust 格式检查 |
+| `validate.yml` | PR / push to master, zrule | Bun 流水线(`setup-bun` 1.3.14)：lint + typecheck + typecheck:apps + test(主仓) + apps 测试 |
 | `semantic-version.yml` | 手动触发 | 自动版本发布 |
 | `build-docker.yml` | release 提交到 master | 构建并推送 Docker 镜像 |
 

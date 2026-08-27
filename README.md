@@ -34,32 +34,26 @@ jdm-editor$ git checkout zrule
 
 ## backend
 
-Run rust backend:
+后端为 Bun + Hono（`apps/editor`），提供决策仿真、自定义节点 schema、名单与图持久化 API。
+
 ```bash
-make watch
+# 启动后端(Hono，默认 :3000)
+bun run --cwd apps/editor dev
 ```
 
 ### Running via Docker
 
-Running locally:
+镜像打包了前端产物与 Hono 后端，运行后访问 :3000 即得完整编辑器。
+
 ```bash
-docker run -p 3000:3000 --platform=linux/amd64 gorules/editor
+# 构建镜像(bun 多阶段，见 Dockerfile)
+docker build -t editor .
+
+# 本地运行
+docker run -p 3000:3000 editor
 ```
 
-Repository:
-https://hub.docker.com/r/gorules/editor
-
-### run with rust
-
-也可以编译 rust 后端来运行程序.
-```bash
-# 构建rust后端
-$ cargo build
-# 运行rust后端
-$ target/debug/editor
-
-2025-06-04T03:32:03.231397Z  INFO editor: 🚀 Listening on http://127.0.0.1:3000
-```
+> 图与名单落盘在镜像内 `apps/editor/graphs` / `apps/editor/lists` 下，生产请以 volume 挂载持久化。
 
 ## frontend(monorepo)
 

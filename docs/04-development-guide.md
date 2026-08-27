@@ -7,10 +7,8 @@
 | 工具 | 版本要求 | 说明 |
 |------|----------|------|
 | Git | 2.30+ | 支持 submodules |
-| Bun | 1.3+ | 包管理与构建(推荐) |
-| pnpm | 10+ | 替代包管理器 |
-| Rust | stable | 后端构建 |
-| Node.js | 18+ | 前端构建 |
+| Bun | 1.3+ | 包管理、构建与后端运行时(唯一依赖) |
+| Node.js | 18+ | 前端构建(可选) |
 
 ### 1.2 克隆项目
 
@@ -50,12 +48,7 @@ bun i
 
 Bun 1.3+ 可以识别 pnpm 的元数据，因此可以直接使用 `bun i` 安装所有工作空间依赖。
 
-### 2.2 使用 pnpm
-
-```bash
-npm i pnpm -g
-pnpm i
-```
+> 注：根 `pnpm-lock.yaml` 已随 Rust 遗留一并移除，统一以 `bun.lock` / `bun i` 为标准安装方式。
 
 ---
 
@@ -65,8 +58,6 @@ pnpm i
 
 ```bash
 bun run dev
-# 或
-pnpm dev
 ```
 
 Vite 开发服务器默认运行在 `http://localhost:5173`，支持热模块替换(HMR)。
@@ -74,19 +65,14 @@ Vite 开发服务器默认运行在 `http://localhost:5173`，支持热模块替
 ### 3.2 启动后端
 
 ```bash
-# 方式一：使用 Makefile(推荐，支持文件监听)
-make watch
-
-# 方式二：手动构建运行
-cargo build
-target/debug/editor
+bun run --cwd apps/editor dev
 ```
 
 后端默认运行在 `http://localhost:3000`。
 
 ### 3.3 开发工作流
 
-1. 启动后端：`make watch`
+1. 启动后端：`bun run --cwd apps/editor dev`
 2. 启动前端：`bun run dev`
 3. 访问 `http://localhost:5173`
 4. 前端通过 Vite 代理将 `/api/*` 请求转发到后端 `localhost:3000`
@@ -225,11 +211,11 @@ bun run preview
 ### 6.3 后端构建
 
 ```bash
-# 开发构建
-cargo build
+# 开发(热重载)
+bun run --cwd apps/editor dev
 
-# 生产构建
-cargo build --release
+# 直接运行
+bun run --cwd apps/editor start
 ```
 
 ### 6.4 Docker 构建
@@ -239,7 +225,7 @@ cargo build --release
 docker build -t editor .
 
 # 运行容器
-docker run -p 3000:3000 --platform=linux/amd64 editor
+docker run -p 3000:3000 editor
 ```
 
 ### 6.5 Docker Hub
@@ -344,11 +330,10 @@ server: {
 ### 10.2 后端调试
 
 ```bash
-# Rust 日志
-RUST_LOG=debug cargo run
+# 启动后端(热重载)
+bun run --cwd apps/editor dev
 
-# 使用 cargo watch 自动重载
-make watch
+# 后端日志输出到控制台，异常经 onError 统一记录堆栈
 ```
 
 ### 10.3 WASM 调试

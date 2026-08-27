@@ -130,15 +130,17 @@
 
 ### 5.2 后端
 
-- **构建命令**: `cargo build`
-- **输出**: `target/debug/editor`
+- **运行**: `bun run --cwd apps/editor dev`(Bun/Hono，唯一后端)
+- **端口**: 3000
 - **状态**: 正常
+- **图持久化**: `/api/graphs`(参考实现，`graphs-store.ts` 存储层；详见 docs/15)
 
 ### 5.3 Docker
 
-- **镜像**: `gorules/editor`
+- **镜像**: 自构建(`docker build -t editor .`，bun 多阶段)
 - **平台**: linux/amd64
 - **状态**: 正常
+- **持久化**: 图/名单落盘于镜像内 `apps/editor/graphs` / `apps/editor/lists`，生产以 volume 挂载
 
 ---
 
@@ -147,12 +149,13 @@
 ### 6.1 已知问题
 - HTTP 协议下 `crypto.randomUUID` 不可用，已通过 polyfill 解决
 - lezer-zen / lezer-zen-template / zen-engine-wasm 源码已从工作区移除(opencode 与 zrule 分支均如此)，改为外部 npm 固定版本依赖
+- **request 节点 Schema 数据保存丢失**：保存规则时 `contrib.http_request` 节点的 Schema 数据未保存(已定位方向，待处理)**——backlogged**，见 docs/16-deployment-plan(第十五批已知问题项)
 
 ### 6.2 待办事项
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线：主仓 **170 pass**；apps(zen-rule+editor) **67 pass**；模拟器组件级交互待补)
+- [~] 完善单元测试覆盖(bun test 基线：主仓 **174 pass**；apps(zen-rule+editor) **67 pass**；模拟器组件级交互待补)
 - [~] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓暂无 Storybook 配置)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
@@ -164,6 +167,7 @@
 - [x] 第十三批(方向A)：`EditorShellProvider` 把 `persistence` 暴露进 context(`d529c03`)；页面 open/save 接持久化(`a5dbb0e`)——注入适配器后 Open 出现 "Graph library" 子菜单、Save/Save-as 走宿主存储且带 baseRevision 乐观锁，冲突提示刷新；纯逻辑抽到 `src/lib/graph-persistence.ts` 并补 6 单测
 - [x] 第十三批待接线：版本历史子面板——已由第十四批落地（见下）
 - [x] 第十四批(方向A)：版本历史子面板 UI——`listRemoteVersions` 纯逻辑(`src/lib/graph-persistence.ts`)+单测；打开宿主图后顶栏 "Versions" 下拉列版本(`adapter.listVersions(id)`)、选中确认后 `adapter.load(id,{revision})` 加载历史、以该版本为 `baseRevision` 乐观锁；契约与参考实现此前已具备，本批闭合第十三批唯一开放项
+- [x] 第十五批(部署收尾)：Rust/pnpm 遗留清除(`backend/`、根 `Cargo.toml`/`Cargo.lock`、`pnpm-lock.yaml`)；`apps/editor` 定位唯一后端；Dockerfile 重写为 bun 多阶段 + `.dockerignore`；CI 真门禁(去 `continue-on-error`，加主仓/apps 测试 + build job，push 触发 master/zrule，子模块 checkout)；本地 podman 构建验证
 
 ---
 
@@ -220,6 +224,14 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-27，第十五批：部署收尾)：**
+- Rust 遗留清除：删 `backend/`(Cargo.toml + main.rs)、根 `Cargo.toml`/`Cargo.lock`、`pnpm-lock.yaml`、`.gitignore` 的 `/target`；CI 移除 rust-codequality job；`apps/editor` 定位为唯一后端
+- 文档清理：README backend 章节(bun/Hono)、docs/02 架构图/技术栈/§4.1/§6.2 双后端→单后端、docs/04 工具链/后端启动/Docker 指引去 Rust；docs/03 §5.2/§5.3 更新
+- Dockerfile 重写(`oven/bun` 多阶段)：builder 层缓存安装 → `bun run build` → runner 复制 node_modules + apps + jdm-editor + `static/→apps/editor/public`(serveStatic 目录)，VOLUME 挂载 graphs/lists；`.dockerignore` 排除 node_modules/static/运行时数据目录
+- CI 真门禁(`validate.yml`)：去全部 `continue-on-error`；codequality job 加主仓 test + apps test(`bun test apps/zen-rule apps/editor`)；新增 build job；checkout `submodules: recursive`(workspace 含 jdm-editor/packages/*)；push 触发 master **+ zrule**
+- 新增 `docs/16-deployment-plan.md`：第十五批范围 + 已知问题 backlog(request 节点 Schema 保存丢失)
+- 门禁：lint 0 errors、typecheck/apps 绿、主仓 test 174 pass、apps 67 pass、podman 本地 `docker build` 验证通过
 
 **最新变更(2026-08-27，第十四批方向A：版本历史子面板 UI)：**
 - 纯逻辑(`5bbc289`)：`src/lib/graph-persistence.ts` 新增 `listRemoteVersions(adapter,id)`——有 `listVersions` 时透传、否则返回 `[]`(宿主无版本能力则不渲染历史面板)；`loadFromRemote` 已支持 `{revision}` 透传；单测 +3(透传/无实现→[]/load revision 透传)，本套件 9 pass

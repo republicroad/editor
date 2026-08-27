@@ -8,9 +8,12 @@ import path from 'path';
 // 注意：env 与临时目录必须在顶层动态 import 之前就绪——bun test 中顶层 await 先于 beforeAll 执行
 const listsDir = await mkdtemp(path.join(tmpdir(), 'editor-lists-'));
 process.env.LISTS_DIR = listsDir;
+const graphsDir = await mkdtemp(path.join(tmpdir(), 'editor-graphs-'));
+process.env.GRAPHS_DIR = graphsDir;
 
 afterAll(async () => {
   await rm(listsDir, { recursive: true, force: true });
+  await rm(graphsDir, { recursive: true, force: true });
 });
 
 const { app, resolveExecContext } = await import('./index.js');
@@ -344,5 +347,189 @@ describe('resolveExecContext', () => {
     } finally {
       delete process.env.TRUST_PROXY_HEADERS;
     }
+  });
+});
+
+describe('graph persistence routes', () => {
+  beforeAll(() => {
+    process.env.TRUST_PROXY_HEADERS = 'true';
+  });
+  afterAll(() => {
+    delete process.env.TRUST_PROXY_HEADERS;
+  });
+
+  const asUser = (userId: string): Record<string, string> => ({
+    'content-type': 'application/json',
+    'x-user-id': userId,
+  });
+
+  const graphBody = (name: string) => ({
+    name,
+    content: {
+      contentType: 'application/vnd.gorules.decision',
+      nodes: [{ id: 'in', type: 'inputNode', name: 'Input' }],
+      edges: [],
+    },
+  });
+
+  test('新建注入 owner 并落盘 users/{owner}/，revision 初始 v1', async () => {
+    const name = `graph-own-${Date.now()}`;
+    const res = await app.request('/api/graphs', {
+      method: 'POST',
+      headers: asUser('user-a'),
+      body: JSON.stringify(graphBody(name)),
+    });
+    expect(res.status).toBe(200);
+    const created = (await res.json()) as { id: string; revision: string };
+    expect(created.revision).toBe('v1');
+    const files = await readdir(path.join(graphsDir, 'users', 'user-a'));
+    expect(files).toContain(`${created.id}.json`);
+    // 客户端传入的 owner/字段被剥离，不进入响应
+    expect(created.id).toMatch(/^[0-9a-f-]{36}$/i);
+  });
+
+  test('detail 返回 content；他人私有一律 404', async () => {
+    const name = `graph-vis-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    const resA = await app.request(`/api/graphs/${created.id}`, { headers: asUser('user-a') });
+    expect(resA.status).toBe(200);
+    const detail = (await resA.json()) as { name: string; content: { nodes: unknown[] }; owner: string };
+    expect(detail.name).toBe(name);
+    expect(Array.isArray(detail.content.nodes)).toBe(true);
+    expect(detail.owner).toBe('user-a');
+
+    expect((await app.request(`/api/graphs/${created.id}`, { headers: asUser('user-b') })).status).toBe(404);
+    // 列表对他人隐藏
+    const listB = (await (await app.request('/api/graphs', { headers: asUser('user-b') })).json()) as Array<{
+      id: string;
+    }>;
+    expect(listB.map((g) => g.id)).not.toContain(created.id);
+  });
+
+  test('version 递增 v1→v2→v3，且可读历史版本与版本表', async () => {
+    const name = `ver-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    const put1 = await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('updated'), baseRevision: 'v1' }),
+    });
+    expect(put1.status).toBe(200);
+    expect(((await put1.json()) as { revision: string }).revision).toBe('v2');
+
+    const put2 = await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('updated-2'), baseRevision: 'v2' }),
+    });
+    expect(put2.status).toBe(200);
+    expect(((await put2.json()) as { revision: string }).revision).toBe('v3');
+
+    // 读旧版
+    const v1 = await app.request(`/api/graphs/${created.id}?revision=v1`, { headers: asUser('user-a') });
+    const v1Body = (await v1.json()) as { name: string; revision: string };
+    expect(v1Body.revision).toBe('v1');
+    expect(v1Body.name).toBe(name);
+
+    // 版本表不含 head
+    const versions = (await (
+      await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
+    ).json()) as Array<{ revision: string }>;
+    expect(versions.map((v) => v.revision)).toEqual(['v1', 'v2']);
+  });
+
+  test('baseRevision 不匹配 head 返回 409 CONFLICT', async () => {
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(`conf-${Date.now()}`)),
+      })
+    ).json()) as { id: string };
+
+    const res = await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('x'), baseRevision: 'v999' }),
+    });
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { error: { code?: string } };
+    expect(body.error?.code).toBe('CONFLICT');
+  });
+
+  test('PUT 保留原 owner(共享图编辑后仍共享)', async () => {
+    // 通过写入 shared 目录构造无 owner 图
+    const id = 'shared-graph-test';
+    const sharedDir = path.join(graphsDir, 'shared');
+    const { mkdir } = await import('fs/promises');
+    await mkdir(sharedDir, { recursive: true });
+    await writeFile(
+      path.join(sharedDir, `${id}.json`),
+      JSON.stringify({
+        meta: {
+          id,
+          name: 'shared-graph',
+          revision: 'v1',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        content: graphBody('shared-graph').content,
+      }),
+      'utf-8',
+    );
+
+    const put = await app.request(`/api/graphs/${id}`, {
+      method: 'PUT',
+      headers: asUser('user-b'),
+      body: JSON.stringify({ ...graphBody('shared-graph-updated'), baseRevision: 'v1' }),
+    });
+    expect(put.status).toBe(200);
+    expect(((await put.json()) as { revision: string }).revision).toBe('v2');
+
+    const detail = await app.request(`/api/graphs/${id}`, { headers: asUser('user-a') });
+    const body = (await detail.json()) as { owner?: string; name: string };
+    expect(body.owner).toBeUndefined(); // 仍为共享
+    expect(body.name).toBe('shared-graph-updated');
+  });
+
+  test('delete 移除 head 与全部历史版本文件', async () => {
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(`del-${Date.now()}`)),
+      })
+    ).json()) as { id: string };
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('d'), baseRevision: 'v1' }),
+    });
+
+    const res = await app.request(`/api/graphs/${created.id}`, {
+      method: 'DELETE',
+      headers: asUser('user-a'),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()) as { deleted: boolean }).toEqual({ deleted: true });
+
+    expect((await app.request(`/api/graphs/${created.id}`, { headers: asUser('user-a') })).status).toBe(404);
+    const dir = path.join(graphsDir, 'users', 'user-a');
+    const remaining = (await readdir(dir)).filter((f) => f.startsWith(created.id));
+    expect(remaining).toHaveLength(0);
   });
 });

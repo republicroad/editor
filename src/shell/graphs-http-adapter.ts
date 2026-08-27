@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { GraphPersistenceError, type GraphPersistenceAdapter, type GraphRecord, type GraphRecordMeta } from './persistence';
+import { GraphPersistenceError, type GraphPersistenceAdapter, type GraphRecordMeta } from './persistence';
 
 interface HttpGraphMeta {
   id: string;
@@ -24,16 +24,22 @@ interface HttpGraph extends HttpGraphMeta {
  * 404 → load 返回 null / delete 返回 false；409 CONFLICT → 抛 GraphPersistenceError。
  */
 export const createGraphsHttpAdapter = (baseUrl = '/api/graphs'): GraphPersistenceAdapter => {
-  const stripMeta = ({
-    createdAt: _createdAt,
-    updatedAt: _updatedAt,
-    ...meta
-  }: HttpGraphMeta): GraphRecordMeta => meta;
+  const toMeta = (m: HttpGraphMeta): GraphRecordMeta => ({
+    id: m.id,
+    name: m.name,
+    description: m.description,
+    owner: m.owner,
+    tags: m.tags,
+    extensions: m.extensions,
+    revision: m.revision,
+    createdAt: m.createdAt,
+    updatedAt: m.updatedAt,
+  });
 
   return {
     async list(query) {
       const { data } = await axios.get<HttpGraphMeta[]>(baseUrl, { params: query });
-      return data.map(stripMeta);
+      return data.map(toMeta);
     },
 
     async load(id, opts) {
@@ -41,7 +47,7 @@ export const createGraphsHttpAdapter = (baseUrl = '/api/graphs'): GraphPersisten
         const { data } = await axios.get<HttpGraph>(`${baseUrl}/${encodeURIComponent(id)}`, {
           params: opts?.revision ? { revision: opts.revision } : undefined,
         });
-        return { ...stripMeta(data), content: data.content };
+        return { ...toMeta(data), content: data.content };
       } catch (e) {
         if (axios.isAxiosError(e) && e.response?.status === 404) return null;
         throw e;
@@ -49,7 +55,7 @@ export const createGraphsHttpAdapter = (baseUrl = '/api/graphs'): GraphPersisten
     },
 
     async save(record, opts) {
-      const { id, revision: _revision, ...body } = record;
+      const { id, ...body } = record;
       try {
         const url = id ? `${baseUrl}/${encodeURIComponent(id)}` : baseUrl;
         const method = id ? 'put' : 'post';
@@ -62,7 +68,10 @@ export const createGraphsHttpAdapter = (baseUrl = '/api/graphs'): GraphPersisten
         if (axios.isAxiosError(e)) {
           const code = e.response?.data?.error?.code;
           if (e.response?.status === 409 || code === 'CONFLICT') {
-            throw new GraphPersistenceError('CONFLICT', `base revision ${opts?.baseRevision ?? '(none)'} does not match head`);
+            throw new GraphPersistenceError(
+              'CONFLICT',
+              `base revision ${opts?.baseRevision ?? '(none)'} does not match head`,
+            );
           }
         }
         throw e;

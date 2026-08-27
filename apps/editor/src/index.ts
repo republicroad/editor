@@ -944,7 +944,9 @@ app.openapi(graphUpdateRoute, async (c) => {
   } catch (error) {
     if (error instanceof GraphPersistenceError) {
       if (error.code === 'CONFLICT') {
-        throw new HTTPException(409, { message: `conflict: ${error.message}` });
+        throw new HTTPException(409, {
+          res: c.json({ error: { code: 'CONFLICT', message: error.message } }, 409),
+        });
       }
       throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
     }

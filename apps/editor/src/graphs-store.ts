@@ -49,7 +49,9 @@ interface HeadFile {
   content: unknown;
 }
 
-let GRAPHS_DIR = process.env.GRAPHS_DIR ? path.resolve(process.env.GRAPHS_DIR) : path.resolve(import.meta.dir, '../graphs');
+let GRAPHS_DIR = process.env.GRAPHS_DIR
+  ? path.resolve(process.env.GRAPHS_DIR)
+  : path.resolve(import.meta.dir, '../graphs');
 const SHARED_GRAPHS_DIR = join(GRAPHS_DIR, 'shared');
 const USERS_GRAPHS_DIR = join(GRAPHS_DIR, 'users');
 
@@ -119,7 +121,19 @@ export async function listGraphs(actor: string | undefined, query?: { q?: string
   }
   const list = [...dedup.values()].filter((g) => (q ? g.name.toLowerCase().includes(q) : true));
   list.sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-  return list.map(({ content: _content, ...meta }) => meta);
+  return list.map(
+    (g): StoredGraphMeta => ({
+      id: g.id,
+      name: g.name,
+      description: g.description,
+      owner: g.owner,
+      tags: g.tags,
+      extensions: g.extensions,
+      revision: g.revision,
+      createdAt: g.createdAt,
+      updatedAt: g.updatedAt,
+    }),
+  );
 }
 
 /**
@@ -140,10 +154,7 @@ export async function loadGraph(
   if (head.owner && head.owner !== actor) return null;
 
   if (opts?.revision && opts.revision !== head.revision) {
-    const versionPath = join(
-      path.dirname(headFile),
-      `${sanitizeGraphId(id)}.${opts.revision}.json`,
-    );
+    const versionPath = join(path.dirname(headFile), `${sanitizeGraphId(id)}.${opts.revision}.json`);
     return readHeadFile(versionPath);
   }
   return head;
@@ -156,7 +167,14 @@ export async function loadGraph(
  * @returns { id, revision }
  */
 export async function saveGraph(
-  input: { id?: string; name: string; description?: string; tags?: string[]; extensions?: Record<string, unknown>; content: unknown },
+  input: {
+    id?: string;
+    name: string;
+    description?: string;
+    tags?: string[];
+    extensions?: Record<string, unknown>;
+    content: unknown;
+  },
   owner: string | undefined,
   opts?: { newId?: string; baseRevision?: string },
 ): Promise<{ id: string; revision: string }> {
@@ -166,9 +184,8 @@ export async function saveGraph(
   }
 
   let existing: StoredGraph | null = null;
-  let headFile: string | null = null;
   if (input.id) {
-    headFile = await findHeadFile(input.id, owner);
+    const headFile = await findHeadFile(input.id, owner);
     if (headFile) {
       existing = await readHeadFile(headFile);
       if (existing?.owner && existing.owner !== owner) {
@@ -183,7 +200,10 @@ export async function saveGraph(
   if (opts?.baseRevision) {
     const headRevision = existing?.revision;
     if (opts.baseRevision !== headRevision) {
-      throw new GraphPersistenceError('CONFLICT', `base revision ${opts.baseRevision} does not match head ${headRevision ?? '(none)'}`);
+      throw new GraphPersistenceError(
+        'CONFLICT',
+        `base revision ${opts.baseRevision} does not match head ${headRevision ?? '(none)'}`,
+      );
     }
   }
 
@@ -196,7 +216,7 @@ export async function saveGraph(
     id,
     name: input.name,
     description: input.description,
-    owner: existing?.owner ?? owner,
+    owner: existing?.owner ?? (isNew ? owner : undefined),
     tags: input.tags,
     extensions: input.extensions,
     revision: nextRevision,
@@ -224,7 +244,11 @@ export async function saveGraph(
       createdAt: existing.createdAt,
       updatedAt: existing.updatedAt,
     };
-    await writeFile(versionPath, `${JSON.stringify({ meta: archivedMeta, content: existing.content }, null, 2)}\n`, 'utf-8');
+    await writeFile(
+      versionPath,
+      `${JSON.stringify({ meta: archivedMeta, content: existing.content }, null, 2)}\n`,
+      'utf-8',
+    );
   }
 
   return { id, revision: nextRevision };
@@ -269,7 +293,10 @@ export async function deleteGraph(id: string, owner: string | undefined): Promis
 }
 
 /** 列出指定图的历史版本(不含 head)；返回空数组 = 图不可见或不存在 */
-export async function listGraphVersions(id: string, owner: string | undefined): Promise<Array<{ revision: string; updatedAt: string }>> {
+export async function listGraphVersions(
+  id: string,
+  owner: string | undefined,
+): Promise<Array<{ revision: string; updatedAt: string }>> {
   const headFile = await findHeadFile(id, owner);
   if (!headFile) return [];
   const head = await readHeadFile(headFile);

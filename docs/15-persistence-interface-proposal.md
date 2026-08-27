@@ -1,7 +1,7 @@
 # Graph Persistence 接口设计提案
 
-> 状态：草案，待实例规则设计定型后转为正式规范并实施服务端参考实现。
-> 相关类型：`src/shell/persistence.ts`
+> 状态：契约已定型(第十二批实施)。
+> 相关类型：`src/shell/persistence.ts` · 参考实现 `apps/editor/src/graphs-store.ts` + 路由 `apps/editor/src/index.ts` · HTTP 适配器 `src/shell/graphs-http-adapter.ts`
 
 ## 1. 背景与目标
 
@@ -132,43 +132,54 @@ Shell 行为分支：
 | 已注入 | `adapter.list()` + `adapter.load()` | `adapter.save()` | `adapter.listVersions()` + `adapter.load({revision})` |
 | 未注入 | 浏览器 showOpenFilePicker | 浏览器 showSaveFilePicker / 下载 | 隐藏 |
 
-## 6. 服务端参考实现路线（待实施）
+## 6. 服务端参考实现（已实施，第十二批 `5576820`）
 
-apps/editor 提供 `/api/graphs` 参考实现，复用现有的 owner 模型与存储布局模式。
+apps/editor 提供 `/api/graphs` 参考实现，复用名单的 owner 模型与存储布局模式。
 
 ### 6.1 存储布局
 
 ```
 GRAPHS_DIR/
-  shared/                      # owner 缺省（存量兼容）
-    {id}.json                  # { meta: {name,revision,...}, content: {...} }
+  shared/                      # owner 缺省
+    {id}.json                  # { meta: {name,revision,...}, content: {...} }  head
+    {id}.v1.json               # 历史版本
   users/{owner}/
-    {id}.json                  # 用户私有图
+    {id}.json                  # 用户私有图(head)
+    {id}.v1.json               # 历史版本
 ```
 
-历史版本采用**分版本文件**：`{id}.v{N}.json`（N 从 1 递增），head 指向最新文件。
+head 文件 `{id}.json` 含 `{meta, content}`；历史版本为分版本文件 `{id}.v{N}.json`（N 从 1 递增，revision 记为 `v{N}`）。revision 单调递增，head 保存最新版。
 
-> 注意：版本文件组织为草案，实施时需评估大图场景下的磁盘/IO 表现，可能改为 head.json + versions/ 目录。
+> 实施说明（第十二批）：版本采用 head + 增量版本文件方案。大图场景下的磁盘/IO 表现未做专门评估，Q1 仍开放。
 
-### 6.2 REST 端点（草案）
+### 6.2 REST 端点（已实施）
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/api/graphs` | 列出当前用户可见图（head 元数据） |
-| GET | `/api/graphs/:id` | 加载 head |
-| GET | `/api/graphs/:id?revision=vN` | 加载指定版本 |
-| POST | `/api/graphs` | 新建（服务端注入 owner） |
-| PUT | `/api/graphs/:id` | 更新（支持 baseRevision 乐观锁） |
-| DELETE | `/api/graphs/:id` | 删除（owner only） |
-| GET | `/api/graphs/:id/versions` | 列出版本历史 |
+| 方法 | 路径 | 说明 | 状态码 |
+|------|------|------|--------|
+| GET | `/api/graphs?q=` | 当前用户可见 head 元数据列表(不含 content) | 200 |
+| GET | `/api/graphs/:id` | 加载 head；`?revision=vN` 加载指定版本 | 200 / 404 |
+| POST | `/api/graphs` | 新建(服务端注入 owner，revision=v1) | 200 / 400 / 500 |
+| PUT | `/api/graphs/:id` | 更新(保留原 owner；baseRevision 乐观锁) | 200 / 404 / 409 |
+| DELETE | `/api/graphs/:id` | 删除(head + 全部历史版本) | 200 / 404 |
+| GET | `/api/graphs/:id/versions` | 历史版本列表(不含 head) | 200 / 404 |
+
+409 响应体为 `{ error: { code: 'CONFLICT', message } }`，供客户端区分乐观锁冲突。
 
 ### 6.3 与名单 owner 模式对齐
 
 沿用第九批 `apps/editor` 名单的双层作用域设计：
-- 共享名单 = `GRAPHS_DIR/shared/*.json`
-- 用户私有 = `GRAPHS_DIR/users/{owner}/*.json`
-- PUT 保留原 owner（防通过请求伪造所有权）
-- 他人私有 GET/PUT/DELETE 一律 404
+- 共享 = `GRAPHS_DIR/shared/*.json`；用户私有 = `GRAPHS_DIR/users/{owner}/*.json`
+- PUT 保留原 owner（防通过请求伪造所有权）；新建默认私有(owner=会话用户)
+- 他人私有 GET/PUT/DELETE 一律 404；共享图任意登录用户可读写
+
+### 6.4 HTTP 适配器参考
+
+`src/shell/graphs-http-adapter.ts` 的 `createGraphsHttpAdapter(baseUrl)` 把上述端点封装为 `GraphPersistenceAdapter`：
+- 404 → `load` 返回 null / `delete` 返回 false（404 语义）
+- 409 CONFLICT → 抛 `GraphPersistenceError('CONFLICT')`
+- `list`/`save`(按有无 id 自动选 create/update)/`delete`/`listVersions` 齐全
+
+宿主可原样复用，或照此实现自己的后端。集成用例见 `apps/editor/src/index.test.ts`（+6：owner 注入落盘/他人 404/版本递增与历史读/乐观锁 409/共享保留 owner/删除清历史版本），apps/editor 测试 21→27。
 
 ## 7. 安全红线
 

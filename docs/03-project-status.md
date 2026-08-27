@@ -159,7 +159,8 @@
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
 - [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(`8360714`+`eaadb0c`)
 - [x] 库化第二步(第十批)：EditorShell Provider(schemaSource/authAdapter/simulate 注入)+ useCustomNodes 组合选项 + storage 键命名空间化 + docs/14-auth-integration.md 集成指南
-- [x] 库化第三步(第十一批)：Graph Persistence 接口契约(`src/shell/persistence.ts`)+ 设计提案(`docs/15-persistence-interface-proposal.md`)——图+配置打包(extensions)、历史版本( revision 必选语义)、乐观锁(baseRevision)、服务端参考路线已规划待实施
+- [x] 库化第三步(第十一批)：Graph Persistence 接口契约(`src/shell/persistence.ts`)+ 设计提案(`docs/15-persistence-interface-proposal.md`)——图+配置打包(extensions)、历史版本(revision 必选语义)、乐观锁(baseRevision)
+- [x] 第十二批：实施 `/api/graphs` 参考实现(`graphs-store.ts` 存储层 + 六端点路由 + `graphs-http-adapter.ts` 适配器 + 6 集成用例)——参考实现落地、宿主持久化可复用
 
 ---
 
@@ -216,6 +217,14 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-26，第十二批：实施 Graph Persistence 参考实现)：**
+- 存储层 `apps/editor/src/graphs-store.ts`(`5576820`)：`GRAPHS_DIR` 布局镜像名单(shared + users/{owner})；head `{id}.json` + 历史版本 `{id}.v{N}.json`(revision 单调 v1→v2…)；owner 由会话注入、PUT 保留原 owner(共享图编辑后仍共享)、他人私有一律 404 防探测；`saveGraph` 支持 `baseRevision` 乐观锁(不匹配抛 CONFLICT)
+- `/api/graphs` 六端点(`GET 列表/detail(?revision)/POST 新建/PUT 更新/DELETE/versions`)全部经 `resolveExecContext` 取 actor；409 返回结构体 `{error:{code:'CONFLICT',message}}`
+- HTTP 适配器 `src/shell/graphs-http-adapter.ts`(`6c3a5bc`)：`createGraphsHttpAdapter(baseUrl)` 将端点封装为 `GraphPersistenceAdapter`(404→load null/delete false、409→GraphPersistenceError CONFLICT)；shell 桶导出
+- 集成用例 +6(apps/editor 测试 21→27)：owner 注入落盘 users/{owner}/、他人私有 404 与列表隐藏、版本递增 v1→v3 与历史读、乐观锁 409、共享图保留 owner、删除清历史版本文件
+- 文档：docs/15 状态翻转为【已实施】(§6 布局/端点/适配器/用例)；
+- 门禁：typecheck/apps 绿、apps/editor 27 pass；主仓 155 维持；lint/build 正常
 
 **最新变更(2026-08-26，第十一批：Graph Persistence 接口设计提案)：**
 - 新增 `src/shell/persistence.ts`(`f3b0d87`)：定义 `GraphRecordMeta`(id/name/description/owner/tags/extensions/revision/timestamps) / `GraphRecord extends Meta {content}` / `GraphPersistenceAdapter`(list?/load/save/delete?/listVersions?) / `GraphPersistenceError`(NOT_FOUND/CONFLICT/FORBIDDEN)；`load` 返回 null(404 语义防探测)、`save` 支持 `baseRevision` 乐观锁、`extensions` 为图+配置打包预留字段；`EditorShellOptions` 新增 `persistence?`(未注入时 shell 回退浏览器 File System Access API)

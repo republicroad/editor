@@ -161,6 +161,8 @@
 - [x] 库化第二步(第十批)：EditorShell Provider(schemaSource/authAdapter/simulate 注入)+ useCustomNodes 组合选项 + storage 键命名空间化 + docs/14-auth-integration.md 集成指南
 - [x] 库化第三步(第十一批)：Graph Persistence 接口契约(`src/shell/persistence.ts`)+ 设计提案(`docs/15-persistence-interface-proposal.md`)——图+配置打包(extensions)、历史版本(revision 必选语义)、乐观锁(baseRevision)
 - [x] 第十二批：实施 `/api/graphs` 参考实现(`graphs-store.ts` 存储层 + 六端点路由 + `graphs-http-adapter.ts` 适配器 + 6 集成用例)——参考实现落地、宿主持久化可复用
+- [x] 第十三批(方向A)：`EditorShellProvider` 把 `persistence` 暴露进 context(`d529c03`)；页面 open/save 接持久化(`a5dbb0e`)——注入适配器后 Open 出现 "Graph library" 子菜单、Save/Save-as 走宿主存储且带 baseRevision 乐观锁，冲突提示刷新；纯逻辑抽到 `src/lib/graph-persistence.ts` 并补 6 单测
+- [ ] 第十三批待接线：版本历史子面板(`adapter.listVersions`)页面 UI(契约与参考实现已具备，仅缺页面)
 
 ---
 
@@ -217,6 +219,14 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-27，第十三批方向A：把 persistence 接入 shell 与页面)：**
+- Shell context 暴露 `persistence?`(`d529c03`)：`EditorShellProvider` 读取 options.persistence 并随 useEditorShell 转发；页面据此在「宿主存储 / 浏览器本地文件」间分支
+- 页面接线(`a5dbb0e`)：注入持久化后 Open 菜单新增 "Graph library" 子菜单(`adapter.list()` + `adapter.load(id)`)；Save/Save-as 走宿主——新建由 adapter.save 分配 id，已打开图 upsert 带 `baseRevision` 乐观锁，冲突(lib 返回 `{kind:'conflict'}`)提示「被他人修改，刷新后再存」；未注入时浏览器 File System Access API / 下载行为完全不变；handleNew 重置 remote 来源为本地
+- 纯逻辑抽取 `src/lib/graph-persistence.ts`：`saveToRemote`/`loadFromRemote`(从 `shell/persistence` 直连导入避免 monaco 桶，bun 可测)、`GraphLike`/`RemoteSaveResult` 类型
+- 单测 +6(`src/lib/__tests__/graph-persistence.test.ts`)：新建不加 baseRevision、upsert 传 baseRevision、CONFLICT 吞掉返回 conflict、非 CONFLICT 原样抛出、load 解包 content、load→null；bun 直测 6 pass
+- 文档：docs/15 §5 行为分支表按实际代码路径更新、页头部状态翻为「第十三批已接线」；docs/03 changelog
+- 门禁：typecheck/apps 绿、lint 0 errors、bun 用例 6 pass(新增)；版本历史子面板 UI 剩开放项(契约/参考实现已具备)
 
 **最新变更(2026-08-26，第十二批：实施 Graph Persistence 参考实现)：**
 - 存储层 `apps/editor/src/graphs-store.ts`(`5576820`)：`GRAPHS_DIR` 布局镜像名单(shared + users/{owner})；head `{id}.json` + 历史版本 `{id}.v{N}.json`(revision 单调 v1→v2…)；owner 由会话注入、PUT 保留原 owner(共享图编辑后仍共享)、他人私有一律 404 防探测；`saveGraph` 支持 `baseRevision` 乐观锁(不匹配抛 CONFLICT)

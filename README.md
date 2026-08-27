@@ -152,6 +152,29 @@ OpenAPI 交互文档: http://localhost:3000/openapi
 | DELETE | `/api/lists/{name}` | 删除名单(含落盘文件清理) |
 | GET | `/api/auth/get-session` | Mock 开发用户(better-auth 兼容格式) |
 
+## 以库方式嵌入(无状态)
+
+编辑器定位为**通用无状态库**。鉴权与图存储由**宿主应用**负责，编辑器只消费注入适配器：
+
+```tsx
+import { EditorShellProvider, createGraphsHttpAdapter, createDefaultSimulate } from '@ryefccd/editor';
+
+<EditorShellProvider
+  options={{
+    // 宿主自己的鉴权(无状态：只管把会话用户填进执行上下文)
+    authAdapter: myAuthAdapter,
+    // 参考图形托管：apps/editor 的 /api/graphs；宿主可换成任意实现
+    persistence: createGraphsHttpAdapter('/api/graphs'),
+    // 决策仿真(引擎由宿主决定；这里用 zd/默认仿真）
+    simulate: createDefaultSimulate(),
+  }}
+>
+  <MyGraphPage />
+</EditorShellProvider>
+```
+
+注入 `persistence` 后，页面 Open 出现 "Graph library"(宿主存储)、Save/Save-as 走宿主并带 `baseRevision` 乐观锁；不注入则回退浏览器 File System Access API。契约见 `src/shell/persistence.ts`、宿主集成见 `docs/15`、页面接线见 `src/lib/graph-persistence.ts`。
+
 ## 自定义节点(zrule)
 
 自定义节点 = **zen-rule 注册 UDF** + **前端手写 spec**。UDF 经 `/api/custom-nodes/schema` 自动下发；

@@ -1,7 +1,7 @@
 # Graph Persistence 接口设计提案
 
-> 状态：契约已定型(第十二批实施)。
-> 相关类型：`src/shell/persistence.ts` · 参考实现 `apps/editor/src/graphs-store.ts` + 路由 `apps/editor/src/index.ts` · HTTP 适配器 `src/shell/graphs-http-adapter.ts`
+> 状态：契约已定型(第十二批)；页面已接线(第十三批)。
+> 相关类型：`src/shell/persistence.ts` · 参考实现 `apps/editor/src/graphs-store.ts` + 路由 `apps/editor/src/index.ts` · HTTP 适配器 `src/shell/graphs-http-adapter.ts` · 页面接线 `src/lib/graph-persistence.ts` + `src/pages/decision-simple.tsx`
 
 ## 1. 背景与目标
 
@@ -126,11 +126,13 @@ const record: GraphRecord = {
 </EditorShellProvider>
 ```
 
-Shell 行为分支：
-| persistence | 打开面板 | 另存为面板 | 版本历史面板 |
-|-------------|---------|-----------|-------------|
-| 已注入 | `adapter.list()` + `adapter.load()` | `adapter.save()` | `adapter.listVersions()` + `adapter.load({revision})` |
-| 未注入 | 浏览器 showOpenFilePicker | 浏览器 showSaveFilePicker / 下载 | 隐藏 |
+Shell 行为分支（decision-simple 实际代码路径）：
+| persistence | Open | Save / Save as | 冲突处理 |
+|-------------|------|----------------|---------|
+| 已注入 | Open 菜单多出 "Graph library" 子菜单=`adapter.list()` → `adapter.load(id)` | `saveToRemote` → `adapter.save()`；已打开图 upsert 带 `baseRevision` 乐观锁 | 返回 `{kind:'conflict'}` → 提示刷新后再存 |
+| 未注入 | 浏览器 showOpenFilePicker / 模板 | 浏览器 showSaveFilePicker / 下载 | 无 |
+
+> 版本历史子面板(`adapter.listVersions`)已入契约与参考实现，但页面 UI 尚未接线，属后续批次（见 docs/03 §6.2 开放项）。
 
 ## 6. 服务端参考实现（已实施，第十二批 `5576820`）
 

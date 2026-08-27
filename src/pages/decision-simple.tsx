@@ -47,7 +47,7 @@ import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
 import { readStorage, writeStorage } from '../lib/storage-key.ts';
 import { loadFromRemote, listRemoteVersions, saveToRemote, type GraphLike } from '../lib/graph-persistence.ts';
-import { EditorShellProvider, useEditorShell } from '../shell';
+import { createGraphsHttpAdapter, EditorShellProvider, useEditorShell } from '../shell';
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
@@ -116,7 +116,11 @@ const EditableTitle: React.FC<{ value: string; onChange: (value: string) => void
 
 export const DecisionSimplePage: React.FC = () => {
   return (
-    <EditorShellProvider>
+    <EditorShellProvider
+      // 参考宿主接线：演示页默认接入 apps/editor 内建的 /api/graphs 持久化。
+      // 宿主应用换成自己的适配器即可(见 docs/15)；不需要图库时传 persistence: undefined 回退本地文件。
+      options={{ persistence: createGraphsHttpAdapter('/api/graphs') }}
+    >
       <DecisionSimpleInner />
     </EditorShellProvider>
   );

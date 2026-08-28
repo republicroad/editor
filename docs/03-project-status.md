@@ -161,7 +161,7 @@
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
-- [x] 第八批：A AuthAdapter 抽取(`515c3f7`) / B ExecCtx 执行上下文通道(`638105f`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(`8360714`+`eaadb0c`)
+- [x] 第八批：A AuthAdapter 抽取(`9e13933`) / B ExecCtx 执行上下文通道(`1f31d9c`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(`f63e6c5`+`4bd678f`)
 - [x] 库化第二步(第十批)：EditorShell Provider(schemaSource/authAdapter/simulate 注入)+ useCustomNodes 组合选项 + storage 键命名空间化 + docs/14-auth-integration.md 集成指南
 - [x] 库化第三步(第十一批)：Graph Persistence 接口契约(`src/shell/persistence.ts`)+ 设计提案(`docs/15-persistence-interface-proposal.md`)——图+配置打包(extensions)、历史版本(revision 必选语义)、乐观锁(baseRevision)
 - [x] 第十二批：实施 `/api/graphs` 参考实现(`graphs-store.ts` 存储层 + 六端点路由 + `graphs-http-adapter.ts` 适配器 + 6 集成用例)——参考实现落地、宿主持久化可复用
@@ -227,10 +227,10 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ### 7.3 zrule 分支变更摘要
 
 **最新变更(2026-08-28，第十六批：库化质量——组件交互测试 + 主仓 Storybook)：**
-- 组件测试基建(`b3a638f`)：`component-tests/` 独立目录 + `bun run test:components`(独立进程，避免 bun test 路径子串误捞)；`src/test-utils/setup-jsdom.ts` jsdom 单例环境——**happy-dom v20 + GlobalRegistrator 的 window 绑定类与模块基类品牌割裂(Symbol.hasInstance)，dispatchEvent 不可用**，组件测试弃用 happy-dom；jsdom 全局拷贝保留 native fetch/AbortSignal/定时器(jsdom 计时器在 bun 下递归爆栈)；`src/test-utils/mock-jdm-editor.ts` 以 `mock.module` 桩替换 jdm-editor 全量桶(monaco 在 bun 不可求值)，updateNode 落 store 并通知重渲染
-- 测试覆盖(`b41aa6a`+`ca4edbc`)：KeyValueEditor 8 用例(结构化/原始模式、增删改、解析失败回退)、HttpRequestTab+画布卡 14 用例(请求行增删选、URL/输出键持久化、方法徽章、高级 tab 超时重试、basic/raw 认证、模拟响应三态、GET 忽略 body)、QueryListTab+画布卡 9 用例、摘要卡片 5 用例(参数对齐/回退/无参/输出/编辑入口)，**合计 38 用例**；radix Tabs 需 mousedown+click 激活(经验记录)
-- 主仓 Storybook(`2ccbe9f`)：@storybook/react-vite 8.6.12 与子模块对齐；`.storybook/` viteFinal 别名(@gorules/jdm-editor→子模块 src)+staticDirs 指向 static/monaco-editor@0.52.2；stories：KeyValueEditor(结构化/原始)、**DecisionGraph 嵌入示范**(真实 customNodes 注册 http_request+query_list，宿主嵌入形态可视化)；`bun run build:storybook` 本地构建通过(3 stories 入索引)
-- CI(`c71a25f`)：codequality job 加 `bun run test:components`
+- 组件测试基建(`dfb831d`)：`component-tests/` 独立目录 + `bun run test:components`(独立进程，避免 bun test 路径子串误捞)；`src/test-utils/setup-jsdom.ts` jsdom 单例环境——**happy-dom v20 + GlobalRegistrator 的 window 绑定类与模块基类品牌割裂(Symbol.hasInstance)，dispatchEvent 不可用**，组件测试弃用 happy-dom；jsdom 全局拷贝保留 native fetch/AbortSignal/定时器(jsdom 计时器在 bun 下递归爆栈)；`src/test-utils/mock-jdm-editor.ts` 以 `mock.module` 桩替换 jdm-editor 全量桶(monaco 在 bun 不可求值)，updateNode 落 store 并通知重渲染
+- 测试覆盖(`dfb831d`)：KeyValueEditor 8 用例(结构化/原始模式、增删改、解析失败回退)、HttpRequestTab+画布卡 14 用例(请求行增删选、URL/输出键持久化、方法徽章、高级 tab 超时重试、basic/raw 认证、模拟响应三态、GET 忽略 body)、QueryListTab+画布卡 9 用例、摘要卡片 5 用例(参数对齐/回退/无参/输出/编辑入口)，**合计 38 用例**；radix Tabs 需 mousedown+click 激活(经验记录)
+- 主仓 Storybook(`a19a361`)：@storybook/react-vite 8.6.12 与子模块对齐；`.storybook/` viteFinal 别名(@gorules/jdm-editor→子模块 src)+staticDirs 指向 static/monaco-editor@0.52.2；stories：KeyValueEditor(结构化/原始)、**DecisionGraph 嵌入示范**(真实 customNodes 注册 http_request+query_list，宿主嵌入形态可视化)；`bun run build:storybook` 本地构建通过(3 stories 入索引)
+- CI(`dfb831d`)：codequality job 加 `bun run test:components`
 - 门禁：lint 0 errors、typecheck×2 绿、主仓 174 + 组件 38 + apps 67 pass、`bun run build` + `build:storybook` ✓
 
 **最新变更(2026-08-27，第十五批：部署收尾)：**
@@ -242,8 +242,8 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - 门禁：lint 0 errors、typecheck/apps 绿、主仓 test 174 pass、apps 67 pass、podman 本地 `docker build` 验证通过
 
 **最新变更(2026-08-27，第十四批方向A：版本历史子面板 UI)：**
-- 纯逻辑(`5bbc289`)：`src/lib/graph-persistence.ts` 新增 `listRemoteVersions(adapter,id)`——有 `listVersions` 时透传、否则返回 `[]`(宿主无版本能力则不渲染历史面板)；`loadFromRemote` 已支持 `{revision}` 透传；单测 +3(透传/无实现→[]/load revision 透传)，本套件 9 pass
-- 页面 UI(`e79d179`)：打开宿主图后顶栏出现 "Versions" 下拉(仅当 `persistence?.listVersions` 且 `remoteSource` 已设)——打开时 `listRemoteVersions(id)` 列版本、当前加载版本禁用、选中某版 AlertDialog 确认后 `openRemoteGraph(id,revision)` 加载历史，并把 `remoteSource.revision` 记为保存的 `baseRevision` 乐观锁；复用现有 DropdownMenu/AlertDialog 无新 UI 依赖
+- 纯逻辑(`23f611c`)：`src/lib/graph-persistence.ts` 新增 `listRemoteVersions(adapter,id)`——有 `listVersions` 时透传、否则返回 `[]`(宿主无版本能力则不渲染历史面板)；`loadFromRemote` 已支持 `{revision}` 透传；单测 +3(透传/无实现→[]/load revision 透传)，本套件 9 pass
+- 页面 UI(`ec91b8a`)：打开宿主图后顶栏出现 "Versions" 下拉(仅当 `persistence?.listVersions` 且 `remoteSource` 已设)——打开时 `listRemoteVersions(id)` 列版本、当前加载版本禁用、选中某版 AlertDialog 确认后 `openRemoteGraph(id,revision)` 加载历史，并把 `remoteSource.revision` 记为保存的 `baseRevision` 乐观锁；复用现有 DropdownMenu/AlertDialog 无新 UI 依赖
 - 保存语义：打开历史版本后保存以该版本为 baseRevision，head 若已更新→CONFLICT 提示刷新(安全默认，防覆盖)
 - 文档：docs/15 §5 状态翻转【版本历史面板已实施】、页头部状态、docs/03 changelog；闭合第十三批唯一开放项
 - 门禁：lint 0 errors、typecheck/apps 绿、主仓 test 170 pass、apps 67 pass、build 待跑
@@ -270,23 +270,23 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - 测试/lint/typecheck/build 无变化(纯类型+文档增量)；主仓 155 pass 维持
 
 **最新变更(2026-08-25，第十批：库化第二步 —— EditorShell Provider + 残余解耦)：**
-- EditorShell Provider 第一版(`e0c3a40`)：新建 `src/shell/`——`EditorShellOptions{schemaSource, authAdapter, simulate}` 三注入点 + `EditorShellProvider`/`useEditorShell` Context；默认 simulate 从 decision-simple 抽出为 `createDefaultSimulate`(axios 错误映射为 Simulation 信封+errorMessage，行为零变)；decision-simple 改走 shell(506→约 470 行)，页面级状态(graph 值/文件对话框)保留在页
+- EditorShell Provider 第一版(`c4944fb`)：新建 `src/shell/`——`EditorShellOptions{schemaSource, authAdapter, simulate}` 三注入点 + `EditorShellProvider`/`useEditorShell` Context；默认 simulate 从 decision-simple 抽出为 `createDefaultSimulate`(axios 错误映射为 Simulation 信封+errorMessage，行为零变)；decision-simple 改走 shell(506→约 470 行)，页面级状态(graph 值/文件对话框)保留在页
 - Provider 渲染测试因 jdm-editor 全量桶(monaco)在 bun 下不可渲染而调整为针对 `createDefaultSimulate` 的 Bun.serve 集成用例(+3：成功信封 snapshot 透传/失败不抛出返回 errorMessage/网络不可达降级)；Provider 薄胶水由 tsc 与页面实际使用覆盖
-- 残余解耦(`11c6c3d`)：`useCustomNodes` 选项扩展 `{extraNodes?, excludeDemoNodes?}`(组合逻辑抽 `composeBaseNodes`,默认行为不变)；localStorage 键命名空间化——`src/lib/storage-key.ts`(`jdm:` 前缀+历史键回退读)，迁移 summary-card 开关与主题偏好两处，用户既有状态不丢失；+4 单测
-- 文档(`e6fe571` 后续)：新增 `docs/14-auth-integration.md` 宿主鉴权集成指南(npm 嵌入/iframe/网关三模式 + AuthAdapter/ExecCtx 用法 + 五条安全红线)
+- 残余解耦(`5454c21`)：`useCustomNodes` 选项扩展 `{extraNodes?, excludeDemoNodes?}`(组合逻辑抽 `composeBaseNodes`,默认行为不变)；localStorage 键命名空间化——`src/lib/storage-key.ts`(`jdm:` 前缀+历史键回退读)，迁移 summary-card 开关与主题偏好两处，用户既有状态不丢失；+4 单测
+- 文档(`b110bbd` 后续)：新增 `docs/14-auth-integration.md` 宿主鉴权集成指南(npm 嵌入/iframe/网关三模式 + AuthAdapter/ExecCtx 用法 + 五条安全红线)
 - 根 devDeps 新增 @testing-library/react@16.3.0(为后续组件测试预留)；测试基线 **148→155 pass**(含子模块 37)；lint 0 错误
 
 **最新变更(2026-08-25，第九批：名单 owner 用户级隔离)：**
 - C 项落地(计划存档 docs/14-batch-eight-plan.md，语义经用户拍板：共享名单任意登录用户可写可删、新建默认私有)
-- zen-rule(`8360714`)：`NamedList` 增加 `owner?`；存储改双层作用域 Map(''=共享/其余=owner)，**同名跨用户互不覆盖、自有遮蔽共享**；五访问器加可选 `actor`(不传=管理员全可见，既有测试零改动)；`query_list` UDF 经 B 批 ALS 读 `getExecContext()?.userId` 并发安全取 actor；测试 **35→40 pass**
-- apps/editor(`eaadb0c`)：名单存储布局升级为 `shared/` + `users/{owner}/` 子目录(存量扁平文件视为共享兼容读取、写回原位更新防重复)；CRUD 全部按会话 actor 过滤——POST 服务端注入 owner(客户端字段被 schema 剥离防伪造)、PUT 保留原 owner、他人私有一律 404 防名字探测；GET 响应形状 `{name,size}[]` 不变前端零改动；测试 **16→21 pass**
+- zen-rule(`f63e6c5`)：`NamedList` 增加 `owner?`；存储改双层作用域 Map(''=共享/其余=owner)，**同名跨用户互不覆盖、自有遮蔽共享**；五访问器加可选 `actor`(不传=管理员全可见，既有测试零改动)；`query_list` UDF 经 B 批 ALS 读 `getExecContext()?.userId` 并发安全取 actor；测试 **35→40 pass**
+- apps/editor(`4bd678f`)：名单存储布局升级为 `shared/` + `users/{owner}/` 子目录(存量扁平文件视为共享兼容读取、写回原位更新防重复)；CRUD 全部按会话 actor 过滤——POST 服务端注入 owner(客户端字段被 schema 剥离防伪造)、PUT 保留原 owner、他人私有一律 404 防名字探测；GET 响应形状 `{name,size}[]` 不变前端零改动；测试 **16→21 pass**
 - 安全边界：owner 由服务端会话注入不可伪造；无 actor 视角仅限内部直调(引擎/CLI)，API 路径恒有 ExecCtx
 - lint 0 错误/17 警告；typecheck×2 绿
 
 **最新变更(2026-08-24，第八批：鉴权适配层 + ExecCtx 执行上下文通道)：**
-- 计划先行(`cd7ea65`)：完整方案存档于 docs/14-batch-eight-plan.md；C 项(名单 owner 隔离)仅设计存档、暂缓实施，待单独放行
-- A AuthAdapter 抽取(`515c3f7`)：新增 `src/lib/auth/adapter.ts`——`AuthAdapter = () => Promise<AuthUser|null>` 接口 + `createAnonymousAdapter`/`createBetterAuthAdapter` 内置实现(宿主自定义直接传函数)；`user-resolver.ts` 改为薄封装 `createUserResolver(adapter)`，`createBetterAuthResolver` 保留兼容别名；decision-simple 经 useMemo 稳定 resolver 引用(顺带修复每 render 重建导致的 effect 反复触发)；better-auth 从硬依赖降为可选实现；+5 单测
-- B ExecCtx 通道(`638105f`)：ALS spike 验证 Bun 下 AsyncLocalStorage 并发隔离 PASS；zen-rule 新增 `exec-context.ts`(`getExecContext`/`runWithExecContext`)并从包入口转出——**禁用实例字段**(ZenRule 单例并发竞态)，UDF 直接 import getter，engine.ts 签名不变；apps/editor 新增 `resolveExecContext`：`TRUST_PROXY_HEADERS=true` 时信任网关 `X-User-Id`/`X-Request-Id`(缺省回退 Mock 用户 mock-user-1)，simulate/decision 两处 evaluate 以 `runWithExecContext` 包裹；+4 zen-rule 用例(含并发交错与 UDF 探针)+3 editor 用例
+- 计划先行(`bca8723`)：完整方案存档于 docs/14-batch-eight-plan.md；C 项(名单 owner 隔离)仅设计存档、暂缓实施，待单独放行
+- A AuthAdapter 抽取(`9e13933`)：新增 `src/lib/auth/adapter.ts`——`AuthAdapter = () => Promise<AuthUser|null>` 接口 + `createAnonymousAdapter`/`createBetterAuthAdapter` 内置实现(宿主自定义直接传函数)；`user-resolver.ts` 改为薄封装 `createUserResolver(adapter)`，`createBetterAuthResolver` 保留兼容别名；decision-simple 经 useMemo 稳定 resolver 引用(顺带修复每 render 重建导致的 effect 反复触发)；better-auth 从硬依赖降为可选实现；+5 单测
+- B ExecCtx 通道(`1f31d9c`)：ALS spike 验证 Bun 下 AsyncLocalStorage 并发隔离 PASS；zen-rule 新增 `exec-context.ts`(`getExecContext`/`runWithExecContext`)并从包入口转出——**禁用实例字段**(ZenRule 单例并发竞态)，UDF 直接 import getter，engine.ts 签名不变；apps/editor 新增 `resolveExecContext`：`TRUST_PROXY_HEADERS=true` 时信任网关 `X-User-Id`/`X-Request-Id`(缺省回退 Mock 用户 mock-user-1)，simulate/decision 两处 evaluate 以 `runWithExecContext` 包裹；+4 zen-rule 用例(含并发交错与 UDF 探针)+3 editor 用例
 - 测试基线更新：主仓 **126→136 pass**(+5 auth adapter/+4 exec-context/+3 resolveExecContext... 净增 10)，zen-rule **31→35 pass**，apps/editor **13→16 pass**；lint 0 错误/17 警告
 - 安全边界：不信任客户端明文 userId(网关头需显式开启信任开关)；凭证不出编辑器——http_request 出站携带用户 token 明确不做(见 docs/14)
 
@@ -296,7 +296,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - apps/editor 首个路由单测 `index.test.ts`(13 pass)：openapi/CORS 头/preflight/simulate 信封与 zod 校验/lists CRUD 全链路(临时 LISTS_DIR)/mock session/schema 下发
 - 模拟器 hooks 单测(jdm-editor 子模块 `44102b4`)：use-simulator-request-binding/use-request-example-persistence/use-simulator-request-editor 三 hooks 全覆盖，子模块测试基线 **21→37 pass**；引入 happy-dom GlobalRegistrator(bunfig preload)并在注册后还原 fetch/AbortSignal 等原生全局，避免污染真实网络用例
 - Storybook：新增 simulator-nodes-panel stories(空态/成功 trace/错误 trace/loading 四场景)，`storybook dev --ci --smoke-test` 通过(`48f1b8a`)
-- 库化第一步(主仓 `c50aea4`)：schema 加载拆出轻量模块 `custom-node-schema-source.ts`——`fetchCustomNodeSchema(source)` 支持 URL 字符串或宿主注入加载函数(默认同源 `/api/custom-nodes/schema` 不变，失败回退离线夹具)；`useCustomNodes({ schemaSource })` 可选注入；registry tsx 转出保持既有导入路径兼容；+6 单测
+- 库化第一步(主仓 `542f45f`)：schema 加载拆出轻量模块 `custom-node-schema-source.ts`——`fetchCustomNodeSchema(source)` 支持 URL 字符串或宿主注入加载函数(默认同源 `/api/custom-nodes/schema` 不变，失败回退离线夹具)；`useCustomNodes({ schemaSource })` 可选注入；registry tsx 转出保持既有导入路径兼容；+6 单测
 - 测试基线更新：根仓库 `bun test src` 因路径子串过滤连带运行子模块用例，根 bunfig.toml 复用同一 DOM 预加载脚本，基线 **93→126 pass**(含子模块 37)；lint 0 错误/17 警告(均为节点文件 react-refresh 既有类别)
 
 **最新变更(2026-08-23，第五/六批：数据加工节点对 + 基建打磨)：**

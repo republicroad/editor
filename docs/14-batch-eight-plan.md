@@ -49,7 +49,7 @@ export const getExecContext = (): ExecContext | undefined;
 
 ## C. 名单 owner 隔离(apps/zen-rule/lists.ts + apps/editor 路由)【已实施(2026-08-25，第九批)】
 
-> 实施提交:zen-rule `8360714` + apps/editor `eaadb0c`。以下为落地语义(与原存档的差异已标注)。
+> 实施提交:zen-rule `f63e6c5` + apps/editor `4bd678f`。以下为落地语义(与原存档的差异已标注)。
 
 - `NamedList` 增加 `owner?: string`;**存储改为双层作用域 Map**(''=共享,其余=owner id),同名名单跨用户互不覆盖,解析时自有遮蔽共享
 - 访问器加可选尾参 `actor`(不传=管理员视角全可见,既有测试零改动):

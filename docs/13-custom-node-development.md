@@ -1,6 +1,8 @@
 # 13 · 自定义节点开发指南
 
 > 适用分支：zrule。本文沉淀 query_list / http_request / crypto / json_path / template 五个节点落地后的标准管线，新增节点照此流程即可。
+>
+> 结构约束见 §7：**1 节点 = 1 自定义函数，不嵌套**；主题分类由「命名空间/group」承担。
 
 ## 1. 总体架构
 
@@ -103,3 +105,32 @@ bun run lint && bun run typecheck && bun run typecheck:apps && bun run test && b
 - ❌ Cascader 受控值 + revealSelected 默认 true(打开直接钻进子级，兄弟分支不可见)→ revealSelected={false}
 - ❌ 正则手术改大文件 → 用行拼接/整文件重写
 - ❌ 测试里传表达式源码文本当实参 → 传求值后的真实类型值
+
+## 7. 设计决策：1 节点 = 1 自定义函数（不嵌套）
+
+> 沉依据：2026-08-28 zrule 分支评审结论。自定义节点只支持最简单的数组序列化模型，后续 UI 与协议均以此为准。
+
+### 7.1 结论
+
+- 自定义节点调用**不支持嵌套函数调用**，为保持「最容易解析」，序列化保持极简数组模型：
+  `config.expressions[0].value = ["inout", "a", "b", "c"]` → 画布 body 渲染 `inout(a, b, c)`。
+- **一个节点 = 一个自定义函数（leaf call）**。主题分类**不放进节点内部**，而由「命名空间 / group」层承担（`schemaToCustomNodes` 已用 `group = namespace.title` 分组）。
+- 明确**不做**：节点内多函数 / 嵌套调用解析；「一个主题节点包含多个函数」。
+
+### 7.2 理由（原子性）
+
+- 嵌套 / 多函数会破坏**原子性**：无法对单个调用独立 trace / diff / 类型推断，也无法按 `node.id` 给单个调用加输出探针（`CustomNodeSummaryCard` 现即按节点看 trace output，正是「1 节点 = 1 操作」的收益）。
+- 与极简数组模型相悖——**数组不可嵌套是特性，是 leaf-call 的标准形，不是缺陷**。
+- 业界一致性：n8n / Coze / Dify / LangGraph / AWS Step Functions / Unreal Blueprint 均为「单节点 = 单操作，边做数据流，容器/子图做归类」。
+
+### 7.3 主题承载位置（三层）
+
+| 机制 | 状态 | 说明 |
+|---|---|---|
+| 命名空间 / group | 已有 | `kind` = 函数，`group` = 主题；侧边栏按命名空间分组 |
+| 颜色 | 已有 | `colors` 辅助一目辨类 |
+| 图级 SubGraph / 纯视觉组容器 | Backlog | 若需「盒子聚合」，落点是图级容器（装节点+边），**非**扩数组协议支持嵌套 |
+
+### 7.4 Backlog（刻意不进本次）
+
+- 图级 SubGraph / 纯视觉组容器（装节点 + 边），保持 `["fn", ...]` 模型长期极简。

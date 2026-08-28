@@ -225,6 +225,11 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule 分支变更摘要
 
+**最新变更(2026-08-28，第十八批：自定义节点结构设计决策)：**
+- 结构决策已沉淀(docs/13 §7)：**1 节点 = 1 自定义函数，不支持嵌套**——序列化保持极简数组模型 `["fn","a","b","c"]`，画布 body 渲染 `inout(a, b, c)`；主题分类由「命名空间/group」层承担(不改 1节点=1函数，不做节点内多函数/嵌套解析)
+- 理由：嵌套破坏原子性(无法对单个调用独立 trace/diff/类型推断/输出探针)，与数组模型相悖，且不符业界惯例(n8n/Coze/Dify/LangGraph/AWS Step Functions/Blueprints 均单节点=单操作、边做数据流、容器/子图归类)
+- 「图级 SubGraph / 纯视觉组容器」记入 Backlog(docs/13 §7.4)，刻意不进实现，保持 `["fn",...]` 模型长期极简
+
 **最新变更(2026-08-28，第十七批：应用层去 antd 收尾)：**
 - `theme.provider.tsx` 删除外层 antd `ConfigProvider`——`JdmConfigProvider`(jdm-editor)内部已按 `mode` 应用同一套 dark/default algorithm(含 prefixCls 隔离)，外层包装冗余；暗/亮切换行为不变
 - 根依赖移除 `antd ^5.29.3` + `@ant-design/icons ^6.1.0`(后者自 f2f0aa4 后零引用)；主仓 `src/` **零 antd 引用**，并消除与 jdm-editor(antd 5.21.2)的双版本并存；antd 此后仅作为 jdm-editor 核心库自身依赖存在(docs/09-11 评估结论「antd 核心 + ReUI 增量」最终态)

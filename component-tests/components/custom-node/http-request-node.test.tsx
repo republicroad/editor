@@ -18,9 +18,7 @@ installJdmEditorMock();
 
 const { cleanup, fireEvent, render, screen, within } = await import('@testing-library/react');
 const { HttpRequestTab, httpRequestNode } = await import('../../../src/components/custom-node/http-request-node');
-const { serializeAuthExpr, toHttpRequestValue } = await import(
-  '../../../src/lib/http-request-protocol'
-);
+const { serializeAuthExpr, toHttpRequestValue } = await import('../../../src/lib/http-request-protocol');
 
 import type { HttpRequestFields } from '../../../src/lib/http-request-protocol';
 
@@ -244,14 +242,16 @@ describe('HttpRequestTab', () => {
 });
 
 describe('HttpRequestNode canvas card', () => {
-  const NodeView = (httpRequestNode as unknown as {
-    renderNode: React.FC<{
-      id: string;
-      data: { name: string };
-      selected: boolean;
-      specification: unknown;
-    }>;
-  }).renderNode;
+  const NodeView = (
+    httpRequestNode as unknown as {
+      renderNode: React.FC<{
+        id: string;
+        data: { name: string };
+        selected: boolean;
+        specification: unknown;
+      }>;
+    }
+  ).renderNode;
 
   const renderNodeCard = () =>
     render(<NodeView id={NODE_ID} data={{ name: 'HTTP 请求1' }} selected={false} specification={{}} />);

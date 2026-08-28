@@ -123,14 +123,16 @@ describe('QueryListTab', () => {
 });
 
 describe('QueryListNode canvas card', () => {
-  const NodeView = (queryListNode as unknown as {
-    renderNode: React.FC<{
-      id: string;
-      data: { name: string };
-      selected: boolean;
-      specification: unknown;
-    }>;
-  }).renderNode;
+  const NodeView = (
+    queryListNode as unknown as {
+      renderNode: React.FC<{
+        id: string;
+        data: { name: string };
+        selected: boolean;
+        specification: unknown;
+      }>;
+    }
+  ).renderNode;
 
   test('renders list names, hit badges, count, and opens the tab from the edit action', () => {
     seedQueries([makeExpr('e1', 'result', 'ipv4_deny'), makeExpr('e2', 'result2')]);

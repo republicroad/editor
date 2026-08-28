@@ -88,12 +88,15 @@ $ bun run build
 ### 质量门禁
 
 ```bash
-$ bun run lint           # eslint(含 prettier 规则)
-$ bun run typecheck      # 主应用类型检查
-$ bun run typecheck:apps # apps/editor 与 apps/zen-rule 类型检查
-$ bun run test           # 主应用单元测试(bun test src，协议库等)
-$ bun run test:zen-rule  # zen-rule 引擎单测(bun test)
-$ bun run sync:schema    # 从 udfManager 重新生成自定义节点 schema 夹具
+$ bun run lint             # eslint(含 prettier 规则)
+$ bun run typecheck        # 主应用类型检查
+$ bun run typecheck:apps   # apps/editor 与 apps/zen-rule 类型检查
+$ bun run test             # 主应用单元测试(bun test src，协议库等)
+$ bun run test:components  # 自定义节点组件交互测试(jsdom + RTL，独立进程)
+$ bun run test:zen-rule    # zen-rule 引擎单测(bun test)
+$ bun run sync:schema      # 从 udfManager 重新生成自定义节点 schema 夹具
+$ bun run storybook        # 组件文档(本地 :9009)
+$ bun run build:storybook  # 组件文档静态构建(输出 storybook-static/)
 ```
 
 ### Monaco 本地化加载

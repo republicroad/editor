@@ -40,12 +40,22 @@ const Stateful: React.FC<{
 
 export const StructuredHeaders: Story = {
   render: () => (
-    <Stateful initialValue='{ Token: input.token, Accept: "application/json" }' label="Headers(键值对)" addLabel="添加 Header" deleteLabel="删除 Header" />
+    <Stateful
+      initialValue='{ Token: input.token, Accept: "application/json" }'
+      label="Headers(键值对)"
+      addLabel="添加 Header"
+      deleteLabel="删除 Header"
+    />
   ),
 };
 
 export const RawExpression: Story = {
   render: () => (
-    <Stateful initialValue='{"Authorization": "Bearer " + input.token}' label="Headers(键值对)" addLabel="添加 Header" deleteLabel="删除 Header" />
+    <Stateful
+      initialValue='{"Authorization": "Bearer " + input.token}'
+      label="Headers(键值对)"
+      addLabel="添加 Header"
+      deleteLabel="删除 Header"
+    />
   ),
 };

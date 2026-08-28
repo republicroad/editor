@@ -63,7 +63,9 @@ const initialGraph: DecisionGraphType = {
           inputField: null,
           outputPath: null,
           passThrough: true,
-          expressions: [{ id: 'expr-query-1', key: 'result', value: ['query_list', JSON.stringify('ipv4_deny'), 'input.ip'] }],
+          expressions: [
+            { id: 'expr-query-1', key: 'result', value: ['query_list', JSON.stringify('ipv4_deny'), 'input.ip'] },
+          ],
         },
       },
     },
@@ -76,18 +78,16 @@ const initialGraph: DecisionGraphType = {
   ],
 };
 
-export const CustomNodesEmbedded: Story = {
-  render: () => {
-    const [value, setValue] = useState<DecisionGraphType>(initialGraph);
+const EmbedDemo: React.FC = () => {
+  const [value, setValue] = useState<DecisionGraphType>(initialGraph);
 
-    return (
-      <div style={{ height: '100vh' }}>
-        <DecisionGraph
-          customNodes={customNodes}
-          value={value}
-          onChange={(next) => setValue(next as DecisionGraphType)}
-        />
-      </div>
-    );
-  },
+  return (
+    <div style={{ height: '100vh' }}>
+      <DecisionGraph customNodes={customNodes} value={value} onChange={(next) => setValue(next as DecisionGraphType)} />
+    </div>
+  );
+};
+
+export const CustomNodesEmbedded: Story = {
+  render: () => <EmbedDemo />,
 };

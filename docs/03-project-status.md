@@ -155,8 +155,9 @@
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
-- [~] 完善单元测试覆盖(bun test 基线：主仓 **174 pass**；apps(zen-rule+editor) **67 pass**；模拟器组件级交互待补)
-- [~] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓暂无 Storybook 配置)
+- [~] 完善单元测试覆盖(bun test 基线：主仓 **174 pass**；component-tests **38 pass**(自定义节点组件交互，jsdom+RTL)；apps(zen-rule+editor) **67 pass**；子模块模拟器面板组件级交互待补)
+- [x] 第十六批(库化质量)：主仓组件交互测试基建(jsdom 单例环境 + jdm-editor 全量桶 mock)+ KV 编辑器/HTTP 请求节点(Tab+画布卡)/查询名单节点(Tab+画布卡)/摘要卡片 38 用例；主仓 Storybook 配置(KV 编辑器 + DecisionGraph 嵌入示范 stories，`build:storybook` 本地验证)；CI 加 test:components；已知问题 request 节点 Schema 保存丢失维持 backlog(docs/16 §4)
+- [x] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓 Storybook 已于第十六批配置：src/stories/ 下 KeyValueEditor 与 DecisionGraph 嵌入示范)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
 - [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
@@ -224,6 +225,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-28，第十六批：库化质量——组件交互测试 + 主仓 Storybook)：**
+- 组件测试基建(`b3a638f`)：`component-tests/` 独立目录 + `bun run test:components`(独立进程，避免 bun test 路径子串误捞)；`src/test-utils/setup-jsdom.ts` jsdom 单例环境——**happy-dom v20 + GlobalRegistrator 的 window 绑定类与模块基类品牌割裂(Symbol.hasInstance)，dispatchEvent 不可用**，组件测试弃用 happy-dom；jsdom 全局拷贝保留 native fetch/AbortSignal/定时器(jsdom 计时器在 bun 下递归爆栈)；`src/test-utils/mock-jdm-editor.ts` 以 `mock.module` 桩替换 jdm-editor 全量桶(monaco 在 bun 不可求值)，updateNode 落 store 并通知重渲染
+- 测试覆盖(`b41aa6a`+`ca4edbc`)：KeyValueEditor 8 用例(结构化/原始模式、增删改、解析失败回退)、HttpRequestTab+画布卡 14 用例(请求行增删选、URL/输出键持久化、方法徽章、高级 tab 超时重试、basic/raw 认证、模拟响应三态、GET 忽略 body)、QueryListTab+画布卡 9 用例、摘要卡片 5 用例(参数对齐/回退/无参/输出/编辑入口)，**合计 38 用例**；radix Tabs 需 mousedown+click 激活(经验记录)
+- 主仓 Storybook(`2ccbe9f`)：@storybook/react-vite 8.6.12 与子模块对齐；`.storybook/` viteFinal 别名(@gorules/jdm-editor→子模块 src)+staticDirs 指向 static/monaco-editor@0.52.2；stories：KeyValueEditor(结构化/原始)、**DecisionGraph 嵌入示范**(真实 customNodes 注册 http_request+query_list，宿主嵌入形态可视化)；`bun run build:storybook` 本地构建通过(3 stories 入索引)
+- CI(`c71a25f`)：codequality job 加 `bun run test:components`
+- 门禁：lint 0 errors、typecheck×2 绿、主仓 174 + 组件 38 + apps 67 pass、`bun run build` + `build:storybook` ✓
 
 **最新变更(2026-08-27，第十五批：部署收尾)：**
 - Rust 遗留清除：删 `backend/`(Cargo.toml + main.rs)、根 `Cargo.toml`/`Cargo.lock`、`pnpm-lock.yaml`、`.gitignore` 的 `/target`；CI 移除 rust-codequality job；`apps/editor` 定位为唯一后端

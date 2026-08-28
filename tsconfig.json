@@ -29,7 +29,8 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "src"
+    "src",
+    "component-tests"
   ],
   "references": [{ "path": "./tsconfig.node.json"}]
 }

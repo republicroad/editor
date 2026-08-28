@@ -19,6 +19,10 @@ installJdmEditorMock();
 const { cleanup, fireEvent, render, screen } = await import('@testing-library/react');
 const { CustomNodeSummaryCard } = await import('../../../src/components/custom-node/custom-node-summary-card');
 
+import type { MinimalNodeSpecification } from '@gorules/jdm-editor';
+
+import type { CustomFunctionTool } from '../../../src/lib/custom-node-types';
+
 const NODE_ID = 'sum-node';
 
 const specProps = (tool: {
@@ -30,8 +34,8 @@ const specProps = (tool: {
   id: NODE_ID,
   data: { name: '摘要节点' },
   selected: false,
-  specification: {},
-  tool,
+  specification: {} as unknown as MinimalNodeSpecification,
+  tool: tool as unknown as CustomFunctionTool,
 });
 
 const seedExpr = (value: string[]) => {

@@ -41,6 +41,9 @@ jobs:
       - name: 'Test (root)'
         run: bun run test
 
+      - name: 'Test (component)'
+        run: bun run test:components
+
       - name: 'Test (apps)'
         run: bun test apps/zen-rule apps/editor
 

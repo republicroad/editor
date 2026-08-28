@@ -19,7 +19,8 @@
     "test:zen-rule": "bun run --cwd apps/zen-rule main",
     "test": "bun test src",
     "sync:schema": "bun scripts/sync-custom-node-schema.ts",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "test:components": "bun test component-tests"
   },
   "packageManager": "bun@1.3.14",
   "engines": {
@@ -92,6 +93,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.0",
     "globals": "^17.3.0",
+    "jsdom": "^30.0.1",
     "monaco-editor": "0.52.2",
     "prettier": "^3.8.1",
     "semantic-release": "^25.0.3",

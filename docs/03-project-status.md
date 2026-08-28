@@ -56,8 +56,6 @@
 | 依赖 | 版本 | 状态 |
 |------|------|------|
 | react / react-dom | ^18.3.1 | 稳定 |
-| antd | ^5.29.3 | 稳定 |
-| @ant-design/icons | ^6.1.0 | 稳定 |
 | react-router / react-router-dom | ^7.13.0 | 稳定 |
 | reactflow | 11.11.4 | 锁定版本 |
 | zustand | ^4.5.5 | 稳定 |
@@ -153,6 +151,7 @@
 
 ### 6.2 待办事项
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
+- [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [x] zen-engine-wasm 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
 - [~] 完善单元测试覆盖(bun test 基线：主仓 **174 pass**；component-tests **38 pass**(自定义节点组件交互，jsdom+RTL)；apps(zen-rule+editor) **67 pass**；子模块模拟器面板组件级交互待补)
@@ -225,6 +224,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
+**最新变更(2026-08-28，第十七批：应用层去 antd 收尾)：**
+- `theme.provider.tsx` 删除外层 antd `ConfigProvider`——`JdmConfigProvider`(jdm-editor)内部已按 `mode` 应用同一套 dark/default algorithm(含 prefixCls 隔离)，外层包装冗余；暗/亮切换行为不变
+- 根依赖移除 `antd ^5.29.3` + `@ant-design/icons ^6.1.0`(后者自 f2f0aa4 后零引用)；主仓 `src/` **零 antd 引用**，并消除与 jdm-editor(antd 5.21.2)的双版本并存；antd 此后仅作为 jdm-editor 核心库自身依赖存在(docs/09-11 评估结论「antd 核心 + ReUI 增量」最终态)
+- 门禁：lint 0 errors、typecheck×2 绿、主仓 174 + 组件 38 + apps 67 pass、`bun run build` + `build:storybook` ✓
+- 待手验：:5173 暗/亮主题切换(jdm-editor 组件跟随 JdmConfigProvider)
 
 **最新变更(2026-08-28，第十六批：库化质量——组件交互测试 + 主仓 Storybook)：**
 - 组件测试基建(`dfb831d`)：`component-tests/` 独立目录 + `bun run test:components`(独立进程，避免 bun test 路径子串误捞)；`src/test-utils/setup-jsdom.ts` jsdom 单例环境——**happy-dom v20 + GlobalRegistrator 的 window 绑定类与模块基类品牌割裂(Symbol.hasInstance)，dispatchEvent 不可用**，组件测试弃用 happy-dom；jsdom 全局拷贝保留 native fetch/AbortSignal/定时器(jsdom 计时器在 bun 下递归爆栈)；`src/test-utils/mock-jdm-editor.ts` 以 `mock.module` 桩替换 jdm-editor 全量桶(monaco 在 bun 不可求值)，updateNode 落 store 并通知重渲染

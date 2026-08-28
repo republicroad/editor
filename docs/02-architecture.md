@@ -106,7 +106,7 @@ jdm-editor/
 | TypeScript | 5.9 | 类型系统 |
 | Vite | 7.3 | 构建工具 |
 | SWC | - | 快速编译 |
-| Ant Design | 5.29 | UI 组件库 |
+| shadcn/ui + ReUI | - | 应用层 UI 原语(antd 仅存于 jdm-editor 核心库) |
 | React Flow | 11.11 | 图编辑器 |
 | Zustand | 4.5 | 状态管理 |
 | Immer | 10.1 | 不可变状态 |

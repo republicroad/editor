@@ -53,7 +53,7 @@ docker build -t editor .
 docker run -p 3000:3000 editor
 ```
 
-> 图与名单落盘在镜像内 `apps/editor/graphs` / `apps/editor/lists` 下，生产请以 volume 挂载持久化。
+> 图与名单落盘在镜像内 `apps/editor/graphs` / `apps/editor/rosters` 下，生产请以 volume 挂载持久化。
 
 ## frontend(monorepo)
 
@@ -142,11 +142,11 @@ OpenAPI 交互文档: http://localhost:3000/openapi
 |---|---|---|
 | POST | `/api/simulate` | 决策图仿真执行 |
 | GET | `/api/custom-nodes/schema` | 自定义节点 schema(由 zen-rule udfManager 运行时生成) |
-| GET | `/api/lists?q=` | 名单列表(大小写不敏感过滤) |
-| GET | `/api/lists/{name}` | 名单详情 |
-| POST | `/api/lists` | 创建/覆盖名单(upsert，落盘 `apps/editor/lists/*.json`) |
-| PUT | `/api/lists/{name}` | 更新名单(name 不可变) |
-| DELETE | `/api/lists/{name}` | 删除名单(含落盘文件清理) |
+| GET | `/api/rosters?q=` | 名单列表(大小写不敏感过滤) |
+| GET | `/api/rosters/{name}` | 名单详情 |
+| POST | `/api/rosters` | 创建/覆盖名单(upsert，落盘 `apps/editor/rosters/*.json`) |
+| PUT | `/api/rosters/{name}` | 更新名单(name 不可变) |
+| DELETE | `/api/rosters/{name}` | 删除名单(含落盘文件清理) |
 | GET | `/api/auth/get-session` | Mock 开发用户(better-auth 兼容格式) |
 
 ## 以库方式嵌入(无状态)
@@ -179,11 +179,11 @@ import { EditorShellProvider, createGraphsHttpAdapter, createDefaultSimulate } f
 
 | kind | 名称 | 表达式协议(位置参数) | 富编辑器 |
 |---|---|---|---|
-| `risk.query_list` | 查询名单 | `['query_list', "名单名", 值表达式]` | ✅ 双栏 + 服务端名单搜索 |
-| `contrib.http_request` | HTTP 请求 | `['http_request', url, "method", headers?, body?, params?, timeout?, retry?, auth?]` | ✅ 页签化(Headers/Body/Params/高级) |
-| `contrib.crypto` | 摘要签名 | `['crypto', input, "algorithm", secret?, "encoding"?, upper?]` | ✅ 级联选择(普通/HMAC)+ 分段编码按钮 |
-| `contrib.json_path` | JSON 提取 | `['json_path', input, "path", default?]` | ✅ 实例行列表 |
-| `contrib.template` | 模板渲染 | `['template', "tpl", vars?]` | ✅ 模板体 + 变量键值表 |
+| `roster` | 查询名单 | `['roster', "名单名", 值表达式]` | ✅ 双栏 + 服务端名单搜索 |
+| `http_request` | HTTP 请求 | `['http_request', url, "method", headers?, body?, params?, timeout?, retry?, auth?]` | ✅ 页签化(Headers/Body/Params/高级) |
+| `crypto` | 摘要签名 | `['crypto', input, "algorithm", secret?, "encoding"?, upper?]` | ✅ 级联选择(普通/HMAC)+ 分段编码按钮 |
+| `json_path` | JSON 提取 | `['json_path', input, "path", default?]` | ✅ 实例行列表 |
+| `template` | 模板渲染 | `['template', "tpl", vars?]` | ✅ 模板体 + 变量键值表 |
 
 约定：
 - 可选尾参**变长序列化**：末尾连续空值截断、中段空串占位；引擎侧对缺省/空值回退声明默认值 → 旧图零迁移

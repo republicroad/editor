@@ -3,14 +3,22 @@ import path from 'path';
 import { join } from 'path';
 import { debug } from 'console';
 import type { ZenDecision } from '@gorules/zen-engine';
-import { deleteList, getList, registerList, listLists, runWithExecContext, type ExecContext, ZenRule } from 'zen-rule';
+import {
+  deleteRoster,
+  getRoster,
+  registerRoster,
+  listRosters,
+  runWithExecContext,
+  type ExecContext,
+  ZenRule,
+} from 'zen-rule';
 import { cors } from 'hono/cors';
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { serveStatic } from 'hono/bun';
-import { customNodeFunctionSchema } from './custom-node-schema';
+import { getCustomNodeFunctionSchema } from './custom-node-schema';
 import {
   deleteGraph,
   GRAPHS_DIR,
@@ -21,17 +29,17 @@ import {
   saveGraph,
 } from './graphs-store';
 
-// 环境配置：PORT 监听端口、CORS_ORIGINS 跨域白名单(逗号分隔，未设则全放行)、LISTS_DIR 名单落盘目录
+// 环境配置：PORT 监听端口、CORS_ORIGINS 跨域白名单(逗号分隔，未设则全放行)、ROSTERS_DIR 名单落盘目录
 const PORT = Number(process.env.PORT ?? 3000);
 const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? '')
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
-const LISTS_DIR = process.env.LISTS_DIR
-  ? path.resolve(process.env.LISTS_DIR)
-  : path.resolve(import.meta.dir, '../lists');
-const SHARED_LISTS_DIR = join(LISTS_DIR, 'shared');
-const USERS_LISTS_DIR = join(LISTS_DIR, 'users');
+const ROSTERS_DIR = process.env.ROSTERS_DIR
+  ? path.resolve(process.env.ROSTERS_DIR)
+  : path.resolve(import.meta.dir, '../rosters');
+const SHARED_ROSTERS_DIR = join(ROSTERS_DIR, 'shared');
+const USERS_ROSTERS_DIR = join(ROSTERS_DIR, 'users');
 const MOCK_USER_ID = 'mock-user-1';
 
 // 执行上下文解析：TRUST_PROXY_HEADERS=true 时信任网关头(X-User-Id/X-Request-Id)，
@@ -68,36 +76,36 @@ async function requestLogger(c: Context, next: Next) {
   );
 }
 
-// 名单文件布局: $LISTS_DIR/shared/*.json(共享) + $LISTS_DIR/users/{owner}/*.json(私有)
-// + 存量扁平 $LISTS_DIR/*.json(无 owner 字段, 视为共享, 只读兼容并在写回时原位更新)。
-async function registerListFile(filePath: string): Promise<void> {
+// 名单文件布局: $ROSTERS_DIR/shared/*.json(共享) + $ROSTERS_DIR/users/{owner}/*.json(私有)
+// + 存量扁平 $ROSTERS_DIR/*.json(无 owner 字段, 视为共享, 只读兼容并在写回时原位更新)。
+async function registerRosterFile(filePath: string): Promise<void> {
   try {
     const raw = await readFile(filePath, 'utf-8');
-    const list = JSON.parse(raw) as { name?: string; description?: string; items?: string[]; owner?: string };
-    if (!list.name || !Array.isArray(list.items)) return;
-    const items = list.items.map((item) => String(item));
-    registerList({ name: list.name, description: list.description, items, owner: list.owner });
+    const roster = JSON.parse(raw) as { name?: string; description?: string; items?: string[]; owner?: string };
+    if (!roster.name || !Array.isArray(roster.items)) return;
+    const items = roster.items.map((item) => String(item));
+    registerRoster({ name: roster.name, description: roster.description, items, owner: roster.owner });
   } catch {
     // 单个文件损坏不阻塞其余装载
   }
 }
 
-async function loadLists(): Promise<void> {
+async function loadRosters(): Promise<void> {
   const roots: string[][] = [];
   try {
     roots.push(
-      (await readdir(LISTS_DIR, { withFileTypes: true }))
+      (await readdir(ROSTERS_DIR, { withFileTypes: true }))
         .filter((e) => e.isFile() && e.name.endsWith('.json'))
-        .map((e) => join(LISTS_DIR, e.name)),
+        .map((e) => join(ROSTERS_DIR, e.name)),
     );
     roots.push(
-      (await readdir(SHARED_LISTS_DIR, { withFileTypes: true }))
+      (await readdir(SHARED_ROSTERS_DIR, { withFileTypes: true }))
         .filter((e) => e.isFile() && e.name.endsWith('.json'))
-        .map((e) => join(SHARED_LISTS_DIR, e.name)),
+        .map((e) => join(SHARED_ROSTERS_DIR, e.name)),
     );
-    const userDirs = (await readdir(USERS_LISTS_DIR, { withFileTypes: true })).filter((e) => e.isDirectory());
+    const userDirs = (await readdir(USERS_ROSTERS_DIR, { withFileTypes: true })).filter((e) => e.isDirectory());
     for (const dir of userDirs) {
-      const userPath = join(USERS_LISTS_DIR, dir.name);
+      const userPath = join(USERS_ROSTERS_DIR, dir.name);
       roots.push(
         (await readdir(userPath, { withFileTypes: true }))
           .filter((e) => e.isFile() && e.name.endsWith('.json'))
@@ -109,18 +117,22 @@ async function loadLists(): Promise<void> {
   }
   for (const files of roots) {
     for (const filePath of files) {
-      await registerListFile(filePath);
+      await registerRosterFile(filePath);
     }
   }
 }
 
 // 文件名安全化：保留 unicode 字母/数字/下划线/连字符，其余折叠为下划线
-const sanitizeListFilename = (name: string): string =>
+const sanitizeRosterFilename = (name: string): string =>
   name.replace(/[^\p{L}\p{N}_-]+/gu, '_').replace(/^[-_]+|[-_]+$/g, '') || 'unnamed';
 
 /** 按内容中的 name 字段定位名单文件; 扫描顺序 自有目录 → shared → 存量扁平根 */
-async function findListFile(name: string, owner?: string): Promise<string | null> {
-  const roots = [...(owner ? [join(USERS_LISTS_DIR, sanitizeListFilename(owner))] : []), SHARED_LISTS_DIR, LISTS_DIR];
+async function findRosterFile(name: string, owner?: string): Promise<string | null> {
+  const roots = [
+    ...(owner ? [join(USERS_ROSTERS_DIR, sanitizeRosterFilename(owner))] : []),
+    SHARED_ROSTERS_DIR,
+    ROSTERS_DIR,
+  ];
   for (const root of roots) {
     let entries;
     try {
@@ -145,22 +157,24 @@ async function findListFile(name: string, owner?: string): Promise<string | null
   return null;
 }
 
-interface PersistableList {
+interface PersistableRoster {
   name: string;
   description?: string;
   items: string[];
   owner?: string;
 }
 
-async function writeListFile(list: PersistableList): Promise<void> {
-  const existing = await findListFile(list.name, list.owner);
-  const canonicalDir = list.owner ? join(USERS_LISTS_DIR, sanitizeListFilename(list.owner)) : SHARED_LISTS_DIR;
-  const filePath = existing ?? join(canonicalDir, `${sanitizeListFilename(list.name)}.json`);
+async function writeRosterFile(roster: PersistableRoster): Promise<void> {
+  const existing = await findRosterFile(roster.name, roster.owner);
+  const canonicalDir = roster.owner
+    ? join(USERS_ROSTERS_DIR, sanitizeRosterFilename(roster.owner))
+    : SHARED_ROSTERS_DIR;
+  const filePath = existing ?? join(canonicalDir, `${sanitizeRosterFilename(roster.name)}.json`);
   if (!existing) {
     await mkdir(canonicalDir, { recursive: true });
   }
-  await writeFile(filePath, `${JSON.stringify({ ...list }, null, 2)}\n`, 'utf-8');
-  console.log(`[lists] persisted ${list.name} -> ${path.relative(LISTS_DIR, filePath)}`);
+  await writeFile(filePath, `${JSON.stringify({ ...roster }, null, 2)}\n`, 'utf-8');
+  console.log(`[rosters] persisted ${roster.name} -> ${path.relative(ROSTERS_DIR, filePath)}`);
 }
 
 // --- OpenAPI schemas ---
@@ -315,61 +329,61 @@ const customNodesSchemaRoute = createRoute({
   },
 });
 
-const ListSummarySchema = z
+const RosterSummarySchema = z
   .object({
     name: z.string(),
     description: z.string().optional(),
     size: z.number(),
   })
-  .openapi('ListSummary');
+  .openapi('RosterSummary');
 
-const ListQuerySchema = z
+const RosterQuerySchema = z
   .object({
     q: z.string().optional(),
   })
-  .openapi('ListQuery');
+  .openapi('RosterQuery');
 
-const NamedListSchema = z
+const RosterSchema = z
   .object({
     name: z.string().min(1),
     description: z.string().optional(),
     items: z.array(z.string()),
   })
-  .openapi('NamedList');
+  .openapi('Roster');
 
-const ListUpdateSchema = z
+const RosterUpdateSchema = z
   .object({
     description: z.string().optional(),
     items: z.array(z.string()),
   })
-  .openapi('ListUpdate');
+  .openapi('RosterUpdate');
 
-const listsRoute = createRoute({
+const rostersRoute = createRoute({
   method: 'get',
-  path: '/api/lists',
+  path: '/api/rosters',
   request: {
-    query: ListQuerySchema,
+    query: RosterQuerySchema,
   },
   responses: {
     200: {
       content: {
-        'application/json': { schema: z.array(ListSummarySchema) },
+        'application/json': { schema: z.array(RosterSummarySchema) },
       },
       description: '服务端名单名称列表(支持 q 关键词搜索，供查询名单节点下拉动态加载)',
     },
   },
 });
 
-const listDetailRoute = createRoute({
+const rosterDetailRoute = createRoute({
   method: 'get',
-  path: '/api/lists/{name}',
+  path: '/api/rosters/{name}',
   request: {
     params: z.object({ name: z.string() }),
   },
   responses: {
     200: {
       content: {
-        'application/json': { schema: NamedListSchema },
+        'application/json': { schema: RosterSchema },
       },
       description: '名单详情(含全部条目)',
     },
@@ -382,20 +396,20 @@ const listDetailRoute = createRoute({
   },
 });
 
-const listCreateRoute = createRoute({
+const rosterCreateRoute = createRoute({
   method: 'post',
-  path: '/api/lists',
+  path: '/api/rosters',
   request: {
     body: {
       content: {
-        'application/json': { schema: NamedListSchema },
+        'application/json': { schema: RosterSchema },
       },
     },
   },
   responses: {
     200: {
       content: {
-        'application/json': { schema: NamedListSchema },
+        'application/json': { schema: RosterSchema },
       },
       description: '已保存(upsert：同名覆盖)并回写 JSON 文件',
     },
@@ -414,21 +428,21 @@ const listCreateRoute = createRoute({
   },
 });
 
-const listUpdateRoute = createRoute({
+const rosterUpdateRoute = createRoute({
   method: 'put',
-  path: '/api/lists/{name}',
+  path: '/api/rosters/{name}',
   request: {
     params: z.object({ name: z.string() }),
     body: {
       content: {
-        'application/json': { schema: ListUpdateSchema },
+        'application/json': { schema: RosterUpdateSchema },
       },
     },
   },
   responses: {
     200: {
       content: {
-        'application/json': { schema: NamedListSchema },
+        'application/json': { schema: RosterSchema },
       },
       description: '已更新并回写 JSON 文件',
     },
@@ -447,9 +461,9 @@ const listUpdateRoute = createRoute({
   },
 });
 
-const listDeleteRoute = createRoute({
+const rosterDeleteRoute = createRoute({
   method: 'delete',
-  path: '/api/lists/{name}',
+  path: '/api/rosters/{name}',
   request: {
     params: z.object({ name: z.string() }),
   },
@@ -515,7 +529,7 @@ const graphsRoute = createRoute({
   method: 'get',
   path: '/api/graphs',
   request: {
-    query: ListQuerySchema,
+    query: RosterQuerySchema,
   },
   responses: {
     200: {
@@ -768,95 +782,95 @@ app.openapi(getSessionRoute, (c) => {
   });
 });
 
-// 自定义节点/自定义函数 JSON Schema 下发
+// 自定义节点/自定义函数 JSON Schema 下发(每请求实时聚合合并注册表)
 app.openapi(customNodesSchemaRoute, (c) => {
-  return c.json(customNodeFunctionSchema);
+  return c.json(getCustomNodeFunctionSchema());
 });
 
 // 名单名称列表下发(查询名单节点下拉数据源)；按会话用户过滤: 自有私有 + 共享
-app.openapi(listsRoute, (c) => {
+app.openapi(rostersRoute, (c) => {
   const q = c.req.query('q');
   const execCtx = resolveExecContext((name) => c.req.header(name));
-  const lists = listLists(q, execCtx.userId).map((list) => ({
-    name: list.name,
-    description: list.description,
-    size: list.items.length,
+  const rosters = listRosters(q, execCtx.userId).map((roster) => ({
+    name: roster.name,
+    description: roster.description,
+    size: roster.items.length,
   }));
-  return c.json(lists);
+  return c.json(rosters);
 });
 
 // 名单详情；他人私有一律 404(防名字探测)
-app.openapi(listDetailRoute, (c) => {
+app.openapi(rosterDetailRoute, (c) => {
   const { name } = c.req.valid('param');
   const execCtx = resolveExecContext((name) => c.req.header(name));
-  const list = getList(name, execCtx.userId);
-  if (!list) {
-    throw new HTTPException(404, { message: `list '${name}' not found` });
+  const roster = getRoster(name, execCtx.userId);
+  if (!roster) {
+    throw new HTTPException(404, { message: `roster '${name}' not found` });
   }
-  return c.json({ name: list.name, description: list.description, items: list.items, owner: list.owner }, 200);
+  return c.json({ name: roster.name, description: roster.description, items: roster.items, owner: roster.owner }, 200);
 });
 
 // 名单保存(upsert)：owner 由服务端注入为会话用户(新建默认私有)，客户端传入的归属字段被 schema 剥离
-app.openapi(listCreateRoute, async (c) => {
+app.openapi(rosterCreateRoute, async (c) => {
   const body = c.req.valid('json');
   const execCtx = resolveExecContext((name) => c.req.header(name));
-  const list: PersistableList = {
+  const roster: PersistableRoster = {
     name: body.name.trim(),
     description: body.description?.trim() || undefined,
     items: body.items.map((item) => String(item)),
     owner: execCtx.userId,
   };
-  if (!list.name) {
+  if (!roster.name) {
     throw new HTTPException(400, { message: 'name is required' });
   }
-  registerList(list);
+  registerRoster(roster);
   try {
-    await writeListFile(list);
+    await writeRosterFile(roster);
   } catch (error) {
-    throw new HTTPException(500, { message: `failed to persist list file: ${String(error)}` });
+    throw new HTTPException(500, { message: `failed to persist roster file: ${String(error)}` });
   }
-  return c.json(list, 200);
+  return c.json(roster, 200);
 });
 
 // 名单更新(仅已存在的名单；name 不可变；保留原 owner，共享名单编辑后仍共享)
-app.openapi(listUpdateRoute, async (c) => {
+app.openapi(rosterUpdateRoute, async (c) => {
   const { name } = c.req.valid('param');
   const body = c.req.valid('json');
   const execCtx = resolveExecContext((name) => c.req.header(name));
-  const existing = getList(name, execCtx.userId);
+  const existing = getRoster(name, execCtx.userId);
   if (!existing) {
-    throw new HTTPException(404, { message: `list '${name}' not found` });
+    throw new HTTPException(404, { message: `roster '${name}' not found` });
   }
-  const list: PersistableList = {
+  const roster: PersistableRoster = {
     name: existing.name,
     description: body.description?.trim() || undefined,
     items: body.items.map((item) => String(item)),
     owner: existing.owner,
   };
-  registerList(list);
+  registerRoster(roster);
   try {
-    await writeListFile(list);
+    await writeRosterFile(roster);
   } catch (error) {
-    throw new HTTPException(500, { message: `failed to persist list file: ${String(error)}` });
+    throw new HTTPException(500, { message: `failed to persist roster file: ${String(error)}` });
   }
-  return c.json(list, 200);
+  return c.json(roster, 200);
 });
 
 // 名单删除：内存存储 + 对应 JSON 文件一并移除；他人私有一律 404
-app.openapi(listDeleteRoute, async (c) => {
+app.openapi(rosterDeleteRoute, async (c) => {
   const { name } = c.req.valid('param');
   const execCtx = resolveExecContext((name) => c.req.header(name));
-  const list = getList(name, execCtx.userId);
-  if (!list || !deleteList(name, execCtx.userId)) {
-    throw new HTTPException(404, { message: `list '${name}' not found` });
+  const roster = getRoster(name, execCtx.userId);
+  if (!roster || !deleteRoster(name, execCtx.userId)) {
+    throw new HTTPException(404, { message: `roster '${name}' not found` });
   }
-  const filePath = await findListFile(name, list.owner);
+  const filePath = await findRosterFile(name, roster.owner);
   if (filePath) {
     try {
       await unlink(filePath);
-      console.log(`[lists] removed file ${path.relative(LISTS_DIR, filePath)} for ${name}`);
+      console.log(`[rosters] removed file ${path.relative(ROSTERS_DIR, filePath)} for ${name}`);
     } catch (error) {
-      console.warn(`[lists] failed to remove file for ${name}:`, error);
+      console.warn(`[rosters] failed to remove file for ${name}:`, error);
     }
   }
   return c.json({ deleted: true }, 200);
@@ -872,7 +886,7 @@ app.doc('/openapi/json', {
 });
 app.get('/openapi', Scalar({ url: '/openapi/json' }));
 
-await loadLists();
+await loadRosters();
 
 // --- Graph persistence handlers (reference implementation) ---
 
@@ -977,7 +991,7 @@ app.openapi(graphVersionsRoute, async (c) => {
   return c.json(versions, 200);
 });
 
-export { app, LISTS_DIR, GRAPHS_DIR };
+export { app, ROSTERS_DIR, GRAPHS_DIR };
 
 // 仅直接运行时启动 HTTP 服务；被测试/其他模块导入时只暴露 app
 if (import.meta.main) {

@@ -32,6 +32,6 @@ WORKDIR /app/apps/editor
 EXPOSE 3000
 
 # 图与名单落盘目录(生产以 volume 持久化)
-VOLUME ["/app/apps/editor/graphs", "/app/apps/editor/lists"]
+VOLUME ["/app/apps/editor/graphs", "/app/apps/editor/rosters"]
 
 CMD ["bun", "src/index.ts"]

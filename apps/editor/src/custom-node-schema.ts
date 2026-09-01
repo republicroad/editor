@@ -5,12 +5,8 @@ export type { CustomFunctionTool, CustomNodeNamespace };
 /**
  * 自定义节点与自定义函数 JSON Schema(namespace/tools 格式)。
  *
- * 数据源为 zen-rule 的 UDF 注册表(单一数据源)，格式与
- * https://brdeapi.geetest.com/zen_custom_node_function.json 对齐：
- * - 每个 namespace(CustomNodeNamespace)对应前端侧边栏 group
- * - 每个 tool(CustomFunctionTool)对应 createJdmNode 的 kind
- * - parameters / returns 为完整 JSON Schema
- *
- * 若日后 zen-rule 的输出结构变化，仅需在此模块适配。
+ * 数据源为 udfManager 合并注册表(单一数据源)：zen-rule 内置 contrib/ 扩展 + 宿主 app 层 contrib/ 注册的客户函数融合。
+ * 每请求实时聚合，宿主运行期注册不丢；schema 每个命名空间生成一个集合容器节点(kind = 命名空间名，
+ * 函数限定集合内)；专属 UI 由宿主按函数名以专用 spec 接管。
  */
-export const customNodeFunctionSchema: CustomNodeNamespace[] = udfManager.udfFunctionSchemaNamespaces();
+export const getCustomNodeFunctionSchema = (): CustomNodeNamespace[] => udfManager.udfFunctionSchemaNamespaces();

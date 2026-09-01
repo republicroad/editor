@@ -11,7 +11,7 @@
 
 # 运行时数据目录(不应打包进镜像；生产以 volume 挂载)
 **/graphs
-**/lists
+**/rosters
 
 # 日志
 **/logs

@@ -1,18 +1,18 @@
 // apps/editor 路由单测：app.request() 直连，不绑定端口。
-// LISTS_DIR 指向临时目录，落盘断言与清理均在该目录内完成。
+// ROSTERS_DIR 指向临时目录，落盘断言与清理均在该目录内完成。
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import path from 'path';
 
 // 注意：env 与临时目录必须在顶层动态 import 之前就绪——bun test 中顶层 await 先于 beforeAll 执行
-const listsDir = await mkdtemp(path.join(tmpdir(), 'editor-lists-'));
-process.env.LISTS_DIR = listsDir;
+const rostersDir = await mkdtemp(path.join(tmpdir(), 'editor-rosters-'));
+process.env.ROSTERS_DIR = rostersDir;
 const graphsDir = await mkdtemp(path.join(tmpdir(), 'editor-graphs-'));
 process.env.GRAPHS_DIR = graphsDir;
 
 afterAll(async () => {
-  await rm(listsDir, { recursive: true, force: true });
+  await rm(rostersDir, { recursive: true, force: true });
   await rm(graphsDir, { recursive: true, force: true });
 });
 
@@ -41,13 +41,13 @@ describe('GET /openapi/json', () => {
 
 describe('CORS', () => {
   test('allows any origin when CORS_ORIGINS unset', async () => {
-    const res = await app.request('/api/lists', { headers: { Origin: 'http://localhost:5173' } });
+    const res = await app.request('/api/rosters', { headers: { Origin: 'http://localhost:5173' } });
     expect(res.status).toBe(200);
     expect(res.headers.get('access-control-allow-origin')).toBe('*');
   });
 
   test('preflight responds with allowed method', async () => {
-    const res = await app.request('/api/lists', { method: 'OPTIONS', headers: { Origin: 'http://example.com' } });
+    const res = await app.request('/api/rosters', { method: 'OPTIONS', headers: { Origin: 'http://example.com' } });
     expect(res.status).toBe(204);
     expect(res.headers.get('access-control-allow-methods')).toContain('DELETE');
   });
@@ -107,8 +107,8 @@ describe('POST /api/simulate', () => {
   });
 });
 
-describe('lists CRUD on temp LISTS_DIR', () => {
-  const name = `it-list-${Date.now()}`;
+describe('rosters CRUD on temp ROSTERS_DIR', () => {
+  const name = `it-roster-${Date.now()}`;
 
   const jsonFilesRec = async (dir: string): Promise<string[]> => {
     const out: string[] = [];
@@ -121,7 +121,7 @@ describe('lists CRUD on temp LISTS_DIR', () => {
   };
 
   test('create persists file under owner subdir (mock user)', async () => {
-    const res = await app.request('/api/lists', {
+    const res = await app.request('/api/rosters', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ name, description: 'd1', items: ['a', 'b'] }),
@@ -129,7 +129,7 @@ describe('lists CRUD on temp LISTS_DIR', () => {
     expect(res.status).toBe(200);
     const created = (await res.json()) as { owner?: string };
     expect(created.owner).toBe('mock-user-1');
-    const files = await jsonFilesRec(listsDir);
+    const files = await jsonFilesRec(rostersDir);
     expect(files.length).toBeGreaterThan(0);
     const hit = files.find((f) => f.includes('mock-user-1'));
     expect(hit).toBeTruthy();
@@ -140,44 +140,44 @@ describe('lists CRUD on temp LISTS_DIR', () => {
   });
 
   test('detail returns items; unknown name yields unified 404 error', async () => {
-    const ok = await app.request(`/api/lists/${encodeURIComponent(name)}`);
+    const ok = await app.request(`/api/rosters/${encodeURIComponent(name)}`);
     expect(ok.status).toBe(200);
-    const list = (await ok.json()) as { items?: string[] };
-    expect(list.items).toEqual(['a', 'b']);
+    const roster = (await ok.json()) as { items?: string[] };
+    expect(roster.items).toEqual(['a', 'b']);
 
-    const missing = await app.request('/api/lists/definitely-missing');
+    const missing = await app.request('/api/rosters/definitely-missing');
     expect(missing.status).toBe(404);
     const err = (await missing.json()) as { error?: string };
     expect(err.error).toContain('not found');
   });
 
   test('update rewrites same file and keeps name immutable', async () => {
-    const res = await app.request(`/api/lists/${encodeURIComponent(name)}`, {
+    const res = await app.request(`/api/rosters/${encodeURIComponent(name)}`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ description: 'd2', items: ['c'] }),
     });
     expect(res.status).toBe(200);
-    const list = (await res.json()) as { name?: string; items?: string[] };
-    expect(list.name).toBe(name);
-    expect(list.items).toEqual(['c']);
+    const roster = (await res.json()) as { name?: string; items?: string[] };
+    expect(roster.name).toBe(name);
+    expect(roster.items).toEqual(['c']);
   });
 
   test('delete removes entry and its persisted file', async () => {
-    const before = await jsonFilesRec(listsDir);
-    const res = await app.request(`/api/lists/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    const before = await jsonFilesRec(rostersDir);
+    const res = await app.request(`/api/rosters/${encodeURIComponent(name)}`, { method: 'DELETE' });
     expect(res.status).toBe(200);
     expect(((await res.json()) as { deleted?: boolean }).deleted).toBe(true);
 
-    const gone = await app.request(`/api/lists/${encodeURIComponent(name)}`);
+    const gone = await app.request(`/api/rosters/${encodeURIComponent(name)}`);
     expect(gone.status).toBe(404);
 
-    const after = await jsonFilesRec(listsDir);
+    const after = await jsonFilesRec(rostersDir);
     expect(after.length).toBe(before.length - 1);
   });
 
   test('empty name is rejected by schema validation', async () => {
-    const res = await app.request('/api/lists', {
+    const res = await app.request('/api/rosters', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ name: '', items: [] }),
@@ -186,7 +186,7 @@ describe('lists CRUD on temp LISTS_DIR', () => {
   });
 });
 
-describe('list owner scoping', () => {
+describe('roster owner scoping', () => {
   beforeAll(() => {
     process.env.TRUST_PROXY_HEADERS = 'true';
   });
@@ -201,7 +201,7 @@ describe('list owner scoping', () => {
 
   test('POST 以会话用户为 owner 落盘 users/{owner}/', async () => {
     const name = `own-${Date.now()}`;
-    const res = await app.request('/api/lists', {
+    const res = await app.request('/api/rosters', {
       method: 'POST',
       headers: asUser('user-a'),
       body: JSON.stringify({ name, items: ['a'] }),
@@ -209,33 +209,33 @@ describe('list owner scoping', () => {
     expect(res.status).toBe(200);
     const created = (await res.json()) as { owner?: string };
     expect(created.owner).toBe('user-a');
-    const files = await readdir(path.join(listsDir, 'users', 'user-a'));
+    const files = await readdir(path.join(rostersDir, 'users', 'user-a'));
     expect(files.some((f) => f.endsWith('.json'))).toBe(true);
   });
 
   test('GET 列表对他人隐藏私有名单，对自己可见', async () => {
     const name = `vis-${Date.now()}`;
-    await app.request('/api/lists', {
+    await app.request('/api/rosters', {
       method: 'POST',
       headers: asUser('user-a'),
       body: JSON.stringify({ name, items: ['x'] }),
     });
 
-    const resB = await app.request('/api/lists', { headers: asUser('user-b') });
+    const resB = await app.request('/api/rosters', { headers: asUser('user-b') });
     expect(((await resB.json()) as Array<{ name: string }>).map((l) => l.name)).not.toContain(name);
 
-    const resA = await app.request('/api/lists', { headers: asUser('user-a') });
+    const resA = await app.request('/api/rosters', { headers: asUser('user-a') });
     expect(((await resA.json()) as Array<{ name: string }>).map((l) => l.name)).toContain(name);
   });
 
   test('他人私有名单 detail/PUT/DELETE 均 404', async () => {
     const name = `for-${Date.now()}`;
-    await app.request('/api/lists', {
+    await app.request('/api/rosters', {
       method: 'POST',
       headers: asUser('user-a'),
       body: JSON.stringify({ name, items: ['x'] }),
     });
-    const url = `/api/lists/${encodeURIComponent(name)}`;
+    const url = `/api/rosters/${encodeURIComponent(name)}`;
 
     expect((await app.request(url, { headers: asUser('user-b') })).status).toBe(404);
     expect(
@@ -254,14 +254,14 @@ describe('list owner scoping', () => {
 
   test('存量无 owner 名单视为共享，任意用户可读可删', async () => {
     const name = `legacy-${Date.now()}`;
-    const { registerList } = await import('zen-rule');
-    registerList({ name, items: ['s'] });
-    await writeFile(path.join(listsDir, `${name}.json`), JSON.stringify({ name, items: ['s'] }), 'utf-8');
+    const { registerRoster } = await import('zen-rule');
+    registerRoster({ name, items: ['s'] });
+    await writeFile(path.join(rostersDir, `${name}.json`), JSON.stringify({ name, items: ['s'] }), 'utf-8');
 
-    const listed = await app.request(`/api/lists?q=${encodeURIComponent(name)}`, { headers: asUser('user-b') });
+    const listed = await app.request(`/api/rosters?q=${encodeURIComponent(name)}`, { headers: asUser('user-b') });
     expect(((await listed.json()) as Array<{ name: string }>).map((l) => l.name)).toContain(name);
 
-    const del = await app.request(`/api/lists/${encodeURIComponent(name)}`, {
+    const del = await app.request(`/api/rosters/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       headers: asUser('user-b'),
     });
@@ -270,33 +270,33 @@ describe('list owner scoping', () => {
 
   test('两用户各建同名名单互不干扰(自有遮蔽)', async () => {
     const name = `dup-${Date.now()}`;
-    await app.request('/api/lists', {
+    await app.request('/api/rosters', {
       method: 'POST',
       headers: asUser('user-a'),
       body: JSON.stringify({ name, items: ['from-a'] }),
     });
-    await app.request('/api/lists', {
+    await app.request('/api/rosters', {
       method: 'POST',
       headers: asUser('user-b'),
       body: JSON.stringify({ name, items: ['from-b'] }),
     });
 
     const a = (await (
-      await app.request(`/api/lists/${encodeURIComponent(name)}`, { headers: asUser('user-a') })
+      await app.request(`/api/rosters/${encodeURIComponent(name)}`, { headers: asUser('user-a') })
     ).json()) as { items?: string[]; owner?: string };
     expect(a.items).toEqual(['from-a']);
     expect(a.owner).toBe('user-a');
 
     const b = (await (
-      await app.request(`/api/lists/${encodeURIComponent(name)}`, { headers: asUser('user-b') })
+      await app.request(`/api/rosters/${encodeURIComponent(name)}`, { headers: asUser('user-b') })
     ).json()) as { items?: string[]; owner?: string };
     expect(b.items).toEqual(['from-b']);
     expect(b.owner).toBe('user-b');
 
-    const listB = (
-      (await (await app.request('/api/lists', { headers: asUser('user-b') })).json()) as Array<{ name: string }>
+    const rosterB = (
+      (await (await app.request('/api/rosters', { headers: asUser('user-b') })).json()) as Array<{ name: string }>
     ).filter((l) => l.name === name);
-    expect(listB.length).toBe(1);
+    expect(rosterB.length).toBe(1);
   });
 });
 
@@ -407,10 +407,10 @@ describe('graph persistence routes', () => {
 
     expect((await app.request(`/api/graphs/${created.id}`, { headers: asUser('user-b') })).status).toBe(404);
     // 列表对他人隐藏
-    const listB = (await (await app.request('/api/graphs', { headers: asUser('user-b') })).json()) as Array<{
+    const rosterB = (await (await app.request('/api/graphs', { headers: asUser('user-b') })).json()) as Array<{
       id: string;
     }>;
-    expect(listB.map((g) => g.id)).not.toContain(created.id);
+    expect(rosterB.map((g) => g.id)).not.toContain(created.id);
   });
 
   test('version 递增 v1→v2→v3，且可读历史版本与版本表', async () => {

@@ -27,6 +27,7 @@
 ## 一、总体架构
 
 > **进展注记(2026-08-06)**：步骤 4(dg-wrapper.tsx 启用 components override 机制)与步骤 5(graph.tsx 启用 customNodeRenderer)已由以下提交落地：
+>
 > - 子模块 `3f59467` `feat: custom function table editor for custom node renderTab` —— `customFunctions` 经 `DecisionGraphWrapper` 透传 `TabContents` → `renderTab`(新增 `tab-custom-function-table.tsx`)，并新增 `custom-function-table/` 组件(函数下拉、参数编辑器、结果浮层)与 `expression-store.context.tsx`
 > - 主项目 `0292f98` `feat: custom node registry with function mode in decision graph` —— 消费方新增 `custom-node-registry.tsx`(`schemaToCustomNodes`/`fetchCustomNodeSchema`，回退 `custom-node-schema.json`)与 `useCustomNodes` hook，把 schema 中的 `customFunctions` 传入 DecisionGraph
 >
@@ -75,61 +76,62 @@
 
 ### 2.1 ReactFlow 节点渲染
 
-| 位置 | Input 节点 | Custom 节点 |
-|------|-----------|-------------|
-| 文件 | `graph.tsx` L262-282 | `graph.tsx` L262-282 |
+| 位置 | Input 节点                                                           | Custom 节点                                                                 |
+| ---- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 文件 | `graph.tsx` L262-282                                                 | `graph.tsx` L262-282                                                        |
 | 机制 | `defaultNodeTypes[NodeKind.Input]` → `inputSpecification.renderNode` | `defaultNodeTypes['customNode']` → `customFunctionSpecification.renderNode` |
-| 问题 | 无法覆盖 | `customNodeRenderer` 已实现但被注释掉，未注册到 `nodeTypes` |
+| 问题 | 无法覆盖                                                             | `customNodeRenderer` 已实现但被注释掉，未注册到 `nodeTypes`                 |
 
 ### 2.2 Tab 内容渲染
 
-| 位置 | Input 节点 | Custom 节点 |
-|------|-----------|-------------|
-| 文件 | `dg-wrapper.tsx` L123 | `dg-wrapper.tsx` L124 |
+| 位置 | Input 节点                                                       | Custom 节点                                                                        |
+| ---- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 文件 | `dg-wrapper.tsx` L123                                            | `dg-wrapper.tsx` L124                                                              |
 | 机制 | `.with(NodeKind.Input, () => inputSpecification?.renderTab?.())` | `.with(NodeKind.CustomFunction, () => customFunctionSpecification?.renderTab?.())` |
-| 问题 | 硬编码，`components` 的 `.otherwise()` 分支永远不执行 | 硬编码，同上 |
+| 问题 | 硬编码，`components` 的 `.otherwise()` 分支永远不执行            | 硬编码，同上                                                                       |
 
 ### 2.3 侧边栏分组
 
-| 位置 | Input 节点 | Custom 节点 |
-|------|-----------|-------------|
-| 文件 | `graph-components.tsx` L50-76 | `graph-components.tsx` L50-76 |
-| 机制 | 归入 `core` 组 | 归入自定义 `group` 或默认 `custom` 组 |
-| 现状 | ✅ 正确 | ✅ 正确 |
+| 位置 | Input 节点                    | Custom 节点                           |
+| ---- | ----------------------------- | ------------------------------------- |
+| 文件 | `graph-components.tsx` L50-76 | `graph-components.tsx` L50-76         |
+| 机制 | 归入 `core` 组                | 归入自定义 `group` 或默认 `custom` 组 |
+| 现状 | ✅ 正确                       | ✅ 正确                               |
 
 ### 2.4 节点创建
 
-| 位置 | Input 节点 | Custom 节点 |
-|------|-----------|-------------|
-| 文件 | `graph.tsx` L304-306 | `graph.tsx` L309-315 |
-| 现状 | ⚠️ 内容结构过于简单(仅 `{name: ''}`) | ✅ 正确 |
+| 位置 | Input 节点                           | Custom 节点          |
+| ---- | ------------------------------------ | -------------------- |
+| 文件 | `graph.tsx` L304-306                 | `graph.tsx` L309-315 |
+| 现状 | ⚠️ 内容结构过于简单(仅 `{name: ''}`) | ✅ 正确              |
 
 ### 2.5 数据 Schema
 
-| 位置 | Input 节点 | Custom 节点 |
-|------|-----------|-------------|
-| 文件 | `helpers/schema.ts` L67-69 | `helpers/schema.ts` L107-109 |
+| 位置 | Input 节点                                           | Custom 节点                                        |
+| ---- | ---------------------------------------------------- | -------------------------------------------------- |
+| 文件 | `helpers/schema.ts` L67-69                           | `helpers/schema.ts` L107-109                       |
 | 定义 | `inputNodeSchema = z.object({ schema: z.string() })` | `customNodeSchema = z.object({ config: z.any() })` |
-| 现状 | ⚠️ 过于简单 | ✅ 已足够灵活 |
+| 现状 | ⚠️ 过于简单                                          | ✅ 已足够灵活                                      |
 
 ### 2.6 后端执行
 
-| 位置 | Input 节点 | Custom 节点 |
-|------|-----------|-------------|
+| 位置 | Input 节点                         | Custom 节点                         |
+| ---- | ---------------------------------- | ----------------------------------- |
 | 机制 | zen-engine 以 `inputNode` 类型处理 | zen-engine 以 `customNode` 类型处理 |
-| 现状 | ✅ 无需改动 | ✅ 无需改动 |
+| 现状 | ✅ 无需改动                        | ✅ 无需改动                         |
 
 ### 2.7 扩展路径对比
 
-| 维度 | `customNodes` prop | `components` prop |
-|------|-------------------|-------------------|
-| 目标类型 | 仅 `customNode` | **任意类型**(含内置) |
-| `renderNode` | ✅ 支持 | ✅ 支持 |
-| `renderTab` | ❌ 不支持(Custom 节点也无法覆盖) | ✅ 支持 |
-| `generateNode` | ✅ 支持 | ✅ 支持 |
-| 侧边栏分组 | ✅ 支持 | ⚠️ 归入 `extended` 组 |
+| 维度           | `customNodes` prop               | `components` prop     |
+| -------------- | -------------------------------- | --------------------- |
+| 目标类型       | 仅 `customNode`                  | **任意类型**(含内置)  |
+| `renderNode`   | ✅ 支持                          | ✅ 支持               |
+| `renderTab`    | ❌ 不支持(Custom 节点也无法覆盖) | ✅ 支持               |
+| `generateNode` | ✅ 支持                          | ✅ 支持               |
+| 侧边栏分组     | ✅ 支持                          | ⚠️ 归入 `extended` 组 |
 
 **结论**：两种路径各有优劣。最佳方案是同时修复两条路径：
+
 - `customNodes`：补全 `renderTab` 路由
 - `components`：统一 override 机制(与 Input 节点共用同一套代码)
 
@@ -179,7 +181,7 @@ export type { UserResolver } from './dg-types';
 export type DecisionGraphStoreType = {
   state: {
     // ... 现有字段
-    user: string;           // 新增，默认 ''
+    user: string; // 新增，默认 ''
   };
   // ...
 };
@@ -191,7 +193,7 @@ export type DecisionGraphStoreType = {
 () => ({
   // ... 现有初始化
   user: '',
-})
+});
 ```
 
 **文件**: `jdm-editor/packages/jdm-editor/src/components/decision-graph/dg-wrapper.tsx`
@@ -222,7 +224,9 @@ const ResolveUserEffect: React.FC<{ userResolver?: UserResolver }> = ({ userReso
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userResolver]);
 
   return null;
@@ -401,16 +405,15 @@ const nodeTypes = useMemo<Record<string, React.FC<any>>>(() => {
       ...acc,
       [component.type]: React.memo(
         (props: MinimalNodeProps) => component.renderNode({ specification: component, ...props }),
-        (prevProps, nextProps) => (
+        (prevProps, nextProps) =>
           prevProps.id === nextProps.id &&
           prevProps.selected === nextProps.selected &&
-          equal(prevProps.data, nextProps.data)
-        ),
+          equal(prevProps.data, nextProps.data),
       ),
     }),
-    { ...defaultNodeTypes, customNode: customNodeRenderer },  // 启用
+    { ...defaultNodeTypes, customNode: customNodeRenderer }, // 启用
   );
-}, [components, customNodeRenderer]);  // 加回依赖
+}, [components, customNodeRenderer]); // 加回依赖
 ```
 
 ---
@@ -446,10 +449,10 @@ npm install better-auth
 **新文件**: `editor/src/lib/auth-client.ts`
 
 ```typescript
-import { createAuthClient } from "better-auth/react";
+import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_AUTH_BASE_URL || "",
+  baseURL: import.meta.env.VITE_AUTH_BASE_URL || '',
 });
 ```
 
@@ -458,8 +461,8 @@ export const authClient = createAuthClient({
 **新文件**: `editor/src/lib/user-resolver.ts`
 
 ```typescript
-import { authClient } from "./auth-client";
-import type { UserResolver } from "@gorules/jdm-editor";
+import { authClient } from './auth-client';
+import type { UserResolver } from '@gorules/jdm-editor';
 
 export const createBetterAuthResolver = (): UserResolver => {
   return async () => {
@@ -509,35 +512,35 @@ const userResolver = createBetterAuthResolver();
 
 ### jdm-editor 库(7 个文件)
 
-| 文件 | 变更类型 | 说明 |
-|------|---------|------|
-| `dg-types.ts` | 新增 | `UserResolver` 类型定义 |
-| `dg-wrapper.tsx` | 修改 | 删除 `user` props，新增 `userResolver` prop，新增 `ResolveUserEffect`，TabContents 改为从 store 读取，新增 `specOverrides` |
-| `dg.tsx` | 修改 | 删除 `user` props 透传 |
-| `dg-store.context.tsx` | 修改 | state 新增 `user` 字段，初始化 |
-| `graph.tsx` | 修改 | 从 store 读取 `user`，启用 `customNodeRenderer` |
-| `graph-side-toolbar.tsx` | 修改 | 从 store 读取 `user` |
-| `index.ts` | 修改 | 导出 `UserResolver` 类型，导出各 specification |
+| 文件                     | 变更类型 | 说明                                                                                                                       |
+| ------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `dg-types.ts`            | 新增     | `UserResolver` 类型定义                                                                                                    |
+| `dg-wrapper.tsx`         | 修改     | 删除 `user` props，新增 `userResolver` prop，新增 `ResolveUserEffect`，TabContents 改为从 store 读取，新增 `specOverrides` |
+| `dg.tsx`                 | 修改     | 删除 `user` props 透传                                                                                                     |
+| `dg-store.context.tsx`   | 修改     | state 新增 `user` 字段，初始化                                                                                             |
+| `graph.tsx`              | 修改     | 从 store 读取 `user`，启用 `customNodeRenderer`                                                                            |
+| `graph-side-toolbar.tsx` | 修改     | 从 store 读取 `user`                                                                                                       |
+| `index.ts`               | 修改     | 导出 `UserResolver` 类型，导出各 specification                                                                             |
 
 ### 编辑器项目(3 个新文件 + 1 个修改)
 
-| 文件 | 变更类型 | 说明 |
-|------|---------|------|
-| `src/lib/auth-client.ts` | 新增 | better-auth client 配置 |
-| `src/lib/user-resolver.ts` | 新增 | `createBetterAuthResolver` 工厂函数 |
-| `src/pages/decision-simple.tsx` | 修改 | 传入 `userResolver` prop |
-| `package.json` | 修改 | 新增 `better-auth` 依赖 |
+| 文件                            | 变更类型 | 说明                                |
+| ------------------------------- | -------- | ----------------------------------- |
+| `src/lib/auth-client.ts`        | 新增     | better-auth client 配置             |
+| `src/lib/user-resolver.ts`      | 新增     | `createBetterAuthResolver` 工厂函数 |
+| `src/pages/decision-simple.tsx` | 修改     | 传入 `userResolver` prop            |
+| `package.json`                  | 修改     | 新增 `better-auth` 依赖             |
 
 ---
 
 ## 五、向后兼容策略
 
-| 维度 | 策略 |
-|------|------|
-| **user props** | 删除，替换为 `userResolver`。**破坏性变更**，需在 CHANGELOG 中标注 |
-| **renderTab 签名** | 保留 `user` 参数(从 store 读取后传入)，消费方自定义 Tab 无需改动 |
-| **config.meta 写入** | 逻辑不变，只是数据来源从 prop 变为 store |
-| **没有 userResolver 的消费方** | `user` 默认 `''`，行为与之前一致 |
+| 维度                           | 策略                                                               |
+| ------------------------------ | ------------------------------------------------------------------ |
+| **user props**                 | 删除，替换为 `userResolver`。**破坏性变更**，需在 CHANGELOG 中标注 |
+| **renderTab 签名**             | 保留 `user` 参数(从 store 读取后传入)，消费方自定义 Tab 无需改动   |
+| **config.meta 写入**           | 逻辑不变，只是数据来源从 prop 变为 store                           |
+| **没有 userResolver 的消费方** | `user` 默认 `''`，行为与之前一致                                   |
 
 ---
 

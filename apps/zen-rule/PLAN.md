@@ -39,17 +39,20 @@ flowchart LR
 ### Step 1: `package.json` + `tsconfig.json`
 
 **package.json**
+
 - `"type": "module"` (ESM)
 - 依赖: `@gorules/zen-engine` (latest)
 - devDependencies: `typescript`, `bun-types`
 
 **tsconfig.json**
+
 - `target: "ES2022"`, `module: "ESNext"`, `moduleResolution: "bundler"`
 - `strict: true`
 
 ### Step 2: `src/register.ts` — UDF 注册管理器
 
 **Python 原型:**
+
 ```python
 class UDFManager:
     def __init__(self):
@@ -98,6 +101,7 @@ class UDFManager {
 ```
 
 **关键差异说明:**
+
 - Python 通过 `inspect.signature()` + `docstring_parser` 自动提取参数 schema
 - TypeScript 无法在运行时反射函数参数类型(类型在编译期被擦除)
 - 因此 schema 为**可选参数**：有 schema 时做类型转换(`funcBindParams`)，无 schema 时直接传参
@@ -117,18 +121,18 @@ export function registerUdf(name: string, namespace?: string, schema?: UdfSchema
 
 **Python → TypeScript 方法映射:**
 
-| Python 方法 | TypeScript 方法 | 行为差异 |
-|------------|----------------|---------|
-| `__init__(options)` | `constructor(options?)` | 使用 `new ZenEngine(options)` |
-| `create_decision(content)` | `createDecision(content)` | 调用 `graphAddons` 补全后调 `engine.createDecision()` |
-| `create_decision_with_cache_key(key, content)` | `createDecisionWithCacheKey(key, content)` | 相同 |
-| `update_decision_with_cache_key(key, content)` | `updateDecisionWithCacheKey(key, content)` | 相同 |
-| `delete_decision_with_cache_key(key)` | `deleteDecisionWithCacheKey(key)` | 相同 |
-| `get_decision(key)` → 调 loader | `getDecision(key)` | 缓存查找 + loader fallback |
-| `evaluate(key, ctx, options?)` | `evaluate(key, ctx, options?)` | TS `decision.evaluate()` 是同步的 |
-| `async_evaluate(key, ctx, options?)` | `evaluateAsync(key, ctx, options?)` | 相同返回 Promise |
-| `graph_addons(graphContent)` | `graphAddons(graphContent)` | 向 customNode 注入 inputNode name、meta、expr_asts |
-| `parse_oprator_expr(expr)` | `parseOperatorExpr(expr)` | 支持 `list`(数组原样返回)与字符串(正则拆分 `;;` 分隔, 兼容旧格式) |
+| Python 方法                                    | TypeScript 方法                            | 行为差异                                                          |
+| ---------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------- |
+| `__init__(options)`                            | `constructor(options?)`                    | 使用 `new ZenEngine(options)`                                     |
+| `create_decision(content)`                     | `createDecision(content)`                  | 调用 `graphAddons` 补全后调 `engine.createDecision()`             |
+| `create_decision_with_cache_key(key, content)` | `createDecisionWithCacheKey(key, content)` | 相同                                                              |
+| `update_decision_with_cache_key(key, content)` | `updateDecisionWithCacheKey(key, content)` | 相同                                                              |
+| `delete_decision_with_cache_key(key)`          | `deleteDecisionWithCacheKey(key)`          | 相同                                                              |
+| `get_decision(key)` → 调 loader                | `getDecision(key)`                         | 缓存查找 + loader fallback                                        |
+| `evaluate(key, ctx, options?)`                 | `evaluate(key, ctx, options?)`             | TS `decision.evaluate()` 是同步的                                 |
+| `async_evaluate(key, ctx, options?)`           | `evaluateAsync(key, ctx, options?)`        | 相同返回 Promise                                                  |
+| `graph_addons(graphContent)`                   | `graphAddons(graphContent)`                | 向 customNode 注入 inputNode name、meta、expr_asts                |
+| `parse_oprator_expr(expr)`                     | `parseOperatorExpr(expr)`                  | 支持 `list`(数组原样返回)与字符串(正则拆分 `;;` 分隔, 兼容旧格式) |
 
 **ZenRule 主逻辑流程:**
 
@@ -202,19 +206,19 @@ flowchart TD
 
 **`@gorules/zen-engine` API 适配要点:**
 
-| Python 用法 | TypeScript 等价用法 |
-|------------|-------------------|
-| `zen.ZenEngine(options)` | `new ZenEngine(options)` |
-| `engine.create_decision(content)` | `engine.createDecision(content)` |
-| `engine.get_decision(key)` | `engine.getDecision(key)` |
-| `engine.evaluate(key, ctx, opts)` | `engine.evaluate(key, ctx, opts)` (同步) |
+| Python 用法                             | TypeScript 等价用法                                           |
+| --------------------------------------- | ------------------------------------------------------------- | ---------------- |
+| `zen.ZenEngine(options)`                | `new ZenEngine(options)`                                      |
+| `engine.create_decision(content)`       | `engine.createDecision(content)`                              |
+| `engine.get_decision(key)`              | `engine.getDecision(key)`                                     |
+| `engine.evaluate(key, ctx, opts)`       | `engine.evaluate(key, ctx, opts)` (同步)                      |
 | `engine.async_evaluate(key, ctx, opts)` | — 使用 `decision.evaluate()` 同步调用, 或 `engine.evaluate()` |
-| `decision.evaluate(ctx, opts)` | `decision.evaluate(ctx, opts)` (同步) |
-| `decision.async_evaluate(ctx, opts)` | — TS `evaluate()` 已是同步 |
-| `zen.evaluate_expression(expr, ctx)` | `evaluateExpressionSync(expr, ctx)` |
-| `zen.render_template(tpl, ctx)` | `renderTemplateSync(tpl, ctx)` |
-| `ZenDecisionContent(content)` | `new ZenDecisionContent(content)` |
-| `loader(key)` 同步函数 | `loader(key)` 可返回 `Promise<Buffer|string>`, 或同步 |
+| `decision.evaluate(ctx, opts)`          | `decision.evaluate(ctx, opts)` (同步)                         |
+| `decision.async_evaluate(ctx, opts)`    | — TS `evaluate()` 已是同步                                    |
+| `zen.evaluate_expression(expr, ctx)`    | `evaluateExpressionSync(expr, ctx)`                           |
+| `zen.render_template(tpl, ctx)`         | `renderTemplateSync(tpl, ctx)`                                |
+| `ZenDecisionContent(content)`           | `new ZenDecisionContent(content)`                             |
+| `loader(key)` 同步函数                  | `loader(key)` 可返回 `Promise<Buffer                          | string>`, 或同步 |
 
 ### Step 4: `src/contrib.ts` — 示例 UDF
 
@@ -222,12 +226,18 @@ flowchart TD
 // 参考 Python contrib.py
 import { registerUdf } from './register.js';
 
-export const inout = registerUdf('inout', 'default')(async (...args: any[]) => {
+export const inout = registerUdf(
+  'inout',
+  'default',
+)(async (...args: any[]) => {
   const kwargs = args[args.length - 1];
   return kwargs?._node_input_ ?? {};
 });
 
-export const funcWithoutArgs = registerUdf('func_without_args', 'default')(async (...args: any[]) => {
+export const funcWithoutArgs = registerUdf(
+  'func_without_args',
+  'default',
+)(async (...args: any[]) => {
   const kwargs = args[args.length - 1];
   return kwargs?._node_input_ ?? {};
 });
@@ -243,6 +253,7 @@ export { UDFManager, udfManager, registerUdf } from './register.js';
 ### Step 6: `main.ts` — 测试入口
 
 参考 `main.py`, 验证:
+
 1. 注册自定义 UDF `foo`
 2. 加载 `graph/custom.json` 规则图
 3. 调用 `createDecisionWithCacheKey` 缓存决策
@@ -250,9 +261,9 @@ export { UDFManager, udfManager, registerUdf } from './register.js';
 
 ## TypeScript 无法直接移植的特性
 
-| Python 特性 | 处理方案 |
-|------------|---------|
-| `inspect.signature()` + `docstring_parser` 自动提取 schema | 显式 schema 可选, 不传也能工作 |
-| `contextvars` (ContextVar) | 没有直接等价物, 用户可在 customHandler 中通过 closure 或全局变量实现 |
-| `pathlib.Path` | 使用 `path` 模块或 `URL` |
-| `logging` 层级配置 | 使用 `console.log` / 用户自行选择 logger |
+| Python 特性                                                | 处理方案                                                             |
+| ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| `inspect.signature()` + `docstring_parser` 自动提取 schema | 显式 schema 可选, 不传也能工作                                       |
+| `contextvars` (ContextVar)                                 | 没有直接等价物, 用户可在 customHandler 中通过 closure 或全局变量实现 |
+| `pathlib.Path`                                             | 使用 `path` 模块或 `URL`                                             |
+| `logging` 层级配置                                         | 使用 `console.log` / 用户自行选择 logger                             |

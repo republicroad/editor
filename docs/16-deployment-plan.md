@@ -5,13 +5,13 @@
 
 ## 1. 范围
 
-| 项 | 说明 |
-|----|------|
-| Rust/pnpm 遗留清除 | 删 `backend/`、根 `Cargo.toml`/`Cargo.lock`、`pnpm-lock.yaml`、`.gitignore` `/target`；CI 删 rust-codequality job |
-| 后端收敛 | `apps/editor`(Bun/Hono)为唯一后端，取消 Rust/Axum 双后端描述 |
-| Dockerfile 重写 | `oven/bun` 多阶段；前端产物 `static/` 复制到 `apps/editor/public`(Hono `serveStatic` 目录)；graphs/rosters 以 volume 持久化 |
-| `.dockerignore` | 排除 node_modules / static / graphs / lists / logs |
-| CI 真门禁 | 去 `continue-on-error`；加主仓 test + apps test；新增 build job；checkout `submodules: recursive`；push 触发 master + zrule |
+| 项                 | 说明                                                                                                                        |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Rust/pnpm 遗留清除 | 删 `backend/`、根 `Cargo.toml`/`Cargo.lock`、`pnpm-lock.yaml`、`.gitignore` `/target`；CI 删 rust-codequality job           |
+| 后端收敛           | `apps/editor`(Bun/Hono)为唯一后端，取消 Rust/Axum 双后端描述                                                                |
+| Dockerfile 重写    | `oven/bun` 多阶段；前端产物 `static/` 复制到 `apps/editor/public`(Hono `serveStatic` 目录)；graphs/rosters 以 volume 持久化 |
+| `.dockerignore`    | 排除 node_modules / static / graphs / lists / logs                                                                          |
+| CI 真门禁          | 去 `continue-on-error`；加主仓 test + apps test；新增 build job；checkout `submodules: recursive`；push 触发 master + zrule |
 
 ## 2. 提交划分
 

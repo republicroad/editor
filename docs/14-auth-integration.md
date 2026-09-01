@@ -5,20 +5,20 @@
 
 ## 一、两层身份模型
 
-| 层 | 接口 | 用途 | 落点 |
-| --- | --- | --- | --- |
-| 编辑态身份 | `AuthAdapter`(`() => Promise<{userId} \| null>`) | 图元数据归属显示、审计署名 | `EditorShellProvider options.authAdapter` |
-| 执行态凭证 | `ExecContext`(`{userId, requestId}`) | 服务端 UDF(query_list 等)按用户隔离数据面 | HTTP 会话/网关头 → AsyncLocalStorage 穿透 |
+| 层         | 接口                                             | 用途                                      | 落点                                      |
+| ---------- | ------------------------------------------------ | ----------------------------------------- | ----------------------------------------- |
+| 编辑态身份 | `AuthAdapter`(`() => Promise<{userId} \| null>`) | 图元数据归属显示、审计署名                | `EditorShellProvider options.authAdapter` |
+| 执行态凭证 | `ExecContext`(`{userId, requestId}`)             | 服务端 UDF(query_list 等)按用户隔离数据面 | HTTP 会话/网关头 → AsyncLocalStorage 穿透 |
 
 关键区分：`AuthAdapter` 只解决"当前在编辑的人是谁"；规则执行时的用户级隔离由后端从请求本身解析(同源 cookie 或网关头)，**客户端不传明文 userId**。
 
 ## 二、三种宿主接入模式
 
-| 模式 | 凭证传递 | authAdapter 写法 | 适用场景 |
-| --- | --- | --- | --- |
-| npm 嵌入(推荐) | 同源 httpOnly cookie 自动携带 | `() => fetch('/api/auth/get-session').then(r => r.json())` 取宿主会话 | 主应用与规则服务同域 |
-| iframe/microfrontend | postMessage 握手换取 token → apiClient 注入 Authorization 头 | 包装握手 Promise 为 adapter | 跨团队异栈嵌入、跨域 |
-| 独立部署+网关 | 网关鉴权后转发 `X-User-Id`/`X-Request-Id`(仅内网信任) | 无需(前端零感知) | SaaS 化独立部署 |
+| 模式                 | 凭证传递                                                     | authAdapter 写法                                                      | 适用场景             |
+| -------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- | -------------------- |
+| npm 嵌入(推荐)       | 同源 httpOnly cookie 自动携带                                | `() => fetch('/api/auth/get-session').then(r => r.json())` 取宿主会话 | 主应用与规则服务同域 |
+| iframe/microfrontend | postMessage 握手换取 token → apiClient 注入 Authorization 头 | 包装握手 Promise 为 adapter                                           | 跨团队异栈嵌入、跨域 |
+| 独立部署+网关        | 网关鉴权后转发 `X-User-Id`/`X-Request-Id`(仅内网信任)        | 无需(前端零感知)                                                      | SaaS 化独立部署      |
 
 ### 模式 1 示例：npm 嵌入
 
@@ -36,7 +36,7 @@ import { EditorShellProvider } from './shell';
   }}
 >
   <MyGraphPage />
-</EditorShellProvider>
+</EditorShellProvider>;
 ```
 
 页面内消费:
@@ -53,6 +53,7 @@ TRUST_PROXY_HEADERS=true   # 仅在内网/网关之后开启，公网直连必�
 ```
 
 后端行为(apps/editor/src/index.ts `resolveExecContext`)：
+
 - `TRUST_PROXY_HEADERS=true` 且带 `X-User-Id` → 采用该身份
 - 否则回退 Mock 开发用户(`mock-user-1`)
 

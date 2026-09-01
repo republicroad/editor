@@ -13,15 +13,15 @@
 
 ### 2.1 使用规模
 
-| 指标 | 数值 |
-|---|---|
-| 导入 `antd` 的文件数 | 70(jdm-editor 子模块 + 主 app) |
-| 导入 `@ant-design/icons` 的文件数 | 32 |
-| antd 组件品种 | ~30(Typography 39、Button 35、Input 29、theme 28、message 19、Select 14、Tooltip 14、Dropdown 9、Tabs 6、Modal 7、Form 7、DatePicker/TimePicker 各 1-2 …) |
-| `theme.useToken()` 调用点 | ~23 |
-| 项目 SCSS 中 `ant-*` 类名引用 | 53 处 / 10 个文件(含 `.ant-select-selection-overflow-item`、`.ant-picker-suffix` 等内部类) |
-| antd 直接 CSS 变量引用 | `var(--ant-color-text-*)` 等(expression-builder.scss) |
-| antd 产物体积 | `antd.min.js` 1.47 MB(本地实测，按需引入后远低于此) |
+| 指标                              | 数值                                                                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 导入 `antd` 的文件数              | 70(jdm-editor 子模块 + 主 app)                                                                                                                            |
+| 导入 `@ant-design/icons` 的文件数 | 32                                                                                                                                                        |
+| antd 组件品种                     | ~30(Typography 39、Button 35、Input 29、theme 28、message 19、Select 14、Tooltip 14、Dropdown 9、Tabs 6、Modal 7、Form 7、DatePicker/TimePicker 各 1-2 …) |
+| `theme.useToken()` 调用点         | ~23                                                                                                                                                       |
+| 项目 SCSS 中 `ant-*` 类名引用     | 53 处 / 10 个文件(含 `.ant-select-selection-overflow-item`、`.ant-picker-suffix` 等内部类)                                                                |
+| antd 直接 CSS 变量引用            | `var(--ant-color-text-*)` 等(expression-builder.scss)                                                                                                     |
+| antd 产物体积                     | `antd.min.js` 1.47 MB(本地实测，按需引入后远低于此)                                                                                                       |
 
 ### 2.2 架构性耦合
 
@@ -41,12 +41,12 @@
 
 ### 3.1 antd 维护问题 → 保留，但需管理
 
-| 风险 | 证据 | 处置 |
-|---|---|---|
-| 版本漂移 | 子模块锁 `antd 5.21.2`、主 app `^5.29.3`，workspace 依赖下 CSS-in-JS 差异易致 token 不一致 | 强制对齐到同一版本 |
-| 深层 CSS 耦合 | 53 处 `ant-*` 内部类 + `var(--ant-color-*)` | 换栈即全量重写；留在 antd 则需随升级回归 |
-| 公开 API 暴露 antd 类型 | `MenuProps`、`Omit<AntThemeConfig>`、`prefixCls` | 替换 = major breaking，需冻结类型 |
-| 命令式 API 脱离 React | 静态 message/notification 在纯 helper 中 | 换栈需事件桥接层 |
+| 风险                    | 证据                                                                                       | 处置                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| 版本漂移                | 子模块锁 `antd 5.21.2`、主 app `^5.29.3`，workspace 依赖下 CSS-in-JS 差异易致 token 不一致 | 强制对齐到同一版本                       |
+| 深层 CSS 耦合           | 53 处 `ant-*` 内部类 + `var(--ant-color-*)`                                                | 换栈即全量重写；留在 antd 则需随升级回归 |
+| 公开 API 暴露 antd 类型 | `MenuProps`、`Omit<AntThemeConfig>`、`prefixCls`                                           | 替换 = major breaking，需冻结类型        |
+| 命令式 API 脱离 React   | 静态 message/notification 在纯 helper 中                                                   | 换栈需事件桥接层                         |
 
 ### 3.2 减依赖/体积 → 收益存疑
 
@@ -61,13 +61,13 @@
 
 ### 3.4 核心组件硬缺口(ReUI/shadcn 无法低成本替代)
 
-| antd 能力 | 替代情况 |
-|---|---|
-| `DatePicker`/`TimePicker`(dayjs) | 表达式构建器类型字面量编辑核心；ReUI `date-selector` 是周期筛选器，**不覆盖任意时间点** |
-| `Tabs`(可关闭、contextMenu、tabBarExtraContent) | shadcn `Tabs` 无 closable/extraContent，graph tab bar 需重写 |
-| `Dropdown` + `MenuProps` 公开类型 | radix ContextMenu/DropdownMenu API 不同，公开契约破坏 |
-| `Select`(异步搜索/大量项) | shadcn `Select` 无远程搜索、无虚拟滚动 |
-| 静态 `message`/`notification` | shadcn/sonner 为 React 上下文绑定，非 React 调用需桥接 |
+| antd 能力                                       | 替代情况                                                                                |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `DatePicker`/`TimePicker`(dayjs)                | 表达式构建器类型字面量编辑核心；ReUI `date-selector` 是周期筛选器，**不覆盖任意时间点** |
+| `Tabs`(可关闭、contextMenu、tabBarExtraContent) | shadcn `Tabs` 无 closable/extraContent，graph tab bar 需重写                            |
+| `Dropdown` + `MenuProps` 公开类型               | radix ContextMenu/DropdownMenu API 不同，公开契约破坏                                   |
+| `Select`(异步搜索/大量项)                       | shadcn `Select` 无远程搜索、无虚拟滚动                                                  |
+| 静态 `message`/`notification`                   | shadcn/sonner 为 React 上下文绑定，非 React 调用需桥接                                  |
 
 ## 4. ReUI 覆盖范围(为何不能当"antd 替代品")
 

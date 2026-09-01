@@ -8,14 +8,14 @@
 
 ### 1.1 基本信息
 
-| 项目 | 值 |
-|------|-----|
-| 仓库名 | `@gorules/jdm-monorepo` |
-| 包管理 | 本地默认 **bun**(root `package.json` 的 `workspaces` 字段)；保留 `pnpm-workspace.yaml` + Lerna 与上游对齐 |
-| 当前版本 | v1.52.0 |
-| 开源协议 | MIT |
-| 上游仓库 | https://github.com/gorules/jdm-editor |
-| 本地路径 | `editor/jdm-editor/` |
+| 项目     | 值                                                                                                        |
+| -------- | --------------------------------------------------------------------------------------------------------- |
+| 仓库名   | `@gorules/jdm-monorepo`                                                                                   |
+| 包管理   | 本地默认 **bun**(root `package.json` 的 `workspaces` 字段)；保留 `pnpm-workspace.yaml` + Lerna 与上游对齐 |
+| 当前版本 | v1.52.0                                                                                                   |
+| 开源协议 | MIT                                                                                                       |
+| 上游仓库 | https://github.com/gorules/jdm-editor                                                                     |
+| 本地路径 | `editor/jdm-editor/`                                                                                      |
 
 ### 1.2 包结构
 
@@ -29,13 +29,13 @@ jdm-editor/packages/
 
 ### 1.3 分支状态
 
-| 分支 | 说明 | 与 master 差异 |
-|------|------|----------------|
-| `master` | 上游发布分支 | 基准 |
-| `zrule` | **当前分支**(外部化改造 + 前后端 TS monorepo 开发分支) | 基于 master；单包 workspace，三库外部 npm 依赖 |
-| `opencode` | 定制化开发分支(历史，功能已并入 zrule) | +14,485 / -4,235 行，139 文件 |
-| `standalone` | 开源发布分支 | 基于 master |
-| `brde` | 开发分支 | 同 opencode |
+| 分支         | 说明                                                   | 与 master 差异                                 |
+| ------------ | ------------------------------------------------------ | ---------------------------------------------- |
+| `master`     | 上游发布分支                                           | 基准                                           |
+| `zrule`      | **当前分支**(外部化改造 + 前后端 TS monorepo 开发分支) | 基于 master；单包 workspace，三库外部 npm 依赖 |
+| `opencode`   | 定制化开发分支(历史，功能已并入 zrule)                 | +14,485 / -4,235 行，139 文件                  |
+| `standalone` | 开源发布分支                                           | 基于 master                                    |
+| `brde`       | 开发分支                                               | 同 opencode                                    |
 
 ---
 
@@ -132,15 +132,15 @@ type NodeSpecification<T> = {
 
 已注册的节点类型(`NodeKind` 枚举)：
 
-| 枚举值 | 类型字符串 | 说明 |
-|--------|------------|------|
-| `Input` | `inputNode` | 输入节点 |
-| `Output` | `outputNode` | 输出节点 |
-| `DecisionTable` | `decisionTableNode` | 决策表节点 |
-| `Function` | `functionNode` | 函数节点 |
-| `Expression` | `expressionNode` | 表达式节点 |
-| `CustomFunction` | `customNode` | 自定义函数节点 |
-| `Switch` | `switchNode` | 分支节点 |
+| 枚举值           | 类型字符串          | 说明           |
+| ---------------- | ------------------- | -------------- |
+| `Input`          | `inputNode`         | 输入节点       |
+| `Output`         | `outputNode`        | 输出节点       |
+| `DecisionTable`  | `decisionTableNode` | 决策表节点     |
+| `Function`       | `functionNode`      | 函数节点       |
+| `Expression`     | `expressionNode`    | 表达式节点     |
+| `CustomFunction` | `customNode`        | 自定义函数节点 |
+| `Switch`         | `switchNode`        | 分支节点       |
 
 ### 2.4 Diff 系统
 
@@ -160,6 +160,7 @@ type Diff = {
 ```
 
 共享 Diff 控件(`shared/` 目录)：
+
 - `DiffInput` — 差异输入框
 - `DiffRadio` — 差异单选框
 - `DiffSelect` — 差异下拉框
@@ -185,23 +186,24 @@ type Diff = {
 
 新增文件：
 
-| 文件 | 行数 | 说明 |
-|------|------|------|
-| `graph/tab-request.tsx` | 1,952 | Request 节点 Tab 主组件 |
-| `graph/tab-request.scss` | 411 | Request Tab 样式 |
-| `request-table/index.ts` | - | 模块导出 |
-| `request-table/expression.tsx` | 125 | 请求表达式组件 |
-| `request-table/expression-item.tsx` | 475 | 请求项组件 |
-| `request-table/expression-list.tsx` | 80 | 请求列表 |
-| `request-table/expression-command-bar.tsx` | 127 | 命令栏 |
-| `request-table/expression-controller.tsx` | 68 | 控制器 |
-| `request-table/expression-item-context-menu.tsx` | 50 | 右键菜单 |
-| `request-table/expression.scss` | 221 | 样式 |
-| `request-table/context/expression-store.context.tsx` | 145 | 状态 Store |
-| `helpers/request-schema.ts` | 1,236 | Request Schema 工具库 |
-| `helpers/json-schema.ts` | 78 | JSON Schema 转换工具 |
+| 文件                                                 | 行数  | 说明                    |
+| ---------------------------------------------------- | ----- | ----------------------- |
+| `graph/tab-request.tsx`                              | 1,952 | Request 节点 Tab 主组件 |
+| `graph/tab-request.scss`                             | 411   | Request Tab 样式        |
+| `request-table/index.ts`                             | -     | 模块导出                |
+| `request-table/expression.tsx`                       | 125   | 请求表达式组件          |
+| `request-table/expression-item.tsx`                  | 475   | 请求项组件              |
+| `request-table/expression-list.tsx`                  | 80    | 请求列表                |
+| `request-table/expression-command-bar.tsx`           | 127   | 命令栏                  |
+| `request-table/expression-controller.tsx`            | 68    | 控制器                  |
+| `request-table/expression-item-context-menu.tsx`     | 50    | 右键菜单                |
+| `request-table/expression.scss`                      | 221   | 样式                    |
+| `request-table/context/expression-store.context.tsx` | 145   | 状态 Store              |
+| `helpers/request-schema.ts`                          | 1,236 | Request Schema 工具库   |
+| `helpers/json-schema.ts`                             | 78    | JSON Schema 转换工具    |
 
 **Request 节点功能**：
+
 - 请求/响应定义管理(RequestDefinition 类型)
 - JSON Schema 构建与解析
 - 示例数据源(Example Sources)管理
@@ -214,22 +216,23 @@ type Diff = {
 
 新增文件：
 
-| 文件 | 行数 | 说明 |
-|------|------|------|
-| `nodes/specifications/custom-function.specification.tsx` | 330 | 自定义函数节点规格 |
-| `custom-function-table/index.ts` | - | 模块导出 |
-| `custom-function-table/expression.tsx` | 120 | 函数表达式组件 |
-| `custom-function-table/expression-item.tsx` | 516 | 函数项组件(最复杂) |
-| `custom-function-table/expression-list.tsx` | 83 | 列表 |
-| `custom-function-table/expression-command-bar.tsx` | 43 | 命令栏 |
-| `custom-function-table/expression-controller.tsx` | 56 | 控制器 |
-| `custom-function-table/expression-item-context-menu.tsx` | 46 | 右键菜单 |
-| `custom-function-table/expression.scss` | 303 | 样式 |
-| `custom-function-table/context/expression-store.context.tsx` | 127 | 状态 Store |
-| `graph/tab-custom-function-table.tsx` | 118 | Tab 组件 |
-| `helpers/custom-function-schema.ts` | 43 | Schema 定义 |
+| 文件                                                         | 行数 | 说明               |
+| ------------------------------------------------------------ | ---- | ------------------ |
+| `nodes/specifications/custom-function.specification.tsx`     | 330  | 自定义函数节点规格 |
+| `custom-function-table/index.ts`                             | -    | 模块导出           |
+| `custom-function-table/expression.tsx`                       | 120  | 函数表达式组件     |
+| `custom-function-table/expression-item.tsx`                  | 516  | 函数项组件(最复杂) |
+| `custom-function-table/expression-list.tsx`                  | 83   | 列表               |
+| `custom-function-table/expression-command-bar.tsx`           | 43   | 命令栏             |
+| `custom-function-table/expression-controller.tsx`            | 56   | 控制器             |
+| `custom-function-table/expression-item-context-menu.tsx`     | 46   | 右键菜单           |
+| `custom-function-table/expression.scss`                      | 303  | 样式               |
+| `custom-function-table/context/expression-store.context.tsx` | 127  | 状态 Store         |
+| `graph/tab-custom-function-table.tsx`                        | 118  | Tab 组件           |
+| `helpers/custom-function-schema.ts`                          | 43   | Schema 定义        |
 
 **自定义函数功能**：
+
 - 内置 `customNode` 类型，不再依赖外部 `createJdmNode`
 - 代码编辑器集成(Monaco)
 - 函数参数 JSON Schema 定义
@@ -243,14 +246,15 @@ type Diff = {
 
 新增文件：
 
-| 文件 | 说明 |
-|------|------|
-| `locales/index.ts` | 模块导出 |
+| 文件                  | 说明                          |
+| --------------------- | ----------------------------- |
+| `locales/index.ts`    | 模块导出                      |
 | `locales/context.tsx` | I18nProvider + useTranslation |
-| `locales/en_US.json` | 英文翻译(280 条) |
-| `locales/zh_CN.json` | 中文翻译(280 条) |
+| `locales/en_US.json`  | 英文翻译(280 条)              |
+| `locales/zh_CN.json`  | 中文翻译(280 条)              |
 
 **翻译覆盖范围**：
+
 - 通用操作(确认、取消、删除、编辑等)
 - 图编辑器(图表、组件、节点等)
 - 决策表(字段、类型、操作等)
@@ -263,16 +267,17 @@ type Diff = {
 修改文件：`helpers/excel.ts`(+115 行)
 
 **增强功能**：
+
 - 支持更复杂的 Excel 格式
 - 修复上传/下载功能
 
 #### 3.2.5 其他新增工具
 
-| 文件 | 行数 | 说明 |
-|------|------|------|
-| `helpers/json-schema.ts` | 78 | JSON ↔ JSON Schema 转换 |
-| `helpers/custom-function-schema.ts` | 58 | 自定义函数 Schema |
-| `helpers/request-schema.ts` | 1,236 | Request Schema 完整工具库 |
+| 文件                                | 行数  | 说明                      |
+| ----------------------------------- | ----- | ------------------------- |
+| `helpers/json-schema.ts`            | 78    | JSON ↔ JSON Schema 转换   |
+| `helpers/custom-function-schema.ts` | 58    | 自定义函数 Schema         |
+| `helpers/request-schema.ts`         | 1,236 | Request Schema 完整工具库 |
 
 ### 3.3 opencode 修改的核心组件
 
@@ -281,6 +286,7 @@ type Diff = {
 变更：+447 行
 
 主要修改：
+
 - 扩展状态类型，支持 Request 节点数据
 - 新增 `useNodeDiff` / `useEdgeDiff` hooks
 - 新增 `NodeTypeKind` 常量
@@ -291,6 +297,7 @@ type Diff = {
 变更：+250 行 / -27 行
 
 主要修改：
+
 - 支持 Example 与 JSON Schema 模式切换
 - 新增 `example` 和 `jsonSchema` 两种输入模式
 - 与 Request Schema 系统集成
@@ -301,6 +308,7 @@ type Diff = {
 变更：+257 行
 
 主要修改：
+
 - 新增节点分组展示
 - 支持自定义函数节点显示
 - 菜单列表动态加载
@@ -311,6 +319,7 @@ type Diff = {
 变更：+313 行
 
 主要修改：
+
 - 支持更多节点类型的渲染
 - Request 节点 Tab 集成
 - 自定义函数节点 Tab 集成
@@ -321,6 +330,7 @@ type Diff = {
 变更：+646 行
 
 主要修改：
+
 - 支持 Request 节点的模拟执行
 - 请求/响应数据展示
 - 用例数据切换功能
@@ -331,82 +341,84 @@ type Diff = {
 变更：+77 行
 
 主要修改：
+
 - Excel 上传/下载功能集成
 - 表格操作优化
 
 #### 3.3.7 其他修改的文件
 
-| 文件 | 变更 | 说明 |
-|------|------|------|
-| `dg.tsx` | +123 行 | 主组件扩展 |
-| `dg-panel.tsx` | +113 行 | 面板组件扩展 |
-| `dg.scss` | +103 行 | 样式新增 |
-| `dg-wrapper.tsx` | +31 行 | 包装器调整 |
-| `dg-infer.tsx` | +106 行 | 类型推断扩展 |
-| `dg-empty.tsx` | +18 行 | 空状态调整 |
-| `graph-components.tsx` | +46 行 | 图子组件 |
-| `graph-nodes.tsx` | +12 行 | 节点渲染 |
-| `graph-tabs.tsx` | +15 行 | Tab 管理 |
-| `custom-node/index.tsx` | +151 行 | 自定义节点渲染 |
-| `graph-node.tsx` | +35 行 | 基础节点 |
-| `decision-table.specification.tsx` | +68 行 | 决策表规格 |
-| `expression.specification.tsx` | +19 行 | 表达式规格 |
-| `switch.specification.tsx` | +20 行 | 分支规格 |
-| `specification-types.ts` | +8 行 | 类型定义扩展 |
-| `specifications.tsx` | +3 行 | 规格注册 |
-| `custom-edge.tsx` | +6 行 | 自定义边 |
-| `use-graph-clipboard.ts` | +12 行 | 剪贴板操作 |
-| `dg-simulator.tsx` | +16 行 | 模拟器 |
-| `simulator-editor.tsx` | +35 行 | 模拟器编辑器 |
-| `field-edit-popover.tsx` | +127 行 | 字段编辑弹出框 |
-| `input-field-edit.tsx` | +28 行 | 输入字段编辑 |
-| `output-field-edit.tsx` | +28 行 | 输出字段编辑 |
-| `fields-reorder-dialog.tsx` | +6 行 | 字段排序对话框 |
-| `dt-command-bar.tsx` | +45 行 | 决策表命令栏 |
-| `table-context-menu.tsx` | +8 行 | 表格右键菜单 |
-| `table-head-cell.tsx` | +11 行 | 表头单元格 |
-| `table.tsx` | +4 行 | 表格组件 |
-| `expression-item-context-menu.tsx` | +6 行 | 表达式右键菜单 |
-| `expression-item.tsx` | +1 行 | 表达式项 |
-| `expression-list.tsx` | +8 行 | 表达式列表 |
-| `function.scss` | +3 行 | 函数样式 |
-| `helpers/schema.ts` | +99 行 | Schema 扩展 |
-| `helpers/utility.ts` | +150 行 | 工具函数扩展 |
-| `helpers/node-type.ts` | +15 行 | 节点类型工具 |
-| `helpers/traversal.ts` | +2 行 | 图遍历 |
-| `helpers/monaco.ts` | +18 行 | Monaco 配置 |
-| `theme.tsx` | +14 行 | 主题扩展 |
-| `src/index.ts` | +20 行 | 库入口扩展 |
+| 文件                               | 变更    | 说明           |
+| ---------------------------------- | ------- | -------------- |
+| `dg.tsx`                           | +123 行 | 主组件扩展     |
+| `dg-panel.tsx`                     | +113 行 | 面板组件扩展   |
+| `dg.scss`                          | +103 行 | 样式新增       |
+| `dg-wrapper.tsx`                   | +31 行  | 包装器调整     |
+| `dg-infer.tsx`                     | +106 行 | 类型推断扩展   |
+| `dg-empty.tsx`                     | +18 行  | 空状态调整     |
+| `graph-components.tsx`             | +46 行  | 图子组件       |
+| `graph-nodes.tsx`                  | +12 行  | 节点渲染       |
+| `graph-tabs.tsx`                   | +15 行  | Tab 管理       |
+| `custom-node/index.tsx`            | +151 行 | 自定义节点渲染 |
+| `graph-node.tsx`                   | +35 行  | 基础节点       |
+| `decision-table.specification.tsx` | +68 行  | 决策表规格     |
+| `expression.specification.tsx`     | +19 行  | 表达式规格     |
+| `switch.specification.tsx`         | +20 行  | 分支规格       |
+| `specification-types.ts`           | +8 行   | 类型定义扩展   |
+| `specifications.tsx`               | +3 行   | 规格注册       |
+| `custom-edge.tsx`                  | +6 行   | 自定义边       |
+| `use-graph-clipboard.ts`           | +12 行  | 剪贴板操作     |
+| `dg-simulator.tsx`                 | +16 行  | 模拟器         |
+| `simulator-editor.tsx`             | +35 行  | 模拟器编辑器   |
+| `field-edit-popover.tsx`           | +127 行 | 字段编辑弹出框 |
+| `input-field-edit.tsx`             | +28 行  | 输入字段编辑   |
+| `output-field-edit.tsx`            | +28 行  | 输出字段编辑   |
+| `fields-reorder-dialog.tsx`        | +6 行   | 字段排序对话框 |
+| `dt-command-bar.tsx`               | +45 行  | 决策表命令栏   |
+| `table-context-menu.tsx`           | +8 行   | 表格右键菜单   |
+| `table-head-cell.tsx`              | +11 行  | 表头单元格     |
+| `table.tsx`                        | +4 行   | 表格组件       |
+| `expression-item-context-menu.tsx` | +6 行   | 表达式右键菜单 |
+| `expression-item.tsx`              | +1 行   | 表达式项       |
+| `expression-list.tsx`              | +8 行   | 表达式列表     |
+| `function.scss`                    | +3 行   | 函数样式       |
+| `helpers/schema.ts`                | +99 行  | Schema 扩展    |
+| `helpers/utility.ts`               | +150 行 | 工具函数扩展   |
+| `helpers/node-type.ts`             | +15 行  | 节点类型工具   |
+| `helpers/traversal.ts`             | +2 行   | 图遍历         |
+| `helpers/monaco.ts`                | +18 行  | Monaco 配置    |
+| `theme.tsx`                        | +14 行  | 主题扩展       |
+| `src/index.ts`                     | +20 行  | 库入口扩展     |
 
 ### 3.4 opencode 移除的内容
 
 opencode 分支将以下包改为外部 npm 依赖，移除了源码：
 
-| 包 | 原位置 | 新依赖 |
-|----|--------|--------|
-| `@gorules/lezer-zen` | `packages/lezer-zen/` | npm `@gorules/lezer-zen@0.8.1` |
-| `@gorules/lezer-zen-template` | `packages/lezer-zen-template/` | 移除 |
-| `@gorules/zen-engine-wasm` | `packages/zen-engine-wasm/` | npm `@gorules/zen-engine-wasm@^0.23.1` |
+| 包                            | 原位置                         | 新依赖                                 |
+| ----------------------------- | ------------------------------ | -------------------------------------- |
+| `@gorules/lezer-zen`          | `packages/lezer-zen/`          | npm `@gorules/lezer-zen@0.8.1`         |
+| `@gorules/lezer-zen-template` | `packages/lezer-zen-template/` | 移除                                   |
+| `@gorules/zen-engine-wasm`    | `packages/zen-engine-wasm/`    | npm `@gorules/zen-engine-wasm@^0.23.1` |
 
 > **zrule 分支已对齐该模型**(提交 `e21bd87`)：同样移除三个库源码，但 `@gorules/lezer-zen-template` 仍以
 > npm `0.4.0` 保留依赖(`zen.ts` 实际引用 `@gorules/lezer-zen-template`)。构建改为 bun 原生脚本(见 §3.6)。
 
 移除的文件：
+
 - `packages/lezer-zen/` — 完整目录(70 行 CHANGELOG、40 行 package.json、语法文件等)
 - `packages/lezer-zen-template/` — 完整目录
 - `packages/zen-engine-wasm/` — 完整目录(含 Rust 源码、WASM 构建配置等)
 
 ### 3.5 配置变更
 
-| 文件 | 变更 |
-|------|------|
-| `package.json` | +1 行(新增依赖) |
-| `bun.lock` | +2,914 行(Bun 锁文件新增) |
-| `pnpm-lock.yaml` | 更新依赖 |
-| `.storybook/main.ts` | +1 行 |
-| `.storybook/manager-head.html` | 修改 |
-| `vite.config.ts` | +3 行 |
-| `public/product_logo.svg` | 新增品牌 Logo |
+| 文件                           | 变更                      |
+| ------------------------------ | ------------------------- |
+| `package.json`                 | +1 行(新增依赖)           |
+| `bun.lock`                     | +2,914 行(Bun 锁文件新增) |
+| `pnpm-lock.yaml`               | 更新依赖                  |
+| `.storybook/main.ts`           | +1 行                     |
+| `.storybook/manager-head.html` | 修改                      |
+| `vite.config.ts`               | +3 行                     |
+| `public/product_logo.svg`      | 新增品牌 Logo             |
 
 ### 3.6 单独构建与发布(zrule)
 
@@ -462,15 +474,15 @@ npm publish
 
 **模块职责划分：**
 
-| 模块 | 职责 |
-|------|------|
-| `simulator-request-panel.tsx` | 请求面板主组件(编排) |
-| `simulator-nodes-panel.tsx` | 节点列表 / 选择与状态图标(从 `dg-simulator.tsx` 抽出) |
-| `simulator-request-toolbar.tsx` | 工具栏(运行 / 停止 / 加载用例 / 步进) |
-| `use-request-example-persistence.ts` | 用例数据源持久化(参数对象化，`setRequestExampleData`) |
-| `use-simulator-request-binding.ts` | 派生链绑定：节点 → `requestValue`(`responseExpressionMap` / `CustomOperatorType` / `ExpressionDataType`) |
-| `use-simulator-request-editor.ts` | requestValue 编辑 + 外部同步 + 切源时定义默认值同步(光标保持在末尾) |
-| `simulation.types.ts` | 模拟相关类型定义 |
+| 模块                                 | 职责                                                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `simulator-request-panel.tsx`        | 请求面板主组件(编排)                                                                                     |
+| `simulator-nodes-panel.tsx`          | 节点列表 / 选择与状态图标(从 `dg-simulator.tsx` 抽出)                                                    |
+| `simulator-request-toolbar.tsx`      | 工具栏(运行 / 停止 / 加载用例 / 步进)                                                                    |
+| `use-request-example-persistence.ts` | 用例数据源持久化(参数对象化，`setRequestExampleData`)                                                    |
+| `use-simulator-request-binding.ts`   | 派生链绑定：节点 → `requestValue`(`responseExpressionMap` / `CustomOperatorType` / `ExpressionDataType`) |
+| `use-simulator-request-editor.ts`    | requestValue 编辑 + 外部同步 + 切源时定义默认值同步(光标保持在末尾)                                      |
+| `simulation.types.ts`                | 模拟相关类型定义                                                                                         |
 
 **拆分的提交链(`303e169` → `a75fd1e`)：**
 
@@ -596,7 +608,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 203de98 feat: upgrade simulator request panel with full feature set
 ```
 
-**演进路径**: UserResolver 外部化 → components override → customNode renderTab 路由 → Request 节点改造 → custom function table editor(customFunctions 透传 renderTab)→ 模拟器模块化重构(simulator/ 目录 + use* hooks)→ bun test 单测基线
+**演进路径**: UserResolver 外部化 → components override → customNode renderTab 路由 → Request 节点改造 → custom function table editor(customFunctions 透传 renderTab)→ 模拟器模块化重构(simulator/ 目录 + use\* hooks)→ bun test 单测基线
 
 ---
 
@@ -647,6 +659,7 @@ if (typeof crypto.randomUUID !== 'function') {
 opencode 分支是一个**深度定制的开发分支**，基于 master 分支进行了大量功能扩展。它保留了 master 的核心功能，同时新增了针对特定业务场景的定制化功能。
 
 **建议**：在合并回 master 前，需要评估以下内容：
+
 - Request 节点和自定义函数节点的通用性
 - i18n 系统的完整性
 - 移除 WASM/Lezer 源码的影响

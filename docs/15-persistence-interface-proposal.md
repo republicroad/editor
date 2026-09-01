@@ -6,38 +6,39 @@
 ## 1. 背景与目标
 
 编辑器定位为**通用无状态库**：图的存储、版本、权限完全由宿主负责，编辑器只消费宿主注入的适配器。本提案定义编辑器需要的最小持久化契约，使宿主可以：
+
 - 用任意后端（文件系统/SQLite/S3/远程 API）实现图的 CRUD 与版本管理；
 - 在 `EditorShellOptions.persistence` 注入适配器后，shell 自动将"打开/另存为/版本历史"面板路由到宿主存储；
 - 不注入时，shell 回退到浏览器本地文件（现有行为不变）。
 
 ## 2. 设计原则
 
-| 原则 | 说明 |
-|------|------|
-| 宿主管存储 | 编辑器只定义接口契约，不选择或绑定存储后端 |
-| 宿主管身份 | `owner` 由服务端从会话/网关头注入；客户端传值被剥离（防伪造） |
-| 404 防探测 | `load` 返回 null 而非抛错；不可见资源与不存在资源行为一致 |
-| 并发兼容 | `save` 默认 last-write-wins；传入 `baseRevision` 时自动升级为乐观锁 |
-| 版本可选 | `listVersions` 与 `load({revision})` 是可选能力；宿主未实现时 shell 隐藏版本历史面板 |
-| 最小接入 | 宿主只需实现 `load` + `save` 即可获得基本持久化；`list`/`delete`/`listVersions` 按需渐进 |
+| 原则       | 说明                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| 宿主管存储 | 编辑器只定义接口契约，不选择或绑定存储后端                                               |
+| 宿主管身份 | `owner` 由服务端从会话/网关头注入；客户端传值被剥离（防伪造）                            |
+| 404 防探测 | `load` 返回 null 而非抛错；不可见资源与不存在资源行为一致                                |
+| 并发兼容   | `save` 默认 last-write-wins；传入 `baseRevision` 时自动升级为乐观锁                      |
+| 版本可选   | `listVersions` 与 `load({revision})` 是可选能力；宿主未实现时 shell 隐藏版本历史面板     |
+| 最小接入   | 宿主只需实现 `load` + `save` 即可获得基本持久化；`list`/`delete`/`listVersions` 按需渐进 |
 
 ## 3. 核心类型
 
 ```ts
 export interface GraphRecordMeta {
-  id: string;                            // 宿主侧唯一标识（UUID/slug，宿主生成）
+  id: string; // 宿主侧唯一标识（UUID/slug，宿主生成）
   name: string;
   description?: string;
-  owner?: string;                        // 缺省=共享，复用名单 owner 语义
+  owner?: string; // 缺省=共享，复用名单 owner 语义
   tags?: string[];
-  extensions?: Record<string, unknown>;  // 图+配置打包：调度、环境绑定等非图数据
-  revision: string;                      // 当前 head 版本号（宿主生成，单调递增）
+  extensions?: Record<string, unknown>; // 图+配置打包：调度、环境绑定等非图数据
+  revision: string; // 当前 head 版本号（宿主生成，单调递增）
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface GraphRecord extends GraphRecordMeta {
-  content: unknown;                      // DecisionGraphType(nodes/edges/meta)，由消费方解包
+  content: unknown; // DecisionGraphType(nodes/edges/meta)，由消费方解包
 }
 
 export class GraphPersistenceError extends Error {
@@ -117,7 +118,7 @@ const record: GraphRecord = {
 ```tsx
 <EditorShellProvider
   options={{
-    persistence: myGraphAdapter,   // 宿主实现的适配器
+    persistence: myGraphAdapter, // 宿主实现的适配器
     authAdapter: myAuthAdapter,
     simulate: mySimulate,
   }}
@@ -156,20 +157,21 @@ head 文件 `{id}.json` 含 `{meta, content}`；历史版本为分版本文件 `
 
 ### 6.2 REST 端点（已实施）
 
-| 方法 | 路径 | 说明 | 状态码 |
-|------|------|------|--------|
-| GET | `/api/graphs?q=` | 当前用户可见 head 元数据列表(不含 content) | 200 |
-| GET | `/api/graphs/:id` | 加载 head；`?revision=vN` 加载指定版本 | 200 / 404 |
-| POST | `/api/graphs` | 新建(服务端注入 owner，revision=v1) | 200 / 400 / 500 |
-| PUT | `/api/graphs/:id` | 更新(保留原 owner；baseRevision 乐观锁) | 200 / 404 / 409 |
-| DELETE | `/api/graphs/:id` | 删除(head + 全部历史版本) | 200 / 404 |
-| GET | `/api/graphs/:id/versions` | 历史版本列表(不含 head) | 200 / 404 |
+| 方法   | 路径                       | 说明                                       | 状态码          |
+| ------ | -------------------------- | ------------------------------------------ | --------------- |
+| GET    | `/api/graphs?q=`           | 当前用户可见 head 元数据列表(不含 content) | 200             |
+| GET    | `/api/graphs/:id`          | 加载 head；`?revision=vN` 加载指定版本     | 200 / 404       |
+| POST   | `/api/graphs`              | 新建(服务端注入 owner，revision=v1)        | 200 / 400 / 500 |
+| PUT    | `/api/graphs/:id`          | 更新(保留原 owner；baseRevision 乐观锁)    | 200 / 404 / 409 |
+| DELETE | `/api/graphs/:id`          | 删除(head + 全部历史版本)                  | 200 / 404       |
+| GET    | `/api/graphs/:id/versions` | 历史版本列表(不含 head)                    | 200 / 404       |
 
 409 响应体为 `{ error: { code: 'CONFLICT', message } }`，供客户端区分乐观锁冲突。
 
 ### 6.3 与名单 owner 模式对齐
 
 沿用第九批 `apps/editor` 名单的双层作用域设计：
+
 - 共享 = `GRAPHS_DIR/shared/*.json`；用户私有 = `GRAPHS_DIR/users/{owner}/*.json`
 - PUT 保留原 owner（防通过请求伪造所有权）；新建默认私有(owner=会话用户)
 - 他人私有 GET/PUT/DELETE 一律 404；共享图任意登录用户可读写
@@ -177,6 +179,7 @@ head 文件 `{id}.json` 含 `{meta, content}`；历史版本为分版本文件 `
 ### 6.4 HTTP 适配器参考
 
 `src/shell/graphs-http-adapter.ts` 的 `createGraphsHttpAdapter(baseUrl)` 把上述端点封装为 `GraphPersistenceAdapter`：
+
 - 404 → `load` 返回 null / `delete` 返回 false（404 语义）
 - 409 CONFLICT → 抛 `GraphPersistenceError('CONFLICT')`
 - `list`/`save`(按有无 id 自动选 create/update)/`delete`/`listVersions` 齐全
@@ -192,10 +195,10 @@ head 文件 `{id}.json` 含 `{meta, content}`；历史版本为分版本文件 `
 
 ## 8. 开放问题
 
-| # | 问题 | 影响 | 待定 |
-|---|------|------|------|
-| Q1 | 历史版本是否需要清理策略（保留 N 版本）？ | 磁盘占用 | 实施参考实现时定 |
-| Q2 | 批量导出/导入时 extensions 是否序列化？ | 文件格式兼容性 | 实施时定 |
-| Q3 | 部署场景：遗留 Rust 后端（backend/、Cargo.toml）是否可删除？ | Dockerfile/CI 重写范围 | **已确认可删除**，留待部署批次执行 |
-| Q4 | 大图并发写是否需要引入 ETag/If-Match 头（从乐观锁扩展到 HTTP 层面）？ | REST 端点设计 | 实施时定 |
-| Q5 | graph extensions 是否需要类型校验（如 JSON Schema）？ | 宿主扩展灵活性 vs 类型安全 | 实施时定 |
+| #   | 问题                                                                  | 影响                       | 待定                               |
+| --- | --------------------------------------------------------------------- | -------------------------- | ---------------------------------- |
+| Q1  | 历史版本是否需要清理策略（保留 N 版本）？                             | 磁盘占用                   | 实施参考实现时定                   |
+| Q2  | 批量导出/导入时 extensions 是否序列化？                               | 文件格式兼容性             | 实施时定                           |
+| Q3  | 部署场景：遗留 Rust 后端（backend/、Cargo.toml）是否可删除？          | Dockerfile/CI 重写范围     | **已确认可删除**，留待部署批次执行 |
+| Q4  | 大图并发写是否需要引入 ETag/If-Match 头（从乐观锁扩展到 HTTP 层面）？ | REST 端点设计              | 实施时定                           |
+| Q5  | graph extensions 是否需要类型校验（如 JSON Schema）？                 | 宿主扩展灵活性 vs 类型安全 | 实施时定                           |

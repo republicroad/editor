@@ -21,23 +21,23 @@
 
 ## 一、总体目标
 
-| 层级 | 目标 |
-|------|------|
+| 层级         | 目标                                                           |
+| ------------ | -------------------------------------------------------------- |
 | **Option A** | jdm-editor 库内部：Input 节点默认使用 TabRequest(3-Tab 编辑器) |
-| **Option B** | editor 项目外部：通过 `components` 机制可覆盖 Input 节点 Tab |
+| **Option B** | editor 项目外部：通过 `components` 机制可覆盖 Input 节点 Tab   |
 
 ---
 
 ## 二、现状对比
 
-| | zrule(当前) | opencode(参考) |
-|---|---|---|
-| Input Tab | `TabJsonSchema` — 单一 Monaco 编辑器，~228 行 | `TabRequest` — 3-Tab 编辑器(Definitions/Examples/Schema)，~1,719 行 |
-| Schema 工具 | 无 | `request-schema.ts` — ~1,010 行，自包含无内部依赖 |
-| Simulator 集成 | 简单版(~115 行，仅 Run 按钮) | 完整版(~700 行，含 Format/Sync/Save/Copy/Run) |
-| Store 字段 | 无 simulator 相关 | `simulatorRequest`, `simulatorExampleBinding` |
-| inputNodeSchema | `{ schema, fields, example, jsonSchema }` | `{ schema, schemaUI, expressions }` |
-| i18n | 无(硬编码英文) | 完整 i18n(~200 key) |
+|                 | zrule(当前)                                   | opencode(参考)                                                      |
+| --------------- | --------------------------------------------- | ------------------------------------------------------------------- |
+| Input Tab       | `TabJsonSchema` — 单一 Monaco 编辑器，~228 行 | `TabRequest` — 3-Tab 编辑器(Definitions/Examples/Schema)，~1,719 行 |
+| Schema 工具     | 无                                            | `request-schema.ts` — ~1,010 行，自包含无内部依赖                   |
+| Simulator 集成  | 简单版(~115 行，仅 Run 按钮)                  | 完整版(~700 行，含 Format/Sync/Save/Copy/Run)                       |
+| Store 字段      | 无 simulator 相关                             | `simulatorRequest`, `simulatorExampleBinding`                       |
+| inputNodeSchema | `{ schema, fields, example, jsonSchema }`     | `{ schema, schemaUI, expressions }`                                 |
+| i18n            | 无(硬编码英文)                                | 完整 i18n(~200 key)                                                 |
 
 ---
 
@@ -45,35 +45,35 @@
 
 ### 需要新增的文件(jdm-editor)
 
-| # | 文件 | 来源 | 行数 | 依赖 |
-|---|------|------|------|------|
-| 1 | `helpers/request-schema.ts` | opencode 复制 | ~1,010 | 仅 `json5`(已有) |
-| 2 | `helpers/json-schema.ts` | opencode 复制 | ~66 | 仅 `@gorules/zen-engine-wasm`(已有) |
-| 3 | `locales/context.tsx` | opencode 复制 | ~60 | 仅 React Context |
-| 4 | `locales/index.ts` | opencode 复制 | ~10 | re-export |
-| 5 | `locales/en_US.json` | opencode 复制 | ~200 | 无 |
-| 6 | `locales/zh_CN.json` | opencode 复制 | ~200 | 无 |
-| 7 | `graph/tab-request.tsx` | opencode 复制 + 适配 | ~1,719 | 上述所有 |
+| #   | 文件                        | 来源                 | 行数   | 依赖                                |
+| --- | --------------------------- | -------------------- | ------ | ----------------------------------- |
+| 1   | `helpers/request-schema.ts` | opencode 复制        | ~1,010 | 仅 `json5`(已有)                    |
+| 2   | `helpers/json-schema.ts`    | opencode 复制        | ~66    | 仅 `@gorules/zen-engine-wasm`(已有) |
+| 3   | `locales/context.tsx`       | opencode 复制        | ~60    | 仅 React Context                    |
+| 4   | `locales/index.ts`          | opencode 复制        | ~10    | re-export                           |
+| 5   | `locales/en_US.json`        | opencode 复制        | ~200   | 无                                  |
+| 6   | `locales/zh_CN.json`        | opencode 复制        | ~200   | 无                                  |
+| 7   | `graph/tab-request.tsx`     | opencode 复制 + 适配 | ~1,719 | 上述所有                            |
 
 ### 需要修改的文件(jdm-editor)
 
-| # | 文件 | 改动 |
-|---|------|------|
-| 8 | `context/dg-store.context.tsx` | 新增 `simulatorRequest`, `simulatorExampleBinding` 等字段 |
-| 9 | `nodes/specifications/input.specification.tsx` | `renderTab` 切换为 `TabRequest`，适配 schema 结构 |
-| 10 | `helpers/schema.ts` | `inputNodeSchema` 改为 `{ schema, expressions }` |
-| 11 | `simulator/simulator-request-panel.tsx` | 从 opencode 复制替换(~115 → ~700 行) |
-| 12 | `simulator/dg-simulator.tsx` | 适配 i18n + 面板宽度 |
+| #   | 文件                                           | 改动                                                      |
+| --- | ---------------------------------------------- | --------------------------------------------------------- |
+| 8   | `context/dg-store.context.tsx`                 | 新增 `simulatorRequest`, `simulatorExampleBinding` 等字段 |
+| 9   | `nodes/specifications/input.specification.tsx` | `renderTab` 切换为 `TabRequest`，适配 schema 结构         |
+| 10  | `helpers/schema.ts`                            | `inputNodeSchema` 改为 `{ schema, expressions }`          |
+| 11  | `simulator/simulator-request-panel.tsx`        | 从 opencode 复制替换(~115 → ~700 行)                      |
+| 12  | `simulator/dg-simulator.tsx`                   | 适配 i18n + 面板宽度                                      |
 
 ### 已有无需改动的文件
 
-| 文件 | 原因 |
-|------|------|
+| 文件                                   | 原因         |
+| -------------------------------------- | ------------ |
 | `graph/json-to-json-schema-dialog.tsx` | zrule 已存在 |
-| `helpers/monaco.ts` | zrule 已存在 |
-| `helpers/file-helpers.ts` | zrule 已存在 |
-| `helpers/utility.ts` | zrule 已存在 |
-| `helpers/wasm.ts` | zrule 已存在 |
+| `helpers/monaco.ts`                    | zrule 已存在 |
+| `helpers/file-helpers.ts`              | zrule 已存在 |
+| `helpers/utility.ts`                   | zrule 已存在 |
+| `helpers/wasm.ts`                      | zrule 已存在 |
 
 ---
 
@@ -115,12 +115,12 @@
 
 ## 五、风险和注意事项
 
-| 风险 | 缓解措施 |
-|------|----------|
-| `inputNodeSchema` 结构变更 | 步骤 12 前检查 editor 项目是否使用旧字段 |
-| `tab-request.tsx` 的 i18n 依赖 | 步骤 3 已移植完整 i18n 系统 |
-| `simulator-request-panel.tsx` store 字段不匹配 | 步骤 5 已添加所需字段 |
-| opencode 分支代码与 zrule 分支的隐式差异 | 每个阶段完成后运行 Typecheck |
+| 风险                                           | 缓解措施                                 |
+| ---------------------------------------------- | ---------------------------------------- |
+| `inputNodeSchema` 结构变更                     | 步骤 12 前检查 editor 项目是否使用旧字段 |
+| `tab-request.tsx` 的 i18n 依赖                 | 步骤 3 已移植完整 i18n 系统              |
+| `simulator-request-panel.tsx` store 字段不匹配 | 步骤 5 已添加所需字段                    |
+| opencode 分支代码与 zrule 分支的隐式差异       | 每个阶段完成后运行 Typecheck             |
 
 ---
 
@@ -158,11 +158,11 @@
 
 ### 已实现(A+B+D 融合)
 
-| 风格 | 内容 |
-|------|------|
-| **A. Postman 表单** | 节点卡片：method 彩色 Tag + URL + 状态徽标(2xx/3xx/4xx/5xx/ERR)；Tab 编辑器：method 下拉 + URL/Body 表达式编辑器 + 可编辑输出键 |
-| **B. 键值对表格** | Headers 默认结构化模式(可增删 key/value 行，value 为 Zen 表达式输入)；对象字面量无法解析时自动降级「原始表达式模式」，支持手动切换 |
-| **D. 分栏布局** | Tab 编辑器左右分栏：左侧请求配置表单，右侧同屏模拟响应(状态徽标 + 响应头折叠详情 + Body JSON 预览)，复用 query-list 的 tabSplit 布局思路 |
+| 风格                | 内容                                                                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. Postman 表单** | 节点卡片：method 彩色 Tag + URL + 状态徽标(2xx/3xx/4xx/5xx/ERR)；Tab 编辑器：method 下拉 + URL/Body 表达式编辑器 + 可编辑输出键          |
+| **B. 键值对表格**   | Headers 默认结构化模式(可增删 key/value 行，value 为 Zen 表达式输入)；对象字面量无法解析时自动降级「原始表达式模式」，支持手动切换       |
+| **D. 分栏布局**     | Tab 编辑器左右分栏：左侧请求配置表单，右侧同屏模拟响应(状态徽标 + 响应头折叠详情 + Body JSON 预览)，复用 query-list 的 tabSplit 布局思路 |
 
 ### E. 页签分组(已实施，2026-08-23)
 
@@ -184,4 +184,3 @@
 - Headers 往返协议：`{ k: expr, ... }` 对象字面量 ⇄ 行数组；键为合法标识符时裸写、否则 JSON 引号包裹，空键序列化为 `""` 保证编辑中不丢行；含整体引用(如 `input.headers`)或拼接表达式的内容无法拆行时保留原文并提示切换模式。Params 查询参数复用同一协议(公共 `parseObjectLiteralRows`/`serializeObjectLiteralRows` + `KeyValueEditor`)。
 - Auth 序列化：无认证省略尾参；Basic → `{ type: "basic", username: "<字面量>", password: <表达式> }`；Bearer → `{ type: "bearer", token: <表达式> }`；无法解析的自定义 auth 表达式在「高级」页签原样保留并提示，结构化编辑不可用。
 - 引擎语义(`apps/zen-rule/src/contrib.ts`)：params 经 `new URL()` 后 `searchParams.set` 合并(URL 非法直接结构化报错且不重试)；timeout 为单次尝试上限；retry 仅网络异常/超时(status=0)/5xx/429 触发，退避 `200ms × 2ⁿ`。
-

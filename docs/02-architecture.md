@@ -100,39 +100,39 @@ jdm-editor/
 
 ### 3.1 前端技术栈
 
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| React | 18.3 | UI 框架 |
-| TypeScript | 5.9 | 类型系统 |
-| Vite | 7.3 | 构建工具 |
-| SWC | - | 快速编译 |
-| shadcn/ui + ReUI | - | 应用层 UI 原语(antd 仅存于 jdm-editor 核心库)。**样式规范(2026-09-01)**：主仓样式一律 shadcn 组件(`src/components/ui/`) + Tailwind v4 + ReUI registry(`@reui`，`src/components/reui/`)，不引入 antd、不新增手写 css module 徽标类 |
-| React Flow | 11.11 | 图编辑器 |
-| Zustand | 4.5 | 状态管理 |
-| Immer | 10.1 | 不可变状态 |
-| CodeMirror | 6 | 代码编辑器 |
-| Monaco Editor | 4.7 | 代码编辑器(可选) |
-| React Router | 7.13 | 路由 |
-| Graphology | 0.26 | 图数据结构 |
-| Zod | 4.3 | Schema 验证 |
-| Axios | 1.13 | HTTP 客户端 |
+| 技术             | 版本  | 用途                                                                                                                                                                                                                              |
+| ---------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| React            | 18.3  | UI 框架                                                                                                                                                                                                                           |
+| TypeScript       | 5.9   | 类型系统                                                                                                                                                                                                                          |
+| Vite             | 7.3   | 构建工具                                                                                                                                                                                                                          |
+| SWC              | -     | 快速编译                                                                                                                                                                                                                          |
+| shadcn/ui + ReUI | -     | 应用层 UI 原语(antd 仅存于 jdm-editor 核心库)。**样式规范(2026-09-01)**：主仓样式一律 shadcn 组件(`src/components/ui/`) + Tailwind v4 + ReUI registry(`@reui`，`src/components/reui/`)，不引入 antd、不新增手写 css module 徽标类 |
+| React Flow       | 11.11 | 图编辑器                                                                                                                                                                                                                          |
+| Zustand          | 4.5   | 状态管理                                                                                                                                                                                                                          |
+| Immer            | 10.1  | 不可变状态                                                                                                                                                                                                                        |
+| CodeMirror       | 6     | 代码编辑器                                                                                                                                                                                                                        |
+| Monaco Editor    | 4.7   | 代码编辑器(可选)                                                                                                                                                                                                                  |
+| React Router     | 7.13  | 路由                                                                                                                                                                                                                              |
+| Graphology       | 0.26  | 图数据结构                                                                                                                                                                                                                        |
+| Zod              | 4.3   | Schema 验证                                                                                                                                                                                                                       |
+| Axios            | 1.13  | HTTP 客户端                                                                                                                                                                                                                       |
 
 ### 3.2 后端技术栈
 
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| Bun | 1.3+ | 后端运行时 |
-| Hono | 4.12 | HTTP 框架 |
-| Zod | 4 | 请求/响应校验(OpenAPI) |
-| zen-rule | - | GoRules 决策引擎(纯 TS) |
+| 技术     | 版本 | 用途                    |
+| -------- | ---- | ----------------------- |
+| Bun      | 1.3+ | 后端运行时              |
+| Hono     | 4.12 | HTTP 框架               |
+| Zod      | 4    | 请求/响应校验(OpenAPI)  |
+| zen-rule | -    | GoRules 决策引擎(纯 TS) |
 
 ### 3.3 WASM 技术栈
 
-| 技术 | 用途 |
-|------|------|
-| wasm-pack | Rust → WASM 编译 |
+| 技术            | 用途               |
+| --------------- | ------------------ |
+| wasm-pack       | Rust → WASM 编译   |
 | zen-engine-wasm | 决策引擎 WASM 绑定 |
-| Lezer | 语法解析器生成 |
+| Lezer           | 语法解析器生成     |
 
 ---
 
@@ -153,6 +153,7 @@ Bun/Hono 后端(`apps/editor`)是唯一后端，暴露统一的 `/api` 端点：
 ### 4.2 Context Provider 模式
 
 React Context 管理全局状态：
+
 - `ThemeContext`: 主题偏好(暗色/亮色/自动)
 - `JdmConfigProvider`: 编辑器配置(主题、语言、字典)
 - `DictionaryProvider`: 自定义字典
@@ -267,11 +268,11 @@ Stage 2: Bun slim → 运行时(复制后端源码 + node_modules + 前端静态
 
 ### 7.1 工作流
 
-| 工作流 | 触发条件 | 功能 |
-|--------|----------|------|
-| `validate.yml` | PR / push to master, zrule | Bun 流水线(`setup-bun` 1.3.14)：lint + typecheck + typecheck:apps + test(主仓) + apps 测试 |
-| `semantic-version.yml` | 手动触发 | 自动版本发布 |
-| `build-docker.yml` | release 提交到 master | 构建并推送 Docker 镜像 |
+| 工作流                 | 触发条件                   | 功能                                                                                       |
+| ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| `validate.yml`         | PR / push to master, zrule | Bun 流水线(`setup-bun` 1.3.14)：lint + typecheck + typecheck:apps + test(主仓) + apps 测试 |
+| `semantic-version.yml` | 手动触发                   | 自动版本发布                                                                               |
+| `build-docker.yml`     | release 提交到 master      | 构建并推送 Docker 镜像                                                                     |
 
 ### 7.2 版本管理
 

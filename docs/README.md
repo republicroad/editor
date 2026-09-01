@@ -11,19 +11,19 @@
 
 ## 文档目录
 
-| 文档 | 说明 |
-|------|------|
-| [01-需求文档](./01-requirements.md) | 项目背景、功能需求与非功能需求 |
-| [02-架构文档](./02-architecture.md) | 系统架构、技术栈与设计模式 |
-| [03-项目状态](./03-project-status.md) | 当前版本、分支状态与依赖快照 |
-| [04-开发指南](./04-development-guide.md) | 环境搭建、开发流程与构建部署 |
-| [05-API 参考](./05-api-reference.md) | 后端 API 与前端组件 API 文档 |
-| [06-jdm-editor 子仓库](./06-jdm-editor-submodule.md) | jdm-editor 组件库详解与分支差异 |
-| [07-实施计划](./07-implementation-plan.md) | Input/Custom 节点外部化 + better-auth 用户信息集成 |
-| [08-Request 节点计划](./08-request-node-plan.md) | Request 节点(Input 增强版)集成计划 |
-| [09-shadcn+ReUI 取代 antd 评估](./09-shadcn-reui-replacing-antd.md) | antd 替换可行性评估(结论：antd 核心 + ReUI 增量) |
-| [10-从零重写评估与路线图](./10-rewrite-roadmap.md) | 从零重写 jdm-editor 的评估与 P1–P8 路线图(存档) |
-| [11-antd vs shadcn+ReUI 对比](./11-antd-vs-shadcn-reui-comparison.md) | antd 与 shadcn+ReUI 组件能力对照 |
+| 文档                                                                  | 说明                                               |
+| --------------------------------------------------------------------- | -------------------------------------------------- |
+| [01-需求文档](./01-requirements.md)                                   | 项目背景、功能需求与非功能需求                     |
+| [02-架构文档](./02-architecture.md)                                   | 系统架构、技术栈与设计模式                         |
+| [03-项目状态](./03-project-status.md)                                 | 当前版本、分支状态与依赖快照                       |
+| [04-开发指南](./04-development-guide.md)                              | 环境搭建、开发流程与构建部署                       |
+| [05-API 参考](./05-api-reference.md)                                  | 后端 API 与前端组件 API 文档                       |
+| [06-jdm-editor 子仓库](./06-jdm-editor-submodule.md)                  | jdm-editor 组件库详解与分支差异                    |
+| [07-实施计划](./07-implementation-plan.md)                            | Input/Custom 节点外部化 + better-auth 用户信息集成 |
+| [08-Request 节点计划](./08-request-node-plan.md)                      | Request 节点(Input 增强版)集成计划                 |
+| [09-shadcn+ReUI 取代 antd 评估](./09-shadcn-reui-replacing-antd.md)   | antd 替换可行性评估(结论：antd 核心 + ReUI 增量)   |
+| [10-从零重写评估与路线图](./10-rewrite-roadmap.md)                    | 从零重写 jdm-editor 的评估与 P1–P8 路线图(存档)    |
+| [11-antd vs shadcn+ReUI 对比](./11-antd-vs-shadcn-reui-comparison.md) | antd 与 shadcn+ReUI 组件能力对照                   |
 
 ---
 

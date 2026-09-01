@@ -13,7 +13,7 @@
       "@/*": ["./src/*"],
       "@gorules/jdm-editor": ["jdm-editor/packages/jdm-editor/src"],
       "monaco-editor": ["node_modules/monaco-editor"],
-      "monaco-editor/*": ["node_modules/monaco-editor/*"],
+      "monaco-editor/*": ["node_modules/monaco-editor/*"]
     },
 
     /* Bundler mode */
@@ -28,9 +28,6 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src",
-    "component-tests"
-  ],
-  "references": [{ "path": "./tsconfig.node.json"}]
+  "include": ["src", "component-tests"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

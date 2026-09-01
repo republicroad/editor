@@ -5,6 +5,7 @@ URL: https://editor.gorules.io
 ## install
 
 注意以下点:
+
 1. 此项目是以 editor 和 jdm-editor (editor的 jdm-editor 子仓库)组成
 2. 未来editor项目的前后端都会使用bun, 为了使用mono pacakge, 建议使用 bun >=1.3 版本.
 3. editor 和 jdm-editor 的 master 分支用于同步上游分支, 使用 standalone 分支用于开源分支版本.
@@ -12,15 +13,19 @@ URL: https://editor.gorules.io
 
 使用以下命令clone项目:
 克隆 editor 项目的 zrule 分支, 并递归 clone git 子模块，用于完成前后端 monorepo 的 typescript 的构造.
-> git clone --recurse-submodules --branch zrule  https://github.com/republicroad/editor.git
+
+> git clone --recurse-submodules --branch zrule https://github.com/republicroad/editor.git
 
 克隆 editor 项目的 standalone 分支, 并递归 clone git 子模块，用于探索
-> git clone --recurse-submodules --branch standalone  https://github.com/republicroad/editor.git
+
+> git clone --recurse-submodules --branch standalone https://github.com/republicroad/editor.git
 
 也可以使用代理下载:
-> proxychains git clone --recurse-submodules --branch standalone  https://github.com/republicroad/editor.git
+
+> proxychains git clone --recurse-submodules --branch standalone https://github.com/republicroad/editor.git
 
 如果是直接clone了 editor 仓库，那么使用如下命令进行代码拉取 jdm-editor 子模块(和上面命令等价):
+
 ```bash
 $ git clone https://github.com/republicroad/editor.git  # 当前分支是 main 或者 master 分支.
 $ git fetch origin standalone:standalone
@@ -60,7 +65,7 @@ docker run -p 3000:3000 editor
 bun 1.3可以识别pnpm相关的元数据, 我们可以使用 bun 1.3 及以上版本来进行依赖管理和构建.
 
 ### 开源版本
-     
+
 使用 **standalone分支**
 
 ```bash
@@ -138,16 +143,16 @@ OpenAPI 交互文档: http://localhost:3000/openapi
 
 ### API 一览
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `/api/simulate` | 决策图仿真执行 |
-| GET | `/api/custom-nodes/schema` | 自定义节点 schema(由 zen-rule udfManager 运行时生成) |
-| GET | `/api/rosters?q=` | 名单列表(大小写不敏感过滤) |
-| GET | `/api/rosters/{name}` | 名单详情 |
-| POST | `/api/rosters` | 创建/覆盖名单(upsert，落盘 `apps/editor/rosters/*.json`) |
-| PUT | `/api/rosters/{name}` | 更新名单(name 不可变) |
-| DELETE | `/api/rosters/{name}` | 删除名单(含落盘文件清理) |
-| GET | `/api/auth/get-session` | Mock 开发用户(better-auth 兼容格式) |
+| 方法   | 路径                       | 说明                                                     |
+| ------ | -------------------------- | -------------------------------------------------------- |
+| POST   | `/api/simulate`            | 决策图仿真执行                                           |
+| GET    | `/api/custom-nodes/schema` | 自定义节点 schema(由 zen-rule udfManager 运行时生成)     |
+| GET    | `/api/rosters?q=`          | 名单列表(大小写不敏感过滤)                               |
+| GET    | `/api/rosters/{name}`      | 名单详情                                                 |
+| POST   | `/api/rosters`             | 创建/覆盖名单(upsert，落盘 `apps/editor/rosters/*.json`) |
+| PUT    | `/api/rosters/{name}`      | 更新名单(name 不可变)                                    |
+| DELETE | `/api/rosters/{name}`      | 删除名单(含落盘文件清理)                                 |
+| GET    | `/api/auth/get-session`    | Mock 开发用户(better-auth 兼容格式)                      |
 
 ## 以库方式嵌入(无状态)
 
@@ -167,7 +172,7 @@ import { EditorShellProvider, createGraphsHttpAdapter, createDefaultSimulate } f
   }}
 >
   <MyGraphPage />
-</EditorShellProvider>
+</EditorShellProvider>;
 ```
 
 注入 `persistence` 后，页面 Open 出现 "Graph library"(宿主存储)、Save/Save-as 走宿主并带 `baseRevision` 乐观锁；宿主若实现 `listVersions`，打开图后顶栏会出现 "Versions" 下拉以查看/加载历史版本。不注入则回退浏览器 File System Access API。契约见 `src/shell/persistence.ts`、宿主集成见 `docs/15`、页面接线见 `src/lib/graph-persistence.ts`。
@@ -177,15 +182,16 @@ import { EditorShellProvider, createGraphsHttpAdapter, createDefaultSimulate } f
 自定义节点 = **zen-rule 注册 UDF** + **前端手写 spec**。UDF 经 `/api/custom-nodes/schema` 自动下发；
 有富编辑器的节点在前端以 `createJdmNode` 覆盖(`useCustomNodes.ts` 的 `overriddenKinds`)。
 
-| kind | 名称 | 表达式协议(位置参数) | 富编辑器 |
-|---|---|---|---|
-| `roster` | 查询名单 | `['roster', "名单名", 值表达式]` | ✅ 双栏 + 服务端名单搜索 |
-| `http_request` | HTTP 请求 | `['http_request', url, "method", headers?, body?, params?, timeout?, retry?, auth?]` | ✅ 页签化(Headers/Body/Params/高级) |
-| `crypto` | 摘要签名 | `['crypto', input, "algorithm", secret?, "encoding"?, upper?]` | ✅ 级联选择(普通/HMAC)+ 分段编码按钮 |
-| `json_path` | JSON 提取 | `['json_path', input, "path", default?]` | ✅ 实例行列表 |
-| `template` | 模板渲染 | `['template', "tpl", vars?]` | ✅ 模板体 + 变量键值表 |
+| kind           | 名称      | 表达式协议(位置参数)                                                                 | 富编辑器                             |
+| -------------- | --------- | ------------------------------------------------------------------------------------ | ------------------------------------ |
+| `roster`       | 查询名单  | `['roster', "名单名", 值表达式]`                                                     | ✅ 双栏 + 服务端名单搜索             |
+| `http_request` | HTTP 请求 | `['http_request', url, "method", headers?, body?, params?, timeout?, retry?, auth?]` | ✅ 页签化(Headers/Body/Params/高级)  |
+| `crypto`       | 摘要签名  | `['crypto', input, "algorithm", secret?, "encoding"?, upper?]`                       | ✅ 级联选择(普通/HMAC)+ 分段编码按钮 |
+| `json_path`    | JSON 提取 | `['json_path', input, "path", default?]`                                             | ✅ 实例行列表                        |
+| `template`     | 模板渲染  | `['template', "tpl", vars?]`                                                         | ✅ 模板体 + 变量键值表               |
 
 约定：
+
 - 可选尾参**变长序列化**：末尾连续空值截断、中段空串占位；引擎侧对缺省/空值回退声明默认值 → 旧图零迁移
 - 协议纯函数统一放 `src/lib/*-protocol.ts`(parse/serialize/normalize)并配套单测；开发流程见 `docs/13-custom-node-development.md`
 - 新增 UDF 后执行 `bun run sync:schema` 同步离线夹具
@@ -195,21 +201,22 @@ import { EditorShellProvider, createGraphsHttpAdapter, createDefaultSimulate } f
 ## 参考资料
 
 1. 此仓库目前使用 bun 替换 pnpm 来进行 mono package 管理.
-2. 使用 http 协议进行本地开发 
+2. 使用 http 协议进行本地开发
 
 ### pnpm
 
 Run frontend:
+
 ```bash
 npm i pnpm -g
 pnpm i
 pnpm dev
 ```
 
-
 ### Local HTTPS
 
 To create a local HTTPS certificate:
+
 ```bash
 brew install mkcert
 
@@ -233,6 +240,7 @@ $ git add jdm-editor/
 ```
 
 修改 git submodule 中的子仓库分支:
+
 ```bash
 # .gitmodules 中的 branch 会修改为 zrule
 git submodule set-branch --branch zrule jdm-editor

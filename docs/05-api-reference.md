@@ -9,6 +9,7 @@ GET /api/health
 ```
 
 **响应**:
+
 - 状态码: `200 OK`
 - 响应体: `"healthy"`
 
@@ -39,9 +40,9 @@ Content-Type: application/json
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `context` | `Value` | 输入上下文数据 |
+| 字段      | 类型              | 说明           |
+| --------- | ----------------- | -------------- |
+| `context` | `Value`           | 输入上下文数据 |
 | `content` | `DecisionContent` | JDM 决策图定义 |
 
 **说明(Hono 替代后端)**: `contentType` 为可选字段。前端 `DecisionGraph` 直接发送 `{ nodes, edges }`(不含 `contentType`)时，zen-engine 按默认 `application/vnd.gorules.decision` 处理。
@@ -56,11 +57,11 @@ Content-Type: application/json
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `result` | `Value` | 执行结果 |
-| `trace` | `Value` | 执行轨迹(可选) |
-| `performance` | `string` | 执行耗时 |
+| 字段          | 类型     | 说明           |
+| ------------- | -------- | -------------- |
+| `result`      | `Value`  | 执行结果       |
+| `trace`       | `Value`  | 执行轨迹(可选) |
+| `performance` | `string` | 执行耗时       |
 
 **错误响应**:
 
@@ -72,6 +73,7 @@ Content-Type: application/json
 ```
 
 **限制**:
+
 - 请求体最大: 16MB
 - 最大执行深度: 10 层
 
@@ -112,10 +114,10 @@ GET /api/auth/get-session
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `session` | `object` | 会话对象 |
-| `user` | `object` | 用户对象(前端 `userResolver` 读取 `user.id`) |
+| 字段      | 类型     | 说明                                         |
+| --------- | -------- | -------------------------------------------- |
+| `session` | `object` | 会话对象                                     |
+| `user`    | `object` | 用户对象(前端 `userResolver` 读取 `user.id`) |
 
 **说明**: 该端点仅存在于 Hono 替代后端。前端 `src/lib/user-resolver.ts` 通过 `authClient.getSession()` 消费；当前为 Mock 开发用户，真实会话/数据库接入待后续。
 
@@ -140,11 +142,11 @@ Content-Type: application/json
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `decisionId` | `string` | 可选，缓存键。命中缓存时复用规则对象 |
-| `content` | `DecisionContent` | 可选(`contentType` 可省略)。未命中缓存或未传 `decisionId` 时用于创建规则 |
-| `context` | `Value` | 推理输入 |
+| 字段         | 类型              | 说明                                                                     |
+| ------------ | ----------------- | ------------------------------------------------------------------------ |
+| `decisionId` | `string`          | 可选，缓存键。命中缓存时复用规则对象                                     |
+| `content`    | `DecisionContent` | 可选(`contentType` 可省略)。未命中缓存或未传 `decisionId` 时用于创建规则 |
+| `context`    | `Value`           | 推理输入                                                                 |
 
 **响应体**: `{ result, trace?, performance? }`(同 `/api/simulate`)。
 
@@ -154,14 +156,14 @@ Content-Type: application/json
 
 #### 1.3.3 其他端点
 
-| 端点 | 说明 |
-|------|------|
-| `GET /state` | 返回服务端 store(`input`、`db`、`zenDecisions`) |
-| `GET /input` | 返回 `{ num: 19 }`(自定义函数 schema 占位) |
-| `GET /` | 无 `files` 参数时返回 `public/index.html`；有 `?files` 时返回 public 目录文件列表 HTML |
-| `GET /openapi/json` | OpenAPI 3.0 schema(`app.doc()` 生成) |
-| `GET /openapi` | Scalar API Reference 交互式文档页 |
-| admin `GET /`、`GET /admin`(3001) | 管理服务 |
+| 端点                              | 说明                                                                                   |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| `GET /state`                      | 返回服务端 store(`input`、`db`、`zenDecisions`)                                        |
+| `GET /input`                      | 返回 `{ num: 19 }`(自定义函数 schema 占位)                                             |
+| `GET /`                           | 无 `files` 参数时返回 `public/index.html`；有 `?files` 时返回 public 目录文件列表 HTML |
+| `GET /openapi/json`               | OpenAPI 3.0 schema(`app.doc()` 生成)                                                   |
+| `GET /openapi`                    | Scalar API Reference 交互式文档页                                                      |
+| admin `GET /`、`GET /admin`(3001) | 管理服务                                                                               |
 
 **运行日志**: 每个请求打印 `=> 方法 路径` 与 `<= 方法 路径 状态码 耗时`；未处理异常经 `onError` 统一打印堆栈并返回结构化 `{ error }`。
 
@@ -189,23 +191,23 @@ import { DecisionGraph, DecisionGraphRef } from '@gorules/jdm-editor';
 
 **Props**:
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `value` | `DecisionGraphType` | 图数据(nodes + edges) |
-| `onChange` | `(value: DecisionGraphType) => void` | 数据变更回调 |
-| `mode` | `'dev' \| 'business'` | UI 模式 |
-| `customNodes` | `JdmNode[]` | 自定义节点类型 |
-| `simulate` | `Simulation` | 模拟执行结果 |
-| `panels` | `Panel[]` | 侧面板配置 |
-| `reactFlowProOptions` | `object` | React Flow 配置 |
+| 属性                  | 类型                                 | 说明                  |
+| --------------------- | ------------------------------------ | --------------------- |
+| `value`               | `DecisionGraphType`                  | 图数据(nodes + edges) |
+| `onChange`            | `(value: DecisionGraphType) => void` | 数据变更回调          |
+| `mode`                | `'dev' \| 'business'`                | UI 模式               |
+| `customNodes`         | `JdmNode[]`                          | 自定义节点类型        |
+| `simulate`            | `Simulation`                         | 模拟执行结果          |
+| `panels`              | `Panel[]`                            | 侧面板配置            |
+| `reactFlowProOptions` | `object`                             | React Flow 配置       |
 
 **Ref 方法**:
 
-| 方法 | 说明 |
-|------|------|
+| 方法        | 说明     |
+| ----------- | -------- |
 | `fitView()` | 适应视图 |
-| `zoomIn()` | 放大 |
-| `zoomOut()` | 缩小 |
+| `zoomIn()`  | 放大     |
+| `zoomOut()` | 缩小     |
 
 ---
 
@@ -216,19 +218,15 @@ import { DecisionGraph, DecisionGraphRef } from '@gorules/jdm-editor';
 ```tsx
 import { DecisionTable } from '@gorules/jdm-editor';
 
-<DecisionTable
-  id={nodeId}
-  value={tableData}
-  onChange={setTableData}
-/>
+<DecisionTable id={nodeId} value={tableData} onChange={setTableData} />;
 ```
 
 **Props**:
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `id` | `string` | 节点 ID |
-| `value` | `DecisionTableType` | 表格数据 |
+| 属性       | 类型                                 | 说明         |
+| ---------- | ------------------------------------ | ------------ |
+| `id`       | `string`                             | 节点 ID      |
+| `value`    | `DecisionTableType`                  | 表格数据     |
 | `onChange` | `(value: DecisionTableType) => void` | 数据变更回调 |
 
 ---
@@ -246,15 +244,15 @@ import { GraphSimulator } from '@gorules/jdm-editor';
     const result = await axios.post('/api/simulate', { context, content: graph });
     setSimulation({ result: result.data });
   }}
-/>
+/>;
 ```
 
 **Props**:
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `onClear` | `() => void` | 清除模拟结果回调 |
-| `onRun` | `(params: { graph, context }) => Promise<void>` | 执行模拟回调 |
+| 属性      | 类型                                            | 说明             |
+| --------- | ----------------------------------------------- | ---------------- |
+| `onClear` | `() => void`                                    | 清除模拟结果回调 |
+| `onRun`   | `(params: { graph, context }) => Promise<void>` | 执行模拟回调     |
 
 ---
 
@@ -265,23 +263,19 @@ import { GraphSimulator } from '@gorules/jdm-editor';
 ```tsx
 import { JdmConfigProvider } from '@gorules/jdm-editor';
 
-<JdmConfigProvider
-  theme="dark"
-  locale="zh"
-  prefix="my-editor"
->
+<JdmConfigProvider theme="dark" locale="zh" prefix="my-editor">
   {children}
-</JdmConfigProvider>
+</JdmConfigProvider>;
 ```
 
 **Props**:
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `theme` | `'light' \| 'dark' \| 'auto'` | 主题模式 |
-| `locale` | `'en' \| 'zh'` | 语言 |
-| `prefix` | `string` | CSS 类名前缀 |
-| `dictionaries` | `Map<string, { label, value }[]>` | 自定义字典 |
+| 属性           | 类型                              | 说明         |
+| -------------- | --------------------------------- | ------------ |
+| `theme`        | `'light' \| 'dark' \| 'auto'`     | 主题模式     |
+| `locale`       | `'en' \| 'zh'`                    | 语言         |
+| `prefix`       | `string`                          | CSS 类名前缀 |
+| `dictionaries` | `Map<string, { label, value }[]>` | 自定义字典   |
 
 ---
 
@@ -309,16 +303,16 @@ const myNode = createJdmNode({
 
 **参数**:
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `kind` | `string` | 节点类型标识 |
-| `displayName` | `string` | 显示名称 |
-| `group` | `string` | 节点分组 |
-| `icon` | `ReactNode` | 图标组件 |
-| `shortDescription` | `string` | 简短描述 |
-| `handleLeft` | `boolean` | 是否显示左侧连接点 |
-| `handleRight` | `boolean` | 是否显示右侧连接点 |
-| `inputs` | `InputField[]` | 输入字段定义 |
+| 属性               | 类型           | 说明               |
+| ------------------ | -------------- | ------------------ |
+| `kind`             | `string`       | 节点类型标识       |
+| `displayName`      | `string`       | 显示名称           |
+| `group`            | `string`       | 节点分组           |
+| `icon`             | `ReactNode`    | 图标组件           |
+| `shortDescription` | `string`       | 简短描述           |
+| `handleLeft`       | `boolean`      | 是否显示左侧连接点 |
+| `handleRight`      | `boolean`      | 是否显示右侧连接点 |
+| `inputs`           | `InputField[]` | 输入字段定义       |
 
 ---
 
@@ -472,7 +466,7 @@ enum NodeKind {
 type CustomNodeExpression = {
   id: string;
   key: string;
-  value: string | string[];   // 数组形式(推荐)；旧 `;;` 分隔字符串上传时自动迁移为数组
+  value: string | string[]; // 数组形式(推荐)；旧 `;;` 分隔字符串上传时自动迁移为数组
   type?: string;
   returnSchema?: any;
 };

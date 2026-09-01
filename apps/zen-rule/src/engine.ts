@@ -9,9 +9,14 @@ import {
   evaluateExpressionSync,
 } from '@gorules/zen-engine';
 
-import { udfManager } from './register.js';
-import './contrib.js';
-import './lists.js';
+import { udfManager } from './register.ts';
+import './contrib/crypto.ts';
+import './contrib/debug.ts';
+import './contrib/debugui.ts';
+import './contrib/json_path.ts';
+import './contrib/template.ts';
+import './contrib/http.ts';
+import './contrib/roster.ts';
 
 const CUSTOM_HANDLER_META = '__meta__';
 
@@ -285,8 +290,9 @@ class ZenRule {
         }
         return { error: 'empty udf name not allowed' };
       }
-    } catch {
-      return null;
+    } catch (error) {
+      // UDF 抛错不下发为 null(否则 simulator 无痕吞错)：以结构化错误对象出现在 trace/输出中
+      return { error: error instanceof Error ? error.message : String(error) };
     }
   }
 

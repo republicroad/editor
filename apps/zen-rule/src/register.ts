@@ -60,6 +60,7 @@ export interface CustomFunctionTool {
 
 /** 自定义节点命名空间(namespace/tools 格式)，对应侧边栏 group */
 export interface CustomNodeNamespace {
+  /** 恒为 'namespace'(集合容器档；契约字段保留供未来场景) */
   type: 'namespace';
   title: string;
   name: string;
@@ -176,11 +177,31 @@ function normalizeUdfSchema(schema: UdfSchema): UdfSchema {
 class UDFManager {
   private functions = new Map<string, UdfEntry>();
 
+  /** 平台硬化：函数名与 namespace 名同名校验——裸 kind 解析中 namespace 优先，同名会使其中一方 kind 不可达 */
+  private warnNamespaceCollision(name: string, namespace: string): void {
+    const existingNamespaces = new Set<string>();
+    for (const entry of this.functions.values()) {
+      existingNamespaces.add(entry.schema.namespace ?? 'default');
+    }
+    if (name === namespace) {
+      console.warn(
+        `[udf] 函数 '${name}' 与其自身 namespace 同名：锁定 kind 与容器 kind 撞名，专用 spec 需以 override 函数名接管`,
+      );
+    } else if (existingNamespaces.has(name)) {
+      console.warn(`[udf] 函数 '${name}' 与现有 namespace 同名：裸 kind 解析时 namespace 优先，该函数锁定 kind 不可达`);
+    } else if ([...this.functions.keys()].some((fnName) => fnName === namespace)) {
+      console.warn(
+        `[udf] namespace '${namespace}' 与现有函数同名：其中函数的裸 kind 解析将命中 namespace（scoped 优先）`,
+      );
+    }
+  }
+
   registerFunction(fn: UdfFunction, namespace?: string, schema?: UdfSchema, nameOverride?: string): void {
     const name = nameOverride ?? fn.name;
     if (!name) {
       throw new Error('Function must have a name to register');
     }
+    this.warnNamespaceCollision(name, namespace ?? 'default');
     this.functions.set(name, {
       fn,
       schema: normalizeUdfSchema({
@@ -235,6 +256,7 @@ class UDFManager {
   /**
    * namespace 分组 + tools 格式，与 brdeapi.geetest.com/zen_custom_node_function.json 对齐。
    * 每个 namespace 对应侧边栏 group，每个 tool 对应 createJdmNode 的 kind。
+   * type 恒为 'namespace'(集合容器档；契约字段保留供未来场景)。
    */
   udfFunctionSchemaNamespaces(): CustomNodeNamespace[] {
     const namespaces = new Map<string, CustomNodeNamespace>();
@@ -277,6 +299,16 @@ function registerUdf(name: string, namespace?: string, schema?: UdfSchema): (fn:
     udfManager.registerFunction(fn, namespace, schema, name);
     return fn;
   };
+}
+
+/**
+ * ext 扩展文件专用注册器（ext 约定：文件名即 namespace，函数缺省注册到该 namespace）。
+ * 用法：const registerUdf = createExtRegister(import.meta.url); 之后 registerUdf(name, schema)(fn)。
+ * 需要显式指定 namespace 时使用全局 registerUdf(name, namespace, schema)。
+ */
+export function createExtRegister(importMetaUrl: string) {
+  const namespace = decodeURIComponent(importMetaUrl.split('/').pop() ?? '').replace(/\.[^.]+$/, '');
+  return (name: string, schema?: UdfSchema): ((fn: UdfFunction) => UdfFunction) => registerUdf(name, namespace, schema);
 }
 
 export { UDFManager, udfManager, registerUdf };

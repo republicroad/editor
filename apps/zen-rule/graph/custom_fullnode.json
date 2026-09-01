@@ -19,19 +19,25 @@
     {
       "type": "customNode",
       "content": {
-        "kind": "sum",
+        "kind": "UDF",
         "config": {
           "__meta__": {
             "customHandlerVersion": "v3",
             "user": "847960106@qq.com",
             "namespace": "710c5ba6752bdb626cda40a65079d382"
           },
-
           "expressions": [
             {
               "id": "52d41e3d-067d-4930-89bd-832b038cd08f",
               "key": "result",
-              "value": ["foo", "myvar ", "max([5, 8, 2, 11, 7])", "rand(100)", " 'fccd;;jny' ", "$nodes.expression1"],
+              "value": [
+                "foo",
+                "myvar ",
+                "max([5, 8, 2, 11, 7])",
+                "rand(100)",
+                " 'fccd;;jny' ",
+                "$nodes.expression1"
+              ],
               "type": "function"
             }
           ],

@@ -22,7 +22,8 @@
     "preview": "vite preview --host",
     "test:components": "bun test component-tests",
     "storybook": "storybook dev -p 9009",
-    "build:storybook": "storybook build -o storybook-static"
+    "build:storybook": "storybook build -o storybook-static",
+    "sync:schema:check": "bun scripts/sync-custom-node-schema.ts --check"
   },
   "packageManager": "bun@1.3.14",
   "engines": {

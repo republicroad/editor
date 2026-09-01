@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ZenRule, registerUdf, registerList } from './src/index.js';
+import { ZenRule, registerUdf, registerRoster } from './src/index.ts';
 
 // Register a UDF similar to the `foo` in main.py
 registerUdf('foo', undefined, {
@@ -21,10 +21,10 @@ async function testZenruleFoo() {
   let filename: string;
   if (import.meta.url.startsWith('file:///$bunfs/root')) {
     const executionDirectory = process.execPath.split('/').slice(0, -1).join('/');
-    filename = resolve(executionDirectory, 'custom_fullnode.json');
+    filename = resolve(executionDirectory, 'graph', 'custom_fullnode.json');
   } else {
     const executionDirectory = import.meta.dir;
-    filename = resolve(executionDirectory, 'custom_fullnode.json');
+    filename = resolve(executionDirectory, 'graph', 'custom_fullnode.json');
   }
   const key = filename;
   if (!zr.getDecisionCache(key)) {
@@ -57,10 +57,10 @@ async function testZenrule() {
   let filename: string;
   if (import.meta.url.startsWith('file:///$bunfs/root')) {
     const execDir = process.execPath.split('/').slice(0, -1).join('/');
-    filename = resolve(execDir, 'custom.json');
+    filename = resolve(execDir, 'graph', 'custom.json');
   } else {
     const execDir = import.meta.dir;
-    filename = resolve(execDir, 'custom.json');
+    filename = resolve(execDir, 'graph', 'custom.json');
   }
   const key = filename;
   if (!zr.getDecisionCache(key)) {
@@ -74,10 +74,10 @@ async function testZenrule() {
   }
 }
 
-async function testZenruleQueryList() {
-  registerList({ name: 'blacklist', description: '手机号黑名单', items: ['13800000001', '13800000002'] });
+async function testZenruleRoster() {
+  registerRoster({ name: 'blacklist', description: '手机号黑名单', items: ['13800000001', '13800000002'] });
 
-  const buildContent = (value: string): unknown => ({
+  const buildContent = (value: string): object => ({
     contentType: 'application/vnd.gorules.decision',
     nodes: [
       {
@@ -95,9 +95,9 @@ async function testZenruleQueryList() {
       {
         type: 'customNode',
         content: {
-          kind: 'risk.query_list',
+          kind: 'roster.roster',
           config: {
-            expressions: [{ id: 'expr_1', key: 'result', value: ['query_list', '"blacklist"', value] }],
+            expressions: [{ id: 'expr_1', key: 'result', value: ['roster', '"blacklist"', value] }],
             passThrough: true,
             inputField: null,
             outputPath: null,
@@ -127,25 +127,25 @@ async function testZenruleQueryList() {
     result?: { result?: { hit?: boolean } };
   };
   if (hitResult.result?.result?.hit !== true) {
-    throw new Error(`query_list hit expected true, got: ${JSON.stringify(hitResult.result)}`);
+    throw new Error(`roster hit expected true, got: ${JSON.stringify(hitResult.result)}`);
   }
-  console.log('zen rule query_list hit:', JSON.stringify(hitResult.result));
+  console.log('zen rule roster hit:', JSON.stringify(hitResult.result));
 
   const missDecision = zr.createDecision(buildContent('"13800009999"'));
   const missResult = (await missDecision.evaluate({ input: {} }, { trace: false })) as {
     result?: { result?: { hit?: boolean } };
   };
   if (missResult.result?.result?.hit !== false) {
-    throw new Error(`query_list miss expected false, got: ${JSON.stringify(missResult.result)}`);
+    throw new Error(`roster miss expected false, got: ${JSON.stringify(missResult.result)}`);
   }
-  console.log('zen rule query_list miss:', JSON.stringify(missResult.result));
+  console.log('zen rule roster miss:', JSON.stringify(missResult.result));
 }
 
-async function testZenruleQueryListMulti() {
-  registerList({ name: 'blacklist', description: '手机号黑名单', items: ['13800000001', '13800000002'] });
-  registerList({ name: 'whitelist', description: '白名单', items: ['alice@example.com', 'bob@example.com'] });
+async function testZenruleRosterMulti() {
+  registerRoster({ name: 'blacklist', description: '手机号黑名单', items: ['13800000001', '13800000002'] });
+  registerRoster({ name: 'whitelist', description: '白名单', items: ['alice@example.com', 'bob@example.com'] });
 
-  const buildContent = (value1: string, value2: string): unknown => ({
+  const buildContent = (value1: string, value2: string): object => ({
     contentType: 'application/vnd.gorules.decision',
     nodes: [
       {
@@ -163,11 +163,11 @@ async function testZenruleQueryListMulti() {
       {
         type: 'customNode',
         content: {
-          kind: 'risk.query_list',
+          kind: 'roster.roster',
           config: {
             expressions: [
-              { id: 'expr_1', key: 'result', value: ['query_list', '"blacklist"', value1] },
-              { id: 'expr_2', key: 'result2', value: ['query_list', '"whitelist"', value2] },
+              { id: 'expr_1', key: 'result', value: ['roster', '"blacklist"', value1] },
+              { id: 'expr_2', key: 'result2', value: ['roster', '"whitelist"', value2] },
             ],
             passThrough: true,
             inputField: null,
@@ -198,20 +198,18 @@ async function testZenruleQueryListMulti() {
     result?: { result?: { hit?: boolean }; result2?: { hit?: boolean } };
   };
   if (hitBothResult.result?.result?.hit !== true || hitBothResult.result?.result2?.hit !== true) {
-    throw new Error(`query_list multi both-hit expected true, got: ${JSON.stringify(hitBothResult.result)}`);
+    throw new Error(`roster multi both-hit expected true, got: ${JSON.stringify(hitBothResult.result)}`);
   }
-  console.log('zen rule query_list multi both-hit:', JSON.stringify(hitBothResult.result));
+  console.log('zen rule roster multi both-hit:', JSON.stringify(hitBothResult.result));
 
   const mixed = zr.createDecision(buildContent('"13800009999"', '"bob@example.com"'));
   const mixedResult = (await mixed.evaluate({ input: {} }, { trace: false })) as {
     result?: { result?: { hit?: boolean }; result2?: { hit?: boolean } };
   };
   if (mixedResult.result?.result?.hit !== false || mixedResult.result?.result2?.hit !== true) {
-    throw new Error(
-      `query_list multi mixed expected hit=false/result2=true, got: ${JSON.stringify(mixedResult.result)}`,
-    );
+    throw new Error(`roster multi mixed expected hit=false/result2=true, got: ${JSON.stringify(mixedResult.result)}`);
   }
-  console.log('zen rule query_list multi mixed:', JSON.stringify(mixedResult.result));
+  console.log('zen rule roster multi mixed:', JSON.stringify(mixedResult.result));
 }
 
 async function main() {
@@ -219,10 +217,10 @@ async function main() {
   await testZenrule();
   console.log('=== test_zenrule_foo ===');
   await testZenruleFoo();
-  console.log('=== test_zenrule_query_list ===');
-  await testZenruleQueryList();
-  console.log('=== test_zenrule_query_list_multi ===');
-  await testZenruleQueryListMulti();
+  console.log('=== test_zenrule_roster ===');
+  await testZenruleRoster();
+  console.log('=== test_zenrule_roster_multi ===');
+  await testZenruleRosterMulti();
 }
 
 main().catch(console.error);

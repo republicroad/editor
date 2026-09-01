@@ -1,14 +1,15 @@
-export { ZenRule } from './engine.js';
-export { getExecContext, runWithExecContext, type ExecContext } from './exec-context.js';
-export { registerList, listLists, getList, deleteList, queryList, type NamedList } from './lists.js';
+export { ZenRule } from './engine.ts';
+export { getExecContext, runWithExecContext, type ExecContext } from './exec-context.ts';
+export { registerRoster, listRosters, getRoster, deleteRoster, queryRoster, type Roster } from './roster.ts';
 export {
   UDFManager,
   udfManager,
   registerUdf,
+  createExtRegister,
   type UdfSchema,
   type UdfSchemaParameter,
   type JsonSchema,
   type JsonSchemaProperty,
   type CustomFunctionTool,
   type CustomNodeNamespace,
-} from './register.js';
+} from './register.ts';

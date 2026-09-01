@@ -3,7 +3,10 @@
     "version": "1.0.0",
     "author": "847960106@qq.com",
     "description": "login risk check",
-    "tags": ["login", "risk control"]
+    "tags": [
+      "login",
+      "risk control"
+    ]
   },
   "id": "710c5ba6752bdb626cda40a65079d382",
   "contentType": "application/vnd.gorules.decision",
@@ -26,7 +29,7 @@
       },
       "name": "customNode1",
       "content": {
-        "kind": "sum",
+        "kind": "debug",
         "config": {
           "__meta__": {
             "customHandlerVersion": "v3",
@@ -48,7 +51,14 @@
             {
               "id": "52d41e3d-067d-4930-89bd-832b038cd08f",
               "key": "debug_args",
-              "value": ["inout", "myvar", "max([5, 8, 2, 11, 7])", "$nodes", "'fccd;;jny'", "3+4"]
+              "value": [
+                "inout",
+                "myvar",
+                "max([5, 8, 2, 11, 7])",
+                "$nodes",
+                "'fccd;;jny'",
+                "3+4"
+              ]
             }
           ]
         }

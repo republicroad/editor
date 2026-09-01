@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { httpRequest } from './contrib.js';
-import { udfManager } from './register.js';
+import { udfManager } from '../register.ts';
+import { httpRequest } from './http.ts';
 
 let server: ReturnType<typeof Bun.serve>;
 let baseUrl: string;

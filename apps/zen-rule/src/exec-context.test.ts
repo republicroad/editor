@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { getExecContext, runWithExecContext } from './exec-context.js';
-import { registerUdf, udfManager } from './register.js';
+import { getExecContext, runWithExecContext } from './exec-context.ts';
+import { registerUdf, udfManager } from './register.ts';
 
 describe('exec-context', () => {
   test('无上下文时返回 undefined', () => {

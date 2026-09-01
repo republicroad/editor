@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import './contrib.js';
-import { udfManager } from './register.js';
+import { udfManager } from '../register.ts';
+import './crypto.ts';
 
 const callCrypto = async (...args: unknown[]): Promise<string> => {
   const kwargs = udfManager.funcBindParams('crypto', args);

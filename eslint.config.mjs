@@ -68,4 +68,19 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    // jdm 自定义节点 spec/hook 文件：导出节点规格(createJdmNode 产物)与配套常量——非纯 React 组件文件
+    files: [
+      'src/components/custom-node/**/*.{ts,tsx}',
+      'src/components/ui/**/*.{ts,tsx}',
+      'src/components/reui/**/*.{ts,tsx}',
+      'src/context/theme.provider.tsx',
+      'src/hooks/useCustomNodes.ts',
+      'src/lib/custom-node-registry.tsx',
+      'src/shell/editor-shell.context.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ]);

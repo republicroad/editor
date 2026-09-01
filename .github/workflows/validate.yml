@@ -46,6 +46,8 @@ jobs:
 
       - name: 'Test (apps)'
         run: bun test apps/zen-rule apps/editor
+      - name: 'Check custom-node schema fixture'
+        run: bun run sync:schema:check
 
   build:
     name: 'Build'

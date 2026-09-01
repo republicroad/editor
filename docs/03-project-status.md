@@ -226,6 +226,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+**最新变更(2026-09-01，第三十四批：CI 夹具门禁 + lint 告警清零 + multi2.json 归位)：**
+- **CI 夹具门禁挂载**：validate.yml codequality job 增 `bun run sync:schema:check`——ext 变更未刷新夹具时 CI 直接失败
+- **lint 告警清零**：eslint 新增作用域(custom-node/** + useCustomNodes + custom-node-registry + editor-shell.context + ui/** + reui/** + theme.provider)关停 `react-refresh/only-export-components`——spec/hook/context 文件导出节点规格与常量属既定模式(与 reui vendored 先例一致)；18→0 warnings
+- **multi2.json 归位**：`apps/editor/src/multi2.json`(决策图数据)→`apps/editor/graphs/`
+- 门禁：lint 0 errors/0 warnings、typecheck×2 绿、主仓 199/apps 72/组件 33 pass、smoke exit 0；**未提交，待安排**
+
 
 **最新变更(2026-09-01，第三十三批：移除域裁决落档)：**
 

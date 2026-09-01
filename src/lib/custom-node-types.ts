@@ -47,7 +47,8 @@ export interface CustomFunctionTool {
 }
 
 export interface CustomNodeNamespace {
-  type: 'namespace';
+  /** 恒为 'namespace'(集合容器档；契约字段保留供未来场景) */
+  type?: 'namespace';
   title: string;
   name: string;
   description?: string;
@@ -61,6 +62,8 @@ export type CustomNodeExpression = {
 };
 
 export type CustomNodeConfig = {
+  /** 锁定节点 UI 标记：true 表示此节点有专属页面设计（数据侧显式声明，缺省=通用锁定表格 UI） */
+  locked?: true;
   inputField?: string | null;
   outputPath?: string | null;
   passThrough?: boolean;

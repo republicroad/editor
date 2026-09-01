@@ -264,7 +264,7 @@ describe('HttpRequestNode canvas card', () => {
     renderNodeCard();
 
     expect(screen.getByTestId('graph-node-name').textContent).toContain('HTTP 请求1');
-    expect(screen.getByText('contrib.http_request')).toBeDefined();
+    expect(screen.getByText('http_request')).toBeDefined();
     expect(screen.getByText('POST')).toBeDefined();
     expect(screen.getByText('GET')).toBeDefined();
     expect(screen.getByText('2')).toBeDefined();

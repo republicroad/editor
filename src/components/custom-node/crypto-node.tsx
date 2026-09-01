@@ -10,6 +10,7 @@ import {
 } from '@gorules/jdm-editor';
 import { FingerprintIcon } from 'lucide-react';
 import React, { useState } from 'react';
+import { LockedCornerBadge } from './locked-corner-badge';
 
 import { uid } from '../../lib/custom-node-registry';
 import {
@@ -47,7 +48,7 @@ import { Switch } from '../ui/switch';
 import { Hint } from './key-value-editor';
 import css from './custom-node.module.css';
 
-const KIND = 'contrib.crypto';
+const KIND = 'crypto';
 
 const ALGORITHM_LABELS: Record<CryptoAlgorithm, string> = {
   md5: 'MD5',
@@ -300,6 +301,7 @@ export const CryptoTab: React.FC<{ id: string }> = ({ id }) => {
 
   const persistExpressions = (next: CustomNodeExpression[]) => {
     const nextConfig: CustomNodeConfig = {
+      locked: config?.locked,
       inputField: config?.inputField ?? null,
       outputPath: config?.outputPath ?? null,
       passThrough: config?.passThrough ?? true,
@@ -414,6 +416,7 @@ const CryptoNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpecif
       name={data.name}
       isSelected={selected}
       noBodyPadding
+      className="relative"
       actions={[
         <Button
           key="edit-crypto"
@@ -427,8 +430,11 @@ const CryptoNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpecif
         </Button>,
       ]}
     >
+      {config?.config?.locked && <LockedCornerBadge />}
       <div className={css.summary}>
-        <span className={css.kind}>{KIND}</span>
+        <Badge variant="outline" className="font-mono text-[11px] opacity-75">
+          {KIND}
+        </Badge>
         <div className={css.rows}>
           {expressions.length === 0 && (
             <div className={css.row}>
@@ -467,12 +473,13 @@ const CryptoNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpecif
 export const cryptoNode = createJdmNode({
   kind: KIND,
   displayName: '摘要签名',
-  group: 'contrib',
+  group: 'crypto',
   shortDescription: '计算字符串 MD5/SHA 摘要或 HMAC 签名，支持多个并行摘要实例',
   icon: <FingerprintIcon className="size-4" />,
   generateNode: ({ index }) => ({
     name: `${KIND}${index}`,
     config: {
+      locked: true,
       inputField: null,
       outputPath: null,
       passThrough: true,

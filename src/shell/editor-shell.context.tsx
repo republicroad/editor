@@ -15,7 +15,6 @@ type CustomNodeSpec = CustomNodeSpecification<object, any>;
 
 export interface EditorShellContextValue {
   customNodes: CustomNodeSpec[];
-  summaryCustomNodes: CustomNodeSpec[];
   schema: CustomNodeNamespace[] | null;
   ready: boolean;
   userResolver: UserResolver;
@@ -31,14 +30,14 @@ export const EditorShellProvider: React.FC<{ options?: EditorShellOptions; child
   children,
 }) => {
   const { schemaSource, authAdapter, simulate, persistence } = options ?? {};
-  const { customNodes, summaryCustomNodes, schema, ready } = useCustomNodes({ schemaSource });
+  const { customNodes, schema, ready } = useCustomNodes({ schemaSource });
 
   const userResolver = useMemo(() => createUserResolver(authAdapter ?? createAnonymousAdapter()), [authAdapter]);
   const runSimulate = useMemo(() => simulate ?? createDefaultSimulate(), [simulate]);
 
   const value = useMemo<EditorShellContextValue>(
-    () => ({ customNodes, summaryCustomNodes, schema, ready, userResolver, runSimulate, persistence }),
-    [customNodes, summaryCustomNodes, schema, ready, userResolver, runSimulate, persistence],
+    () => ({ customNodes, schema, ready, userResolver, runSimulate, persistence }),
+    [customNodes, schema, ready, userResolver, runSimulate, persistence],
   );
 
   return <EditorShellContext.Provider value={value}>{children}</EditorShellContext.Provider>;

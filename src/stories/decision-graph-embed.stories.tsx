@@ -28,8 +28,9 @@ const initialGraph: DecisionGraphType = {
       position: { x: 360, y: 100 },
       name: 'HTTP 请求',
       content: {
-        name: 'contrib.http_request0',
+        name: 'http_request0',
         config: {
+          locked: true,
           inputField: null,
           outputPath: null,
           passThrough: true,
@@ -58,13 +59,14 @@ const initialGraph: DecisionGraphType = {
       position: { x: 360, y: 360 },
       name: '查询名单',
       content: {
-        name: 'risk.query_list0',
+        name: 'roster0',
         config: {
+          locked: true,
           inputField: null,
           outputPath: null,
           passThrough: true,
           expressions: [
-            { id: 'expr-query-1', key: 'result', value: ['query_list', JSON.stringify('ipv4_deny'), 'input.ip'] },
+            { id: 'expr-query-1', key: 'result', value: ['roster', JSON.stringify('ipv4_deny'), 'input.ip'] },
           ],
         },
       },

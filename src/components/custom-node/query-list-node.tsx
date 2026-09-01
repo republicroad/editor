@@ -29,8 +29,9 @@ import { Badge } from '../reui/badge';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import css from './custom-node.module.css';
+import { LockedCornerBadge } from './locked-corner-badge';
 
-interface ListOption {
+interface RosterOption {
   name: string;
   size: number;
 }
@@ -55,19 +56,19 @@ const useNodeConfig = (id: string): CustomNodeConfig | undefined =>
     return config as CustomNodeConfig | undefined;
   });
 
-const useListOptions = (search: string): { options: ListOption[]; loading: boolean } => {
-  const [options, setOptions] = useState<ListOption[]>([]);
+const useRosterOptions = (search: string): { options: RosterOption[]; loading: boolean } => {
+  const [options, setOptions] = useState<RosterOption[]>([]);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
     const timer = setTimeout(() => {
       setLoading(true);
-      fetch(`/api/lists?q=${encodeURIComponent(search)}`, { signal: controller.signal })
+      fetch(`/api/rosters?q=${encodeURIComponent(search)}`, { signal: controller.signal })
         .then((response) => response.json())
         .then((data) => {
           if (!cancelled && Array.isArray(data)) {
-            setOptions(data as ListOption[]);
+            setOptions(data as RosterOption[]);
           }
         })
         .catch(() => {
@@ -90,15 +91,15 @@ const useListOptions = (search: string): { options: ListOption[]; loading: boole
   return { options, loading };
 };
 
-const parseExpr = (expr?: CustomNodeExpression): { listName: string; valueExpr: string } => {
+const parseExpr = (expr?: CustomNodeExpression): { roster: string; valueExpr: string } => {
   const args = expr ? parseOperatorArgs(expr.value) : [];
   return {
-    listName: args[1] ? unquote(args[1]) : '',
+    roster: args[1] ? unquote(args[1]) : '',
     valueExpr: args[2] ?? '',
   };
 };
 
-const toExprValue = (listName: string, valueExpr: string): string[] => ['query_list', quote(listName), valueExpr];
+const toExprValue = (roster: string, valueExpr: string): string[] => ['roster', quote(roster), valueExpr];
 
 const nextExprKey = (list: CustomNodeExpression[]): string => {
   const used = new Set(list.map((item) => item.key));
@@ -115,17 +116,17 @@ interface QueryInstanceEditorProps {
 }
 
 const QueryInstanceEditor: React.FC<QueryInstanceEditorProps> = ({ expr, onChange }) => {
-  const { listName, valueExpr } = parseExpr(expr);
-  const [query, setQuery] = useState(listName);
-  const [prevListName, setPrevListName] = useState(listName);
-  if (prevListName !== listName) {
-    setPrevListName(listName);
-    setQuery(listName);
+  const { roster, valueExpr } = parseExpr(expr);
+  const [query, setQuery] = useState(roster);
+  const [prevroster, setPrevRoster] = useState(roster);
+  if (prevroster !== roster) {
+    setPrevRoster(roster);
+    setQuery(roster);
   }
-  const { options, loading } = useListOptions(query);
-  const listOption = options.find((option) => option.name === listName);
+  const { options, loading } = useRosterOptions(query);
+  const RosterOption = options.find((option) => option.name === roster);
 
-  const handleListChange = (value: string, eventDetails: AutocompletePrimitive.Root.ChangeEventDetails) => {
+  const handleRosterChange = (value: string, eventDetails: AutocompletePrimitive.Root.ChangeEventDetails) => {
     setQuery(value);
     if (value === '' || eventDetails?.reason === 'item-press' || options.some((option) => option.name === value)) {
       onChange({ ...expr, value: toExprValue(value, valueExpr) });
@@ -137,8 +138,8 @@ const QueryInstanceEditor: React.FC<QueryInstanceEditorProps> = ({ expr, onChang
       <Autocomplete
         items={options}
         value={query}
-        onValueChange={handleListChange}
-        itemToStringValue={(item: unknown) => (item as ListOption).name}
+        onValueChange={handleRosterChange}
+        itemToStringValue={(item: unknown) => (item as RosterOption).name}
         filter={null}
         openOnInputClick
       >
@@ -154,7 +155,7 @@ const QueryInstanceEditor: React.FC<QueryInstanceEditorProps> = ({ expr, onChang
             {loading ? '搜索中…' : options.length > 0 ? `${options.length} 个名单` : '未找到匹配名单'}
           </AutocompleteStatus>
           <AutocompleteList>
-            {(option: ListOption) => (
+            {(option: RosterOption) => (
               <AutocompleteItem key={option.name} value={option} className="rounded-lg">
                 <span>{option.name}</span>
                 <Badge variant="secondary" size="sm" radius="full">
@@ -167,7 +168,7 @@ const QueryInstanceEditor: React.FC<QueryInstanceEditorProps> = ({ expr, onChang
       </Autocomplete>
       <CodeEditor
         value={valueExpr}
-        onChange={(value) => onChange({ ...expr, value: toExprValue(listName, value) })}
+        onChange={(value) => onChange({ ...expr, value: toExprValue(roster, value) })}
         placeholder="Zen 表达式，如 input.phone"
         maxRows={3}
       />
@@ -182,10 +183,10 @@ const QueryInstanceEditor: React.FC<QueryInstanceEditorProps> = ({ expr, onChang
           onChange={(event) => onChange({ ...expr, key: event.target.value })}
         />
       </div>
-      {listName && listOption && (
+      {roster && RosterOption && (
         <Alert variant="info">
           <ShieldSearchIcon />
-          <AlertTitle>{`命中名单 ${listName}(${listOption.size} 条)`}</AlertTitle>
+          <AlertTitle>{`命中名单 ${roster}(${RosterOption.size} 条)`}</AlertTitle>
           <AlertDescription>执行时以服务端名单为准。</AlertDescription>
         </Alert>
       )}
@@ -203,7 +204,7 @@ interface QueryListRowProps {
 }
 
 const QueryListRow: React.FC<QueryListRowProps> = ({ index, expr, selected, hit, onSelect, onRemove }) => {
-  const { listName } = parseExpr(expr);
+  const { roster } = parseExpr(expr);
 
   return (
     <div
@@ -233,7 +234,7 @@ const QueryListRow: React.FC<QueryListRowProps> = ({ index, expr, selected, hit,
           </Button>
         </div>
       </div>
-      <div className={css.listRowValue}>{listName || '未选择'}</div>
+      <div className={css.rosterRowValue}>{roster || '未选择'}</div>
     </div>
   );
 };
@@ -252,6 +253,7 @@ export const QueryListTab: React.FC<{ id: string }> = ({ id }) => {
 
   const persistExpressions = (next: CustomNodeExpression[]) => {
     const nextConfig: CustomNodeConfig = {
+      locked: config?.locked,
       inputField: config?.inputField ?? null,
       outputPath: config?.outputPath ?? null,
       passThrough: config?.passThrough ?? true,
@@ -351,6 +353,7 @@ const QueryListNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpe
       name={data.name}
       isSelected={selected}
       noBodyPadding
+      className="relative"
       actions={[
         <Button
           key="edit-query-list"
@@ -364,8 +367,11 @@ const QueryListNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpe
         </Button>,
       ]}
     >
+      {config?.locked && <LockedCornerBadge />}
       <div className={css.summary}>
-        <span className={css.kind}>risk.query_list</span>
+        <Badge variant="outline" className="font-mono text-[11px] opacity-75">
+          roster
+        </Badge>
         <div className={css.rows}>
           {expressions.length === 0 && (
             <div className={css.row}>
@@ -373,12 +379,12 @@ const QueryListNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpe
             </div>
           )}
           {expressions.map((expr, index) => {
-            const { listName } = parseExpr(expr);
+            const { roster } = parseExpr(expr);
             const hit = outputs[expr.key]?.hit;
             return (
               <div className={css.row} key={expr.id}>
                 <span className={css.rowKey}>查询 {index + 1}</span>
-                <span className={css.rowValue}>{listName || '未选择'}</span>
+                <span className={css.rowValue}>{roster || '未选择'}</span>
                 {hit !== undefined ? (
                   <Badge variant={hit ? 'success' : 'secondary'} size="xs" radius="full">
                     {hit ? '命中' : '未命中'}
@@ -398,14 +404,15 @@ const QueryListNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpe
 };
 
 export const queryListNode = createJdmNode({
-  kind: 'risk.query_list',
+  kind: 'roster',
   displayName: '查询名单',
   group: '风险名单',
   shortDescription: '在服务端名单中查询某个值(支持多个查询实例)',
   icon: <ShieldSearchIcon className="size-4" />,
   generateNode: ({ index }) => ({
-    name: `risk.query_list${index}`,
+    name: `roster${index}`,
     config: {
+      locked: true,
       inputField: null,
       outputPath: null,
       passThrough: true,

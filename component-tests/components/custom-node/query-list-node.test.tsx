@@ -21,10 +21,10 @@ const { QueryListTab, queryListNode } = await import('../../../src/components/cu
 
 const NODE_ID = 'ql-node';
 
-const makeExpr = (id: string, key: string, listName = '', valueExpr = '') => ({
+const makeExpr = (id: string, key: string, roster = '', valueExpr = '') => ({
   id,
   key,
-  value: ['query_list', JSON.stringify(listName), valueExpr],
+  value: ['roster', JSON.stringify(roster), valueExpr],
 });
 
 const seedQueries = (expressions: ReturnType<typeof makeExpr>[]) => {
@@ -141,7 +141,7 @@ describe('QueryListNode canvas card', () => {
     };
     render(<NodeView id={NODE_ID} data={{ name: '查询名单1' }} selected={false} specification={{}} />);
 
-    expect(screen.getByText('risk.query_list')).toBeDefined();
+    expect(screen.getByText('roster')).toBeDefined();
     expect(screen.getByText('ipv4_deny')).toBeDefined();
     expect(screen.getByText('未选择')).toBeDefined();
     expect(screen.getByText('命中')).toBeDefined();

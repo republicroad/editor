@@ -35,8 +35,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Hint, KeyValueEditor } from './key-value-editor';
 import css from './custom-node.module.css';
+import { LockedCornerBadge } from './locked-corner-badge';
 
-const KIND = 'contrib.http_request';
+const KIND = 'http_request';
 
 type MethodBadgeVariant = 'info-light' | 'primary-light' | 'warning-light' | 'destructive-light' | 'secondary';
 
@@ -162,6 +163,7 @@ const HttpRequestNode: React.FC<MinimalNodeProps & { specification: MinimalNodeS
       name={data.name}
       isSelected={selected}
       noBodyPadding
+      className="relative"
       actions={[
         <Button
           key="edit-http-request"
@@ -175,8 +177,11 @@ const HttpRequestNode: React.FC<MinimalNodeProps & { specification: MinimalNodeS
         </Button>,
       ]}
     >
+      {config?.locked && <LockedCornerBadge />}
       <div className={css.summary}>
-        <span className={css.kind}>{KIND}</span>
+        <Badge variant="outline" className="font-mono text-[11px] opacity-75">
+          {KIND}
+        </Badge>
         <div className={css.rows}>
           {expressions.length === 0 && (
             <div className={css.row}>
@@ -228,6 +233,7 @@ export const HttpRequestTab: React.FC<{ id: string }> = ({ id }) => {
   const persistConfig = (next: CustomNodeExpression[]) => {
     graphActions.updateNode(id, (draft) => {
       draft.content.config = {
+        locked: config?.locked,
         inputField: config?.inputField ?? null,
         outputPath: config?.outputPath ?? null,
         passThrough: config?.passThrough ?? true,
@@ -543,12 +549,13 @@ export const HttpRequestTab: React.FC<{ id: string }> = ({ id }) => {
 export const httpRequestNode = createJdmNode({
   kind: KIND,
   displayName: 'HTTP 请求',
-  group: 'contrib',
+  group: 'http',
   shortDescription: '发起 HTTP 请求并返回响应(status / headers / body)，支持多个并行请求实例',
   icon: <GlobeIcon className="size-4" />,
   generateNode: ({ index }) => ({
     name: `${KIND}${index}`,
     config: {
+      locked: true,
       inputField: null,
       outputPath: null,
       passThrough: true,

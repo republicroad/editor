@@ -20,8 +20,10 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { KeyValueEditor } from './key-value-editor';
 import css from './custom-node.module.css';
+import { Badge } from '@/components/ui/badge';
+import { LockedCornerBadge } from './locked-corner-badge';
 
-const KIND = 'contrib.template';
+const KIND = 'template';
 const TEMPLATE_UDF = 'template';
 
 const useNodeConfig = (id: string): CustomNodeConfig | undefined =>
@@ -160,6 +162,7 @@ export const TemplateTab: React.FC<{ id: string }> = ({ id }) => {
 
   const persistExpressions = (next: CustomNodeExpression[]) => {
     const nextConfig: CustomNodeConfig = {
+      locked: config?.locked,
       inputField: config?.inputField ?? null,
       outputPath: config?.outputPath ?? null,
       passThrough: config?.passThrough ?? true,
@@ -261,6 +264,7 @@ const TemplateNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
       name={data.name}
       isSelected={selected}
       noBodyPadding
+      className="relative"
       actions={[
         <Button
           key="edit-template"
@@ -274,8 +278,11 @@ const TemplateNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
         </Button>,
       ]}
     >
+      {config?.locked && <LockedCornerBadge />}
       <div className={css.summary}>
-        <span className={css.kind}>{KIND}</span>
+        <Badge variant="outline" className="font-mono text-[11px] opacity-75">
+          {KIND}
+        </Badge>
         <div className={css.rows}>
           {expressions.length === 0 && (
             <div className={css.row}>
@@ -305,12 +312,13 @@ const TemplateNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
 export const templateNode = createJdmNode({
   kind: KIND,
   displayName: '模板渲染',
-  group: 'contrib',
+  group: 'template',
   shortDescription: '渲染 ${var} 插值模板字符串，支持多个并行模板实例',
   icon: <ReplaceIcon className="size-4" />,
   generateNode: ({ index }) => ({
     name: `${KIND}${index}`,
     config: {
+      locked: true,
       inputField: null,
       outputPath: null,
       passThrough: true,

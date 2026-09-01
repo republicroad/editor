@@ -37,7 +37,6 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { Separator } from '../components/ui/separator';
-import { Switch } from '../components/ui/switch';
 import { DirectedGraph } from 'graphology';
 import { hasCycle } from 'graphology-dag';
 import { Stack } from '../components/stack.tsx';
@@ -45,7 +44,6 @@ import { match, P } from 'ts-pattern';
 
 import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
-import { readStorage, writeStorage } from '../lib/storage-key.ts';
 import { loadFromRemote, listRemoteVersions, saveToRemote, type GraphLike } from '../lib/graph-persistence.ts';
 import { createGraphsHttpAdapter, EditorShellProvider, useEditorShell } from '../shell';
 
@@ -131,12 +129,7 @@ const DecisionSimpleInner: React.FC = () => {
   const graphRef = React.useRef<DecisionGraphRef>(null);
   const { themePreference, setThemePreference } = useTheme();
 
-  const { customNodes, summaryCustomNodes, schema, userResolver, runSimulate, persistence } = useEditorShell();
-  const [summaryCard, setSummaryCard] = useState(() => readStorage('custom-node-summary-card') === 'true');
-  const toggleSummaryCard = (checked: boolean) => {
-    setSummaryCard(checked);
-    writeStorage('custom-node-summary-card', String(checked));
-  };
+  const { customNodes, schema, userResolver, runSimulate, persistence } = useEditorShell();
 
   const [searchParams] = useSearchParams();
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle>();
@@ -559,14 +552,6 @@ const DecisionSimpleInner: React.FC = () => {
           }
           ghost={false}
           extra={[
-            <span key="summary-switch" className="inline-flex items-center gap-2 whitespace-nowrap">
-              <span className="text-xs text-muted-foreground">摘要卡片</span>
-              <Switch
-                checked={summaryCard}
-                onCheckedChange={toggleSummaryCard}
-                className="h-4 w-7 data-[state=checked]:bg-primary [&>span]:size-3 data-[state=checked]:[&>span]:translate-x-3"
-              />
-            </span>,
             <DropdownMenu key="theme-preference">
               <DropdownMenuTrigger asChild>
                 <Button type="button" variant="ghost" size="icon" className="size-8" aria-label="切换主题">
@@ -591,7 +576,7 @@ const DecisionSimpleInner: React.FC = () => {
           <div className={classes.content}>
             <DecisionGraph
               mode={mode}
-              customNodes={summaryCard ? summaryCustomNodes : customNodes}
+              customNodes={customNodes}
               customFunctions={schema ?? undefined}
               ref={graphRef}
               value={graph}

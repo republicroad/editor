@@ -19,8 +19,10 @@ import TrashSquareIcon from '../../reui/icons/default/outline/trash-square';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import css from './custom-node.module.css';
+import { Badge } from '@/components/ui/badge';
+import { LockedCornerBadge } from './locked-corner-badge';
 
-const KIND = 'contrib.json_path';
+const KIND = 'json_path';
 
 const useNodeConfig = (id: string): CustomNodeConfig | undefined =>
   useDecisionGraphState(({ decisionGraph }) => {
@@ -139,6 +141,7 @@ export const JsonPathTab: React.FC<{ id: string }> = ({ id }) => {
 
   const persistExpressions = (next: CustomNodeExpression[]) => {
     const nextConfig: CustomNodeConfig = {
+      locked: config?.locked,
       inputField: config?.inputField ?? null,
       outputPath: config?.outputPath ?? null,
       passThrough: config?.passThrough ?? true,
@@ -240,6 +243,7 @@ const JsonPathNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
       name={data.name}
       isSelected={selected}
       noBodyPadding
+      className="relative"
       actions={[
         <Button
           key="edit-json-path"
@@ -253,8 +257,11 @@ const JsonPathNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
         </Button>,
       ]}
     >
+      {config?.locked && <LockedCornerBadge />}
       <div className={css.summary}>
-        <span className={css.kind}>{KIND}</span>
+        <Badge variant="outline" className="font-mono text-[11px] opacity-75">
+          {KIND}
+        </Badge>
         <div className={css.rows}>
           {expressions.length === 0 && (
             <div className={css.row}>
@@ -283,12 +290,13 @@ const JsonPathNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
 export const jsonPathNode = createJdmNode({
   kind: KIND,
   displayName: 'JSON 提取',
-  group: 'contrib',
+  group: 'json_path',
   shortDescription: '按 JSONPath 从数据中提取值，支持多个并行提取实例',
   icon: <ListTreeIcon className="size-4" />,
   generateNode: ({ index }) => ({
     name: `${KIND}${index}`,
     config: {
+      locked: true,
       inputField: null,
       outputPath: null,
       passThrough: true,

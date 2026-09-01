@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import fallbackSchema from '../../assets/custom-node-schema.json';
 import { fetchCustomNodeSchema, parseCustomNodeSchemaPayload } from '../custom-node-schema-source';
 import type { CustomNodeNamespace } from '../custom-node-types';
+import { EMPTY_EXPRESSIONS_CONFIG, LEGACY_UDF_KIND, legacyUdfPlan, schemaToNodePlans } from '../custom-node-plans';
 
 const FALLBACK_SCHEMA = fallbackSchema as CustomNodeNamespace[];
 
@@ -50,5 +51,60 @@ describe('fetchCustomNodeSchema', () => {
     } finally {
       globalThis.fetch = originalFetch;
     }
+  });
+});
+
+describe('schemaToNodePlans', () => {
+  const collectionNamespace: CustomNodeNamespace = {
+    name: 'shared_counter',
+    title: 'shared_counter',
+    tools: [
+      {
+        name: 'counter_rate_1h',
+        title: 'counter_rate_1h',
+        type: 'function',
+        parameters: { type: 'object', properties: { field: { type: 'string' } } },
+        returns: { type: 'integer' },
+        namespace: 'shared_counter',
+        kind: 'shared_counter',
+      },
+    ],
+  };
+
+  test('generates a single container plan keyed by namespace name', () => {
+    const plans = schemaToNodePlans([collectionNamespace]);
+    expect(plans).toHaveLength(1);
+    expect(plans[0].kind).toBe('shared_counter');
+    expect(plans[0].group).toBe('自定义函数');
+    expect(plans[0].seed({ index: 2 }).name).toBe('shared_counter2');
+  });
+
+  test('container plan seeds empty expressions config', () => {
+    const plans = schemaToNodePlans([collectionNamespace]);
+    expect(plans[0].seed({ index: 0 }).config).toEqual(EMPTY_EXPRESSIONS_CONFIG);
+  });
+
+  test('skips namespaces without tools', () => {
+    expect(schemaToNodePlans([{ ...collectionNamespace, tools: [] }])).toHaveLength(0);
+  });
+
+  test('bundled fallback fixture resolves every namespace as a container', () => {
+    const plans = schemaToNodePlans(FALLBACK_SCHEMA);
+    const kinds = plans.map((plan) => plan.kind);
+    expect(kinds).toContain('debug');
+    expect(kinds).toContain('debugui');
+    expect(kinds).toContain('http');
+    expect(kinds).not.toContain('inout');
+    expect(kinds).not.toContain('current_date');
+    expect(plans.every((plan) => plan.group === '自定义函数')).toBe(true);
+  });
+});
+
+describe('legacyUdfPlan', () => {
+  test('registers legacy UDF kind with free-scope semantics', () => {
+    const plan = legacyUdfPlan();
+    expect(plan.kind).toBe(LEGACY_UDF_KIND);
+    expect(plan.seed({ index: 1 }).name).toBe('UDF1');
+    expect(plan.seed({ index: 1 }).config.expressions).toEqual([]);
   });
 });

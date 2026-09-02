@@ -165,6 +165,7 @@ apps/zen-rule/src/
     template.ts         #   单函数文件：template（专属 UI 由宿主 spec 接管）
     http.ts             #   namespace 档：http_request（专属 UI 由宿主 spec 接管）
     roster.ts           #   单函数文件：roster（原 query_list，专属 UI 由宿主 spec 接管）
+    （示范：debugui.current_date 的专属 UI spec 见主仓 src/components/custom-node/current-date-node.tsx——两档模型「专属 UI 节点」最小模板）
   register.ts / engine.ts / roster.ts / exec-context.ts   # zen-rule 框架，在 contrib 之外
 ```
 

@@ -226,6 +226,18 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+**最新变更(2026-09-01，第三十六批：current_date UI 迭代——输出 key 可编辑 + 仿真取值修正)：**
+- **修复 [object Object]**：画布卡/Tab 此前直接 String(trace.output)——改为按 expressions[0].key 从输出对象取值
+- **输出 key 可由客户输入**：Tab 增「输出 key」Input(font-mono，blur/Enter 提交)——`updateNode` draft 原位改写 `expressions[0].key`(**locked 保留**，不整写 config)；画布卡同步显示 key 标签+对应值
+- **专属 UI 范式确认**：Tab 内 draft 原位变更 + return draft(DraftUpdateCallback 契约)；测试 7 用例(key 提交保留 locked/按 key 取值/角标有无/占位)
+- 门禁：组件 40 pass、typecheck×2 绿、lint 0 errors/0 warnings；**未提交，待安排**
+
+**最新变更(2026-09-01，第三十五批：debugui 专属 UI 示范——current_date spec)：**
+- **首个「专属 UI 节点」最小模板**：新建 `src/components/custom-node/current-date-node.tsx`(kind=`current_date`，ns=debugui)——renderTab 只读信息卡(说明+仿真日期大字回显/空态)、renderNode 画布卡(Badge kind+日期值+动效锁角标)、inferTypes string+passThrough、generateNode 播种 `locked: true`
+- **接管注册**：`overriddenFunctions` + `current_date`(过滤 debugui singleton 生成的同 kind plan)；侧边栏 debugui 组显示「当前日期」专用节点
+- **测试**：`component-tests/.../current-date-node.test.tsx` 6 用例(Tab 空态/仿真回显、画布卡 kind/日期/编辑、角标 locked 有无、未仿真占位)；修复 CurrentDateTab 缺 export 导致的 element undefined
+- 门禁：组件 39 pass(33+6)、typecheck×2 绿；**未提交，待安排**
+
 **最新变更(2026-09-01，第三十四批：CI 夹具门禁 + lint 告警清零 + multi2.json 归位)：**
 - **CI 夹具门禁挂载**：validate.yml codequality job 增 `bun run sync:schema:check`——ext 变更未刷新夹具时 CI 直接失败
 - **lint 告警清零**：eslint 新增作用域(custom-node/** + useCustomNodes + custom-node-registry + editor-shell.context + ui/** + reui/** + theme.provider)关停 `react-refresh/only-export-components`——spec/hook/context 文件导出节点规格与常量属既定模式(与 reui vendored 先例一致)；18→0 warnings

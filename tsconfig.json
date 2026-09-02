@@ -6,13 +6,11 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "noImplicitAny": true,
-    /* module references  */
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@gorules/jdm-editor": ["jdm-editor/packages/jdm-editor/src"],
-      "monaco-editor": ["node_modules/monaco-editor"],
-      "monaco-editor/*": ["node_modules/monaco-editor/*"]
+      "@gorules/jdm-editor": ["./jdm-editor/packages/jdm-editor/src"],
+      "monaco-editor": ["./node_modules/monaco-editor"],
+      "monaco-editor/*": ["./node_modules/monaco-editor/*"]
     },
     /* Bundler mode */
     "moduleResolution": "bundler",

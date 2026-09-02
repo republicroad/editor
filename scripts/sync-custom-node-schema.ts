@@ -15,8 +15,8 @@ const OUT_FILE = path.resolve(import.meta.dir, '../src/assets/custom-node-schema
 const checkMode = process.argv.includes('--check');
 
 const namespaces = udfManager.udfFunctionSchemaNamespaces();
-// 经 prettier 格式化(与仓库 .prettierrc 一致：endOfLine=crlf、printWidth=120)，保证重复执行零 diff
-const formatted = await format(JSON.stringify(namespaces), { parser: 'json', endOfLine: 'crlf', printWidth: 120 });
+// 经 prettier 格式化(与仓库 .prettierrc 一致：endOfLine=lf、printWidth=120)，保证重复执行零 diff
+const formatted = await format(JSON.stringify(namespaces), { parser: 'json', endOfLine: 'lf', printWidth: 120 });
 
 if (checkMode) {
   const existing = await readFile(OUT_FILE, 'utf8');

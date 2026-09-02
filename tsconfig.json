@@ -5,7 +5,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-
     "noImplicitAny": true,
     /* module references  */
     "baseUrl": ".",
@@ -15,7 +14,6 @@
       "monaco-editor": ["node_modules/monaco-editor"],
       "monaco-editor/*": ["node_modules/monaco-editor/*"]
     },
-
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -23,11 +21,14 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-
     /* Linting */
     "strict": true,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src", "component-tests"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }

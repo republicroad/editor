@@ -343,20 +343,19 @@ bun run --cwd apps/editor dev
 - 使用 `ensureWasmLoaded()` 确保加载完成
 - 浏览器控制台查看 WASM 错误
 
-
 ## 11. 跨平台开发配置与最佳实践
 
 > 2026-09-01 起，仓库行尾基线为 **LF**（`.gitattributes` `* text=auto eol=lf` + `.prettierrc` `endOfLine: 'lf'`），配套 `.editorconfig` 与 `.vscode/` 配置保证各编辑器/工具链行为一致。
 
 ### 11.1 配置文件一览
 
-| 文件 | 作用 |
-|---|---|
-| `.gitattributes` | 仓库侧行尾归一：文本文件入库一律 LF；`*.bat/*.cmd/*.ps1` 保持 CRLF；二进制类型显式标记不做转换 |
-| `.prettierrc` | `endOfLine: 'lf'`——与 .gitattributes 同向，消除两者互相拉扯 |
-| `.editorconfig` | 跨编辑器基线：UTF-8 无 BOM、LF、末行换行、去尾随空格、2 空格缩进；`*.md` 保留尾随空格 |
-| `.vscode/settings.json` | `files.eol: '\n'`（新建文件 LF）、保存时 Prettier 格式化 + ESLint 自动修复、终端代理 |
-| `.vscode/extensions.json` | 团队扩展推荐（ESLint / Prettier / EditorConfig） |
+| 文件                      | 作用                                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| `.gitattributes`          | 仓库侧行尾归一：文本文件入库一律 LF；`*.bat/*.cmd/*.ps1` 保持 CRLF；二进制类型显式标记不做转换 |
+| `.prettierrc`             | `endOfLine: 'lf'`——与 .gitattributes 同向，消除两者互相拉扯                                    |
+| `.editorconfig`           | 跨编辑器基线：UTF-8 无 BOM、LF、末行换行、去尾随空格、2 空格缩进；`*.md` 保留尾随空格          |
+| `.vscode/settings.json`   | `files.eol: '\n'`（新建文件 LF）、保存时 Prettier 格式化 + ESLint 自动修复、终端代理           |
+| `.vscode/extensions.json` | 团队扩展推荐（ESLint / Prettier / EditorConfig）                                               |
 
 ### 11.2 日常开发守则
 
@@ -367,16 +366,15 @@ bun run --cwd apps/editor dev
 
 ### 11.3 常见故障排查
 
-| 症状 | 原因 | 处置 |
-|---|---|---|
-| eslint 报 `Delete ␍` | 文件为 CRLF，prettier 要求 LF | `npx eslint --fix <file>` 或 `npx prettier --write <file>` |
-| eslint 报 `Insert ␍` | 编辑器服务仍在用旧的 crlf 配置 | `ESLint: Restart ESLint Server` 或 `Developer: Reload Window`；对打开文件执行 `File: Revert File` |
-| 改 jdm-editor 子模块后主仓未生效 | vite 依赖优化缓存 | 重启 dev server；必要时删除 `node_modules/.vite` |
-| git 警告 `CRLF will be replaced by LF` | 工作区文件仍为 CRLF（git 将在入库时归一为 LF） | 属预期；如需立即对齐工作区，`git add --renormalize .` 后重新检出 |
+| 症状                                   | 原因                                           | 处置                                                                                              |
+| -------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| eslint 报 `Delete ␍`                   | 文件为 CRLF，prettier 要求 LF                  | `npx eslint --fix <file>` 或 `npx prettier --write <file>`                                        |
+| eslint 报 `Insert ␍`                   | 编辑器服务仍在用旧的 crlf 配置                 | `ESLint: Restart ESLint Server` 或 `Developer: Reload Window`；对打开文件执行 `File: Revert File` |
+| 改 jdm-editor 子模块后主仓未生效       | vite 依赖优化缓存                              | 重启 dev server；必要时删除 `node_modules/.vite`                                                  |
+| git 警告 `CRLF will be replaced by LF` | 工作区文件仍为 CRLF（git 将在入库时归一为 LF） | 属预期；如需立即对齐工作区，`git add --renormalize .` 后重新检出                                  |
 
 ### 11.4 ESLint 作用域豁免先例
 
 `eslint.config.mjs` 中对以下文件关闭 `react-refresh/only-export-components`（导出节点规格与常量属既定模式，非纯 React 组件文件）：`src/components/custom-node/**`、`src/hooks/useCustomNodes.ts`、`src/lib/custom-node-registry.tsx`、`src/shell/editor-shell.context.tsx`、`src/components/ui/**`、`src/components/reui/**`、`src/context/theme.provider.tsx`。新增同类文件时按需扩展该作用域。
 
 ---
-

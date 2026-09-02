@@ -226,19 +226,23 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
 **最新变更(2026-09-01，第三十九批：跨平台开发配置补齐——VS Code/Git/ESLint 最佳实践)：**
+
 - **新增 3 个配置文件**：`.vscode/settings.json`(合并既有代理配置；files.eol=lf/formatOnSave/eslint fixAll)、`.vscode/extensions.json`(推荐 ESLint/Prettier/EditorConfig)、`.editorconfig`(UTF-8 无 BOM/LF/2 空格缩进；md 保留尾随空格；cmd/bat/ps1 走 CRLF)
 - **docs/04 新增 §11「跨平台开发配置与最佳实践」**：配置文件一览、日常守则(禁 BOM/不手切行尾/prettier 自检)、常见故障排查表(Insert␍/Delete␍/vite 缓存/CRLF 警告语义)、ESLint 作用域豁免先例
 - 背景：`.prettierrc` 已切 `endOfLine: lf` 与 `.gitattributes` 同向；VS Code 报 `Insert ␍` 为编辑器服务旧配置缓存(Restart ESLint Server/Reload Window 即愈)
 - 门禁：lint 0 errors/0 warnings、typecheck 绿、vscode json 校验通过；**未提交，待安排**
 
 **最新变更(2026-09-01，第三十八批：自动同步逻辑抽 hook + 单测 + locale 死键清理)：**
+
 - **use-simulator-auto-sync.ts 抽取**：panel 内联的防抖(700ms 静默)/签名守卫/flush 逻辑抽为独立 hook(参数化 debounceMs)；单测 5 用例(去抖单发/连续键入重置/外部推送同签名跳过/flush 立即持久化/disabled 全静默)
 - **locale 死键清理**：`requestSaveDataSource`(按钮已删)自 en/zh 移除并修复同行挤键畸形；`requestDataSourceSaved`/`requestSelectDataSourceFirst` 保留(仍被 persist 引用)
 - **docs/06 同步**：simulator 结构块+hook 表补 `use-simulator-auto-sync.ts`
 - 门禁：子模块 typecheck/53 测试/build ✓、zen-rule 45 pass、apps 72 pass、lint 0 err/0 warn；**未提交，待安排**
 
 **最新变更(2026-09-01，第三十七批：Simulator 用例数据自动同步——移除手动保存按钮)：**
+
 - **保存按钮移除**：simulator toolbar 删除「保存用例数据」按钮(onSave/SaveOutlined/requestSaveDataSource)
 - **自动同步(simulator → schema)**：编辑器变更 700ms 防抖后自动持久化至 input 节点 schema.examples——静默(无 toast/错误弹窗，输入中 JSON 未完成静默跳过)、类型冲突**不阻断**(经 normalizeRequestExampleDataByDefinitions 归一后照存)、skip-unchanged 防重；triggeredBy 扩展 'auto-sync'
 - **反向同步(schema → simulator)**：request 子tab 编辑 schema.examples 后 700ms 内推送至 simulator 编辑器(签名比对守卫防回灌)——双向保持一致
@@ -246,23 +250,25 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - 测试：persistence 增 auto-sync 静默用例(53 pass)；typecheck/build ✓
 
 **最新变更(2026-09-01，第三十六批：current_date UI 迭代——输出 key 可编辑 + 仿真取值修正)：**
+
 - **修复 [object Object]**：画布卡/Tab 此前直接 String(trace.output)——改为按 expressions[0].key 从输出对象取值
 - **输出 key 可由客户输入**：Tab 增「输出 key」Input(font-mono，blur/Enter 提交)——`updateNode` draft 原位改写 `expressions[0].key`(**locked 保留**，不整写 config)；画布卡同步显示 key 标签+对应值
 - **专属 UI 范式确认**：Tab 内 draft 原位变更 + return draft(DraftUpdateCallback 契约)；测试 7 用例(key 提交保留 locked/按 key 取值/角标有无/占位)
 - 门禁：组件 40 pass、typecheck×2 绿、lint 0 errors/0 warnings；**未提交，待安排**
 
 **最新变更(2026-09-01，第三十五批：debugui 专属 UI 示范——current_date spec)：**
+
 - **首个「专属 UI 节点」最小模板**：新建 `src/components/custom-node/current-date-node.tsx`(kind=`current_date`，ns=debugui)——renderTab 只读信息卡(说明+仿真日期大字回显/空态)、renderNode 画布卡(Badge kind+日期值+动效锁角标)、inferTypes string+passThrough、generateNode 播种 `locked: true`
 - **接管注册**：`overriddenFunctions` + `current_date`(过滤 debugui singleton 生成的同 kind plan)；侧边栏 debugui 组显示「当前日期」专用节点
 - **测试**：`component-tests/.../current-date-node.test.tsx` 6 用例(Tab 空态/仿真回显、画布卡 kind/日期/编辑、角标 locked 有无、未仿真占位)；修复 CurrentDateTab 缺 export 导致的 element undefined
 - 门禁：组件 39 pass(33+6)、typecheck×2 绿；**未提交，待安排**
 
 **最新变更(2026-09-01，第三十四批：CI 夹具门禁 + lint 告警清零 + multi2.json 归位)：**
+
 - **CI 夹具门禁挂载**：validate.yml codequality job 增 `bun run sync:schema:check`——ext 变更未刷新夹具时 CI 直接失败
-- **lint 告警清零**：eslint 新增作用域(custom-node/** + useCustomNodes + custom-node-registry + editor-shell.context + ui/** + reui/** + theme.provider)关停 `react-refresh/only-export-components`——spec/hook/context 文件导出节点规格与常量属既定模式(与 reui vendored 先例一致)；18→0 warnings
+- **lint 告警清零**：eslint 新增作用域(custom-node/** + useCustomNodes + custom-node-registry + editor-shell.context + ui/** + reui/\*\* + theme.provider)关停 `react-refresh/only-export-components`——spec/hook/context 文件导出节点规格与常量属既定模式(与 reui vendored 先例一致)；18→0 warnings
 - **multi2.json 归位**：`apps/editor/src/multi2.json`(决策图数据)→`apps/editor/graphs/`
 - 门禁：lint 0 errors/0 warnings、typecheck×2 绿、主仓 199/apps 72/组件 33 pass、smoke exit 0；**未提交，待安排**
-
 
 **最新变更(2026-09-01，第三十三批：移除域裁决落档)：**
 

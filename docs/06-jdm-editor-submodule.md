@@ -481,7 +481,7 @@ npm publish
 | `simulator-nodes-panel.tsx`          | 节点列表 / 选择与状态图标(从 `dg-simulator.tsx` 抽出)                                                    |
 | `simulator-request-toolbar.tsx`      | 工具栏(运行 / 停止 / 加载用例 / 步进)                                                                    |
 | `use-request-example-persistence.ts` | 用例数据源持久化(参数对象化，`setRequestExampleData`)                                                    |
-| `use-simulator-auto-sync.ts`         | 用例数据双向自动同步(编辑器 700ms 静默落 schema；schema 外部变更推回编辑器；签名守卫防回灌)               |
+| `use-simulator-auto-sync.ts`         | 用例数据双向自动同步(编辑器 700ms 静默落 schema；schema 外部变更推回编辑器；签名守卫防回灌)              |
 | `use-simulator-request-binding.ts`   | 派生链绑定：节点 → `requestValue`(`responseExpressionMap` / `CustomOperatorType` / `ExpressionDataType`) |
 | `use-simulator-request-editor.ts`    | requestValue 编辑 + 外部同步 + 切源时定义默认值同步(光标保持在末尾)                                      |
 | `simulation.types.ts`                | 模拟相关类型定义                                                                                         |

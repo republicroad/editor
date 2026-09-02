@@ -226,6 +226,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+**最新变更(2026-09-01，第三十八批：自动同步逻辑抽 hook + 单测 + locale 死键清理)：**
+- **use-simulator-auto-sync.ts 抽取**：panel 内联的防抖(700ms 静默)/签名守卫/flush 逻辑抽为独立 hook(参数化 debounceMs)；单测 5 用例(去抖单发/连续键入重置/外部推送同签名跳过/flush 立即持久化/disabled 全静默)
+- **locale 死键清理**：`requestSaveDataSource`(按钮已删)自 en/zh 移除并修复同行挤键畸形；`requestDataSourceSaved`/`requestSelectDataSourceFirst` 保留(仍被 persist 引用)
+- **docs/06 同步**：simulator 结构块+hook 表补 `use-simulator-auto-sync.ts`
+- 门禁：子模块 typecheck/53 测试/build ✓、zen-rule 45 pass、apps 72 pass、lint 0 err/0 warn；**未提交，待安排**
+
 **最新变更(2026-09-01，第三十七批：Simulator 用例数据自动同步——移除手动保存按钮)：**
 - **保存按钮移除**：simulator toolbar 删除「保存用例数据」按钮(onSave/SaveOutlined/requestSaveDataSource)
 - **自动同步(simulator → schema)**：编辑器变更 700ms 防抖后自动持久化至 input 节点 schema.examples——静默(无 toast/错误弹窗，输入中 JSON 未完成静默跳过)、类型冲突**不阻断**(经 normalizeRequestExampleDataByDefinitions 归一后照存)、skip-unchanged 防重；triggeredBy 扩展 'auto-sync'

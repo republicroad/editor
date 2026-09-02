@@ -226,6 +226,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+**最新变更(2026-09-01，第三十七批：Simulator 用例数据自动同步——移除手动保存按钮)：**
+- **保存按钮移除**：simulator toolbar 删除「保存用例数据」按钮(onSave/SaveOutlined/requestSaveDataSource)
+- **自动同步(simulator → schema)**：编辑器变更 700ms 防抖后自动持久化至 input 节点 schema.examples——静默(无 toast/错误弹窗，输入中 JSON 未完成静默跳过)、类型冲突**不阻断**(经 normalizeRequestExampleDataByDefinitions 归一后照存)、skip-unchanged 防重；triggeredBy 扩展 'auto-sync'
+- **反向同步(schema → simulator)**：request 子tab 编辑 schema.examples 后 700ms 内推送至 simulator 编辑器(签名比对守卫防回灌)——双向保持一致
+- **源切换冲刷**：切换数据源前先冲刷未落盘编辑(旧 binding 立即持久化，防串源)
+- 测试：persistence 增 auto-sync 静默用例(53 pass)；typecheck/build ✓
+
 **最新变更(2026-09-01，第三十六批：current_date UI 迭代——输出 key 可编辑 + 仿真取值修正)：**
 - **修复 [object Object]**：画布卡/Tab 此前直接 String(trace.output)——改为按 expressions[0].key 从输出对象取值
 - **输出 key 可由客户输入**：Tab 增「输出 key」Input(font-mono，blur/Enter 提交)——`updateNode` draft 原位改写 `expressions[0].key`(**locked 保留**，不整写 config)；画布卡同步显示 key 标签+对应值

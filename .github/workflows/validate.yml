@@ -46,6 +46,9 @@ jobs:
 
       - name: 'Test (apps)'
         run: bun test apps/zen-rule apps/editor
+      - name: 'Test (jdm-editor)'
+        working-directory: jdm-editor/packages/jdm-editor
+        run: bun test src
       - name: 'Check custom-node schema fixture'
         run: bun run sync:schema:check
 

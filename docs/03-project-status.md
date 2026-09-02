@@ -226,6 +226,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+**最新变更(2026-09-01，第三十九批：跨平台开发配置补齐——VS Code/Git/ESLint 最佳实践)：**
+- **新增 3 个配置文件**：`.vscode/settings.json`(合并既有代理配置；files.eol=lf/formatOnSave/eslint fixAll)、`.vscode/extensions.json`(推荐 ESLint/Prettier/EditorConfig)、`.editorconfig`(UTF-8 无 BOM/LF/2 空格缩进；md 保留尾随空格；cmd/bat/ps1 走 CRLF)
+- **docs/04 新增 §11「跨平台开发配置与最佳实践」**：配置文件一览、日常守则(禁 BOM/不手切行尾/prettier 自检)、常见故障排查表(Insert␍/Delete␍/vite 缓存/CRLF 警告语义)、ESLint 作用域豁免先例
+- 背景：`.prettierrc` 已切 `endOfLine: lf` 与 `.gitattributes` 同向；VS Code 报 `Insert ␍` 为编辑器服务旧配置缓存(Restart ESLint Server/Reload Window 即愈)
+- 门禁：lint 0 errors/0 warnings、typecheck 绿、vscode json 校验通过；**未提交，待安排**
+
 **最新变更(2026-09-01，第三十八批：自动同步逻辑抽 hook + 单测 + locale 死键清理)：**
 - **use-simulator-auto-sync.ts 抽取**：panel 内联的防抖(700ms 静默)/签名守卫/flush 逻辑抽为独立 hook(参数化 debounceMs)；单测 5 用例(去抖单发/连续键入重置/外部推送同签名跳过/flush 立即持久化/disabled 全静默)
 - **locale 死键清理**：`requestSaveDataSource`(按钮已删)自 en/zh 移除并修复同行挤键畸形；`requestDataSourceSaved`/`requestSelectDataSourceFirst` 保留(仍被 persist 引用)

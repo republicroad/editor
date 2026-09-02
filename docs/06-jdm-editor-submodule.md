@@ -437,6 +437,10 @@ bun run test           # 等价于 cd packages/jdm-editor && bun test src(单测
 
 产物输出到 `packages/jdm-editor/dist/`(`index.js` / `index.d.ts` / `schema.js` / `schema.d.ts` / `style.css`，ESM + 类型声明)。
 
+**独立构建复现验证（2026-09-01）**：zrule 分支 `bun install` + `bun run build` 多次复现通过（42~58s）；同形式 `bun test src` 58/58 全绿——独立构建链路稳定。
+
+**主仓消费体积（源码直通，2026-09-01 记录）**：主仓 `bun run build`（tsconfigPaths 源码直通）产物 `static/assets/`：JS 87 文件共 8.44MB（最大 chunk index-*.js 7.85MB）+ CSS 273KB。与 dist 消费的对比未测（需临时摘除 tsconfigPaths，成本高）——如需对比，临时注释 vite.config 的 `tsconfigPaths()` 后构建即可。
+
 发布到 npm(`prepublishOnly: vite build` 会自动重跑构建)：
 
 ```bash

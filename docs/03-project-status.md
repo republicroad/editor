@@ -226,6 +226,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+**最新变更(2026-09-01，第三十九~四十一批：库化收口——CI 库测试门禁 + 独立构建验证 + 文档)：**
+- **CI 库测试门禁(f9872f5)**：validate.yml 增 `Test (jdm-editor)` 步骤(working-directory 指向包目录 + bun test src)——库 58 测试首次纳入 CI 门禁
+- **barrel 导出补全(9347c43)**：`resolveFunctionScope`/`healExpressionsForScope`/`buildDefaultFunctionExpression`/`LEGACY_CUSTOM_FUNCTION_KIND`/`FunctionScope` 类型 + `useSimulatorAutoSync`/`AUTO_SYNC_DEBOUNCE_MS`(库级 API 面完成)；hook 声明转 function 形式
+- **独立构建复现验证(docs/06 §3.6)**：bun install + build 多次复现(42~58s)、同形式测试 58/58——独立链路稳定；**主仓消费体积记录**(源码直通：JS 8.44MB/87 文件，CSS 273KB；dist 对比方法附注)
+- **主仓推送**：a795423..d613cd9 已推(zrule)；子模块远端此前已同步(含 force-with-lease 处理 35c9c39 重写)——CI 首跑待 GitHub Actions 页确认，红了即治理
+- 门禁：lint 0 err/0 warn、typecheck×2、全测试套件绿、build ✓；docs/03 本条
+
 
 **最新变更(2026-09-01，第四十批：源码直通消费链文档化 + 最佳实践独立文档)：**
 

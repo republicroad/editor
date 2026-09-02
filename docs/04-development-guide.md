@@ -64,6 +64,7 @@ Vite 开发服务器默认运行在 `http://localhost:5173`，支持热模块替
 
 > jdm-editor 子模块的源码直通消费链（vite/bun/tsc 三端解析、排障）详见 docs/06 第 7 章。
 > jdm-editor 子模块的源码直通消费链（vite/bun/tsc 三端解析、排障）详见 docs/06 第 7 章；通用最佳实践见 docs/bestpractice/monorepo-source-passthrough.md。
+
 ### 3.2 启动后端
 
 ```bash

@@ -1,5 +1,7 @@
 # jdm-editor 子仓库文档
 
+另：zrule 分支新增 `config.locked: true` 数据约定（专属 UI 节点标记，见主仓 docs/13 §7.2）。
+
 > 本文档详细描述 `jdm-editor` 子模块的架构、组件体系，以及 zrule(当前开发分支)/ opencode 分支与 master 分支的差异分析。
 
 ---
@@ -675,24 +677,24 @@ opencode 分支是一个**深度定制的开发分支**，基于 master 分支�
 
 同一个导入名 @gorules/jdm-editor，三种运行时各自解析：
 
-| 消费端 | 解析机制 | 结果 |
-|---|---|---|
-| 主仓前端（vite dev / build） | `vite-tsconfig-paths` 插件（vite.config.ts）读取根 tsconfig `paths` → `jdm-editor/packages/jdm-editor/src` | **源码直通**（dev 与 build 双端；样式随 src/index.ts 的 import styles.scss 自动带入） |
-| apps/editor 后端 + bun test | bun workspace 链接（`"@gorules/jdm-editor": "workspace:*"`）→ 包目录 → `main: src/index.ts`；bun 原生按序解析 .js → .ts | 源码（运行时直接执行 ts） |
-| tsc typecheck | 根 tsconfig `paths` 同名映射 → 子模块源码纳入 typecheck 程序 | 类型来自源码（不依赖 dist 的 .d.ts） |
+| 消费端                       | 解析机制                                                                                                                | 结果                                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 主仓前端（vite dev / build） | `vite-tsconfig-paths` 插件（vite.config.ts）读取根 tsconfig `paths` → `jdm-editor/packages/jdm-editor/src`              | **源码直通**（dev 与 build 双端；样式随 src/index.ts 的 import styles.scss 自动带入） |
+| apps/editor 后端 + bun test  | bun workspace 链接（`"@gorules/jdm-editor": "workspace:*"`）→ 包目录 → `main: src/index.ts`；bun 原生按序解析 .js → .ts | 源码（运行时直接执行 ts）                                                             |
+| tsc typecheck                | 根 tsconfig `paths` 同名映射 → 子模块源码纳入 typecheck 程序                                                            | 类型来自源码（不依赖 dist 的 .d.ts）                                                  |
 
 ### 7.2 关键配置清单
 
-| 配置点 | 文件 | 作用 |
-|---|---|---|
-| paths 映射 | 根 tsconfig.json | `@/*`→`./src/*`、`@gorules/jdm-editor`→子模块 src、monaco-editor 双映射（配合 vite 静态拷贝与 __MONACO_VS_BASE__ define） |
-| tsconfig-paths 桥接 | vite.config.ts（`tsconfigPaths()`） | 让 vite 的 dev/build 也按同一份 paths 解析（源码直通的运行时入口） |
-| moduleResolution | tsconfig.base.json → `bundler` | 允许无后缀/敏感解析（现代打包器语义） |
-| allowImportingTsExtensions | apps/zen-rule、apps/editor 的 tsconfig | 子模块内部以 .ts 后缀互相导入——凡把子模块源码拉进编译程序的项目都必须开启（需 noEmit） |
-| bun .js→.ts 宽容解析 | bun 运行时内建 | 相对导入写 .js 后缀也能命中 .ts 文件；仓外引用不受影响 |
-| wasm 支持 | vite.config.ts（vite-plugin-wasm） | @gorules/zen-engine-wasm 的加载 |
-| monaco | vite.config.ts（静态拷贝 + __MONACO_VS_BASE__ define） | 版本化静态路径 |
-| react 去重 | vite.config.ts（`dedupe: [react, react-dom]`） | 防止主仓与子模块解析出两份 React 实例 |
+| 配置点                     | 文件                                                   | 作用                                                                                                                      |
+| -------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| paths 映射                 | 根 tsconfig.json                                       | `@/*`→`./src/*`、`@gorules/jdm-editor`→子模块 src、monaco-editor 双映射（配合 vite 静态拷贝与 **MONACO_VS_BASE** define） |
+| tsconfig-paths 桥接        | vite.config.ts（`tsconfigPaths()`）                    | 让 vite 的 dev/build 也按同一份 paths 解析（源码直通的运行时入口）                                                        |
+| moduleResolution           | tsconfig.base.json → `bundler`                         | 允许无后缀/敏感解析（现代打包器语义）                                                                                     |
+| allowImportingTsExtensions | apps/zen-rule、apps/editor 的 tsconfig                 | 子模块内部以 .ts 后缀互相导入——凡把子模块源码拉进编译程序的项目都必须开启（需 noEmit）                                    |
+| bun .js→.ts 宽容解析       | bun 运行时内建                                         | 相对导入写 .js 后缀也能命中 .ts 文件；仓外引用不受影响                                                                    |
+| wasm 支持                  | vite.config.ts（vite-plugin-wasm）                     | @gorules/zen-engine-wasm 的加载                                                                                           |
+| monaco                     | vite.config.ts（静态拷贝 + **MONACO_VS_BASE** define） | 版本化静态路径                                                                                                            |
+| react 去重                 | vite.config.ts（`dedupe: [react, react-dom]`）         | 防止主仓与子模块解析出两份 React 实例                                                                                     |
 
 ### 7.3 样式链
 
@@ -701,12 +703,12 @@ opencode 分支是一个**深度定制的开发分支**，基于 master 分支�
 
 ### 7.4 排障
 
-| 症状 | 原因 | 处置 |
-|---|---|---|
-| 改子模块源码后主仓 dev 未生效 | vite 依赖预构建缓存 / 跨包变更触发热更粒度为整页刷新 | 重启 dev server；必要时删除 node_modules/.vite |
-| TS5097（import path 以 .ts 结尾…） | 引用方 tsconfig 未开 allowImportingTsExtensions | 对应项目 tsconfig 补开（需 noEmit） |
-| 类型报错指向 dist 的 .d.ts | tsconfig paths 缺失或被覆盖 | 核对根 tsconfig paths 是否含 @gorules/jdm-editor |
-| 两份 React 实例（hooks 报错） | vite 未去重 | 确认 dedupe: react/react-dom 在位 |
+| 症状                               | 原因                                                 | 处置                                             |
+| ---------------------------------- | ---------------------------------------------------- | ------------------------------------------------ |
+| 改子模块源码后主仓 dev 未生效      | vite 依赖预构建缓存 / 跨包变更触发热更粒度为整页刷新 | 重启 dev server；必要时删除 node_modules/.vite   |
+| TS5097（import path 以 .ts 结尾…） | 引用方 tsconfig 未开 allowImportingTsExtensions      | 对应项目 tsconfig 补开（需 noEmit）              |
+| 类型报错指向 dist 的 .d.ts         | tsconfig paths 缺失或被覆盖                          | 核对根 tsconfig paths 是否含 @gorules/jdm-editor |
+| 两份 React 实例（hooks 报错）      | vite 未去重                                          | 确认 dedupe: react/react-dom 在位                |
 
 ### 7.5 dist 的定位
 

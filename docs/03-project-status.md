@@ -226,12 +226,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule 分支变更摘要
+
 **最新变更(2026-09-01，第四十批：源码直通消费链文档化 + 最佳实践独立文档)：**
+
 - **docs/06 新增第 7 章「源码直通消费链」**：三端解析表(vite/bun/tsc)、关键配置清单(paths/tsconfigPaths/allowImportingTsExtensions/wasm/monaco/dedupe)、样式链(src/index.ts 自引 scss，主仓无需 dist/style.css)、排障表(.vite 缓存/TS5097/双 React)、dist 定位(仅外部消费方兜底)
 - **新增 `docs/bestpractice/monorepo-source-passthrough.md`**：monorepo 源码直通通用最佳实践(三层解析链/配置清单/双向同步与防回灌/何时不该直通/排障速查/本仓库映射)
 - **重要修正**：根 tsconfig `paths` + `vite-tsconfig-paths` 早已实现 dev/build 源码直通——此前「主仓解析 dist 需先 build 子模块」的判断不准确；跨包未生效的真实原因是 vite 预构建缓存/HMR 粒度(整页刷新)，排障为删 `node_modules/.vite`
 - docs/04 §3.2 加交叉引用(docs/06 §7 + bestpractice 文档)；无代码改动
-
 
 **最新变更(2026-09-01，第三十九批：跨平台开发配置补齐——VS Code/Git/ESLint 最佳实践)：**
 

@@ -260,6 +260,9 @@ plugins: [dts({ entryRoot: 'src', outDir: 'dist', include: ['src'] })],
   declaration emit 绿，lib build 要单独冒烟。
 - tailwind 包（样式类在源码里）：monorepo 内由宿主的 tailwind v4 扫描源码自动生效；
   npm 消费方需要 `dist/style.css` + 文档声明宿主 token 契约（写在包 README）。
+- **vite lib mode 不支持 `manualChunks`**（内核 B1 实验实证）：分包策略在 lib 形态
+  下被忽略，入口拆分只能靠多 entry（exports map 多子路径）实现——appshell 若未来
+  按 surface 拆包（如 `./table`、`./graph`），走多 entry 而非 manualChunks。
 
 ---
 

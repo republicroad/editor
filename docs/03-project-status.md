@@ -226,6 +226,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-03，第四十五批：同步内核 1c072ef + editor reui 首推 + A′ 决策落档)：**
+
+- **子模块同步**：reui tip 16bcd05→1c072ef（并行会话 0.3.0 路线图批次 B1-B3/R2-R4：lib-mode manualChunks 实验结论、custom-function 键盘拖拽、simulator story 离线、Playwright probes 收编、expression-store 单测；19 文件 +818/−29）——**宿主可见面零变动**（barrel/theme 未动、`@/` 仍 76 文件、components.json/tsconfig 未动）
+- **editor reui 首推**：`git push -u origin reui` 建立远端分支——本地 6+2 提交首次过 CI reui 门禁（此前远端无 reui 引用，本地孤本=门禁豁免缺口，已修）
+- **A′ 决策落档**：内核处于 0.3.0 活跃冲刺期（1 天 7 commits），**维持类型桥（C）为现行架构，`@kernel/*` 命名空间别名（A′）缓期至内核 0.3.0 发布后作为协调变更项**——业界实践：活跃开发期的共享包不做集成机制变更，跨仓重构在发布边界执行（届时一次 PR 完成 76 文件 + components.json + tsconfig paths + 宿主侧源码直通切换）
+- 门禁：新内核 1c072ef 下全链复验——typecheck:kernel/typecheck/typecheck:apps、lint 0-0、主仓 152/组件 40/apps 72、build、storybook 全绿；**未推送部分随本批一并推送**
+
 **最新变更(2026-09-03，第四十四批：换肤体系——SkinDefinition + 节点UI槽位劫持 + 切换示范)：**
 
 - **skin 模块（appshell）**：`skin/types.ts`（`SkinDefinition { id, label, seeds?, tokens?, nodeOverrides? }` + `NodeUiOverride { renderTab?, renderNode? }`；ThemeSeeds 内核 barrel 未导出，按公开形状本地镜像为 SkinSeeds）+ `skin/apply.ts`（`applyNodeOverrides` 纯函数：按 kind 只替换显式槽位、未命中保原引用、不改入参）+ 5 单测

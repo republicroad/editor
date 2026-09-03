@@ -25,6 +25,11 @@
 
 ## 宿主要求
 
-- React >= 18；`@republicroad/jdm-editor` >= 0.2（monaco-editor 由宿主安装）
+- React >= 18；`@republicroad/jdm-editor` >= 0.3（monaco-editor 由宿主安装）
 - Tailwind v4 + shadcn 语义 token（`--background`/`--foreground`/... ，参考主仓 `src/main.css`）；
   内核的 `--grl-*` 变量由 `JdmConfigProvider` 自动注入
+
+## 消费契约
+
+**dist 是本包的公共承诺**（npm 安装走 `dist/`）；monorepo 内部走源码直通
+（`main/types → src/index.ts`）属于本仓的开发优化，外部仓库请勿依赖。

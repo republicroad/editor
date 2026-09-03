@@ -77,6 +77,13 @@ npm 包 ──┼─ publish（外部）──── exports/main → dist/index
 
 ## 3. TypeScript 编译分层与类型桥（核心难点）
 
+> **状态注记（2026-09-03，第四十六批）**：本节描述的类型桥曾是内核 reui 别名形态下的
+> 主解；内核迁移为 `#` subpath imports（方案 D，见[别名机制篇 §2.4](./monorepo-alias-mechanisms.md)）
+> 后，宿主已切换为**源码直通**（tsc 直接编译内核源码，`#` 经 imports 字段解析、
+> react/`@lezer` 对齐映射上收根 tsconfig），本节**降级为备案方案**——适用于"子包
+> 别名无法前缀化 / `#` 不可行（如需兼容 TS<5.4 或旧 Vite）"的场景。桥工件
+> （tsconfig.kernel.json）与脚本在 git 历史（f0db8dc^）可随时恢复。
+
 ### 3.1 问题：子包源码进不进宿主编译程序
 
 把子包 ts 源码拉进宿主 tsc 程序（paths → src）看似最"真"，但只要子包内部有自己的

@@ -233,8 +233,10 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **Spike 结论先行**：TS 类型解析 ✓ / vite lib build ✓ / dist 零 `#` 残留 ✓（构建期消化，外部宿主无感知）/ 内核 vitest 156 failed = 迁移前基线完全一致（宿主树双 React 结构问题，对照实验已证与 `#` 无关）
 - **宿主源码直通切换（类型桥退役）**：根 tsconfig `@republicroad/jdm-editor`→内核 src/index.ts；删 `tsconfig.kernel.json` 与 `typecheck:kernel` 链；桥内三项保护映射上收根 tsconfig（react/jsx-runtime 压平 18、`@lezer/common|lr` 钉单实例、monaco 保留）+ include 补内核 5 个 ambient d.ts；appshell tsconfig 内核映射同步改 src/index.ts（bun mock 绑定一致性）；appshell peerDeps `>=0.3.0`（monaco peer 正式化）
 - **A2/L2/2.3 未随 0.3.0**（gru-hl-view 仍在/`--grl-*` 契约未动）——登记 0.4.0 观察项，appshell 自定义节点全用 shadcn token，届时预期零成本
-- **文档**：alias-mechanisms 篇新增方案 D 章节 + 四方案对照 + 决策记录修订；新增[决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)（六轮演进 + 为什么 D 不是第一推荐 + 五条可迁移教训）；bun-workspaces 篇新增
-- 门禁：本地全链绿——typecheck（源码直通一次通过）/ lint 0-0 / 主仓 152 / 组件 40 / apps 72 / build 27s（较桥时代 1m39s 显著提速）/ storybook 43s / 内核 build ✓ dist 零 `#` 残留 / `sync:schema:check` 待随 CI 复验；**未推送部分随本批一并推送**
+- **文档**：alias-mechanisms 篇新增方案 D 章节 + 四方案对照 + 决策记录修订；新增[决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)（六轮演进 + 为什么 D 不是第一推荐 + 五条可迁移教训）；bun-workspaces 篇新增；新增[TS imports 字段解析语义](./bestpractice/ts-imports-field-resolution.md)（扩展探测/通配字面填充/不回落 paths）
+- **文档收尾（D 事件闭环）**：docs/06 §7 重写（tsc 行改回"类型来自源码"；配置清单/排障表按方案 D 更新——`#` TS2307 = imports 映射缺失）；multi-package 构建篇 §3 类型桥降级为备案注记；appshell README 宿主要求 `>=0.3.0` + 消费契约（dist = 公共承诺）
+- **dev 实机冒烟（首次实跑）**：`bun run dev` 两轮——HTTP 200 + root div ✓；`/src/main.tsx` 转换 200（首触 6s 预构建，10.7KB）✓；dev 日志零错误 ✓（内核 `#` 导入 dev 链解析首次实跑通过）；进程树 taskkill 清理 ✓。**留手验**：7 节点渲染/模拟器/三皮肤切换/ocean 接管/暗亮（体验面）
+- 门禁：本地全链绿——typecheck（源码直通一次通过）/ lint 0-0 / 主仓 152 / 组件 40 / apps 72 / build 27s（较桥时代 1m39s 显著提速）/ storybook 43s / 内核 build ✓ dist 零 `#` 残留 / CI Validate 绿（33770373760）+ 本批随推复验
 
 **最新变更(2026-09-03，第四十五批：同步内核 1c072ef + editor reui 首推 + A′ 决策落档)：**
 

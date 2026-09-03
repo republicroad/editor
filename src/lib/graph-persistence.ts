@@ -1,6 +1,10 @@
 // 持久化分支的纯逻辑(不依赖 React/页面环境)，供 decision-simple 复用并可单测。
 // 有 GraphPersistenceAdapter → 走宿主存储；否则页面回退浏览器本地文件。
-import { GraphPersistenceError, type GraphPersistenceAdapter, type GraphRecord } from '../shell/persistence';
+import {
+  GraphPersistenceError,
+  type GraphPersistenceAdapter,
+  type GraphRecord,
+} from '@republicroad/jdm-appshell/src/shell/persistence';
 
 export interface GraphLike {
   nodes: ReadonlyArray<{ id: string } & Record<string, unknown>>;

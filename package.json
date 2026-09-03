@@ -6,7 +6,8 @@
   "license": "MIT",
   "workspaces": [
     "apps/*",
-    "jdm-editor/packages/*"
+    "jdm-editor/packages/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "vite --host",

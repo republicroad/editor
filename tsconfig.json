@@ -9,6 +9,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@republicroad/jdm-editor": ["./tmp/kernel-types/index.d.ts"],
+      "@republicroad/jdm-appshell": ["./packages/appshell/src/index.ts"],
+      "@republicroad/jdm-appshell/*": ["./packages/appshell/src/*"],
       "monaco-editor": ["./node_modules/monaco-editor"],
       "monaco-editor/*": ["./node_modules/monaco-editor/*"]
     },
@@ -23,7 +25,7 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "component-tests"],
+  "include": ["src", "component-tests", "packages/appshell/src"],
   "references": [
     {
       "path": "./tsconfig.node.json"

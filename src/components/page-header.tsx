@@ -2,7 +2,7 @@ import { ChevronLeft } from 'lucide-react';
 import React from 'react';
 
 import { Stack } from './stack.tsx';
-import { Button } from './ui/button';
+import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
 
 export type PageHeaderProps = {
   title?: React.ReactNode;

@@ -1,4 +1,4 @@
-import type { CustomNodeConfig, CustomNodeExpression } from '../lib/custom-node-types';
+import type { CustomNodeConfig, CustomNodeExpression } from '@republicroad/jdm-appshell';
 
 export type Position = {
   x: number;

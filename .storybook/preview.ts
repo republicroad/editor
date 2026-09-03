@@ -1,7 +1,7 @@
 import type { Preview } from '@storybook/react';
 
 import '../src/main.css';
-import '../src/components/custom-node/custom-node.module.css';
+import '../packages/appshell/src/components/custom-node/custom-node.module.css';
 
 const preview: Preview = {
   parameters: {

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { KeyValueEditor } from '../components/custom-node/key-value-editor';
+import { KeyValueEditor } from '@republicroad/jdm-appshell';
 
 const meta: Meta<typeof KeyValueEditor> = {
   title: 'Editor Shell/KeyValueEditor',

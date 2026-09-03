@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 
 import { DecisionGraph, type DecisionGraphType } from '@republicroad/jdm-editor';
 
-import { httpRequestNode } from '../components/custom-node/http-request-node';
-import { queryListNode } from '../components/custom-node/query-list-node';
-import { toHttpRequestValue } from '../lib/http-request-protocol';
+import { httpRequestNode } from '@republicroad/jdm-appshell';
+import { queryListNode } from '@republicroad/jdm-appshell';
+import { toHttpRequestValue } from '@republicroad/jdm-appshell';
 
 const meta: Meta<typeof DecisionGraph> = {
   title: 'Editor Shell/DecisionGraph 嵌入示范',

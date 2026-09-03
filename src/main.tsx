@@ -21,9 +21,9 @@ import 'ace-builds/src-noconflict/snippets/javascript';
 import 'ace-builds/src-noconflict/theme-chrome';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { ThemeContextProvider } from '@republicroad/jdm-appshell';
 import { DecisionSimplePage } from './pages/decision-simple.tsx';
 import { NotFoundPage } from './pages/not-found';
-import { ThemeContextProvider } from './context/theme.provider.tsx';
 
 // Example of a basic polyfill for environments without crypto.randomUUID
 if (typeof crypto.randomUUID !== 'function') {

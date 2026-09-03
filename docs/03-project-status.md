@@ -226,6 +226,15 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-03，第四十三批：appshell 独立包抽取——@republicroad/jdm-appshell)：**
+
+- **建包**：`packages/appshell`（`@republicroad/jdm-appshell` v0.1.0）——main/types 直指 `src/index.ts`（monorepo 内源码直通），`publishConfig` 发布态切 dist；peerDeps = react/react-dom/内核(>=0.2)；vite lib 构建（react+内核外部化，产物 index.js 828KB + index.d.ts + style.css）；根 workspaces 增 `packages/*`
+- **纯搬移（git mv 保历史，73+ 文件）**：shell 全家、useCustomNodes、custom-node 9 组件、UI kit（components/ui 18 + components/reui 14 + components/icons 2 + reui/icons 4 + custom-node.module.css）、lib 11（plans/registry/schema-source/types/user-resolver/storage-key/三协议/auth+auth-client/utils）、theme.provider、JSON 夹具 assets/custom-node-schema.json——app 页面反向消费包（deep path 导 ui、barrel 导 shell/nodes/theme）
+- **`@/` 别名清零**：包内 34 文件 `@/components|lib|reui` 相对化（发布包零工具链耦合）；根 eslint 豁免作用域同步迁至 packages/appshell/**
+- **接线与断点**：根 tsconfig paths 增 `@republicroad/jdm-appshell(/*)` 双映射 + include 增包 src；.storybook preview.css 路径、stories×2、component-tests 深路径、graph-persistence(+test) 深导入 `@republicroad/jdm-appshell/src/shell/persistence`（barrel 会拉内核运行时，bun test 必须走深路径）
+- **bun 就近 tsconfig 断点**：组件测试经 packages/** 加载后 bun 取 appshell tsconfig（无内核映射）→ 内核真实源码被解析、monaco d.ts 当 JS 执行崩溃——appshell tsconfig 补 `paths: @republicroad/jdm-editor → ../../tmp/kernel-types/index.d.ts` 后恢复（mock 按解析路径绑定，两端必须一致）
+- 门禁：typecheck:kernel/typecheck/typecheck:apps、lint 0 err、主仓 147/组件 40/apps 72 全 pass、build ✓、build:storybook ✓、appshell lib build ✓（style.css 命名与 exports 对齐）；**未提交，待安排**
+
 **最新变更(2026-09-03，第四十二批：appshell 适配 jdm-editor reui 内核——改名 + 类型桥 + spec 组合器)：**
 
 - **子模块换轨**：`.gitmodules` branch `zrule`→`reui`（b922227）；指针两连跳至 reui tip（0c1ca71→46733003、31cadcf→16bcd05）。内核 reui 分支 = `@republicroad/jdm-editor` v0.2.x 重构（ReactFlow 12、shadcn/ReUI 栈去 antd、seeds 主题、`.grl-root` 作用域注入、monaco 转 peer）

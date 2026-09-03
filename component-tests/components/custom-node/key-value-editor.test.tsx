@@ -10,7 +10,7 @@ import { installJdmEditorMock, resetJdmMock } from '../../../src/test-utils/mock
 installJdmEditorMock();
 
 const { cleanup, fireEvent, render, screen } = await import('@testing-library/react');
-const { KeyValueEditor } = await import('../../../src/components/custom-node/key-value-editor');
+const { KeyValueEditor } = await import('../../../packages/appshell/src/components/custom-node/key-value-editor');
 
 const changes: string[] = [];
 

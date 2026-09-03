@@ -70,7 +70,7 @@ export default defineConfig([
   },
   {
     // vendored from @reui registry: shadcn CLI 落盘文件，不做源码级 lint 约束
-    files: ['src/components/reui/cascader/**/*.{ts,tsx}'],
+    files: ['packages/appshell/src/components/reui/cascader/**/*.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
@@ -79,13 +79,14 @@ export default defineConfig([
   {
     // jdm 自定义节点 spec/hook 文件：导出节点规格(createJdmNode 产物)与配套常量——非纯 React 组件文件
     files: [
-      'src/components/custom-node/**/*.{ts,tsx}',
-      'src/components/ui/**/*.{ts,tsx}',
-      'src/components/reui/**/*.{ts,tsx}',
-      'src/context/theme.provider.tsx',
-      'src/hooks/useCustomNodes.ts',
-      'src/lib/custom-node-registry.tsx',
-      'src/shell/editor-shell.context.tsx',
+      'packages/appshell/src/components/custom-node/**/*.{ts,tsx}',
+      'packages/appshell/src/components/ui/**/*.{ts,tsx}',
+      'packages/appshell/src/components/reui/**/*.{ts,tsx}',
+      'packages/appshell/src/context/theme.provider.tsx',
+      'packages/appshell/src/hooks/useCustomNodes.ts',
+      'packages/appshell/src/lib/*.ts',
+      'packages/appshell/src/lib/*.tsx',
+      'packages/appshell/src/shell/*.tsx',
     ],
     rules: {
       'react-refresh/only-export-components': 'off',

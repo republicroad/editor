@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { GraphPersistenceError, type GraphPersistenceAdapter } from '../../shell/persistence';
+import { GraphPersistenceError, type GraphPersistenceAdapter } from '@republicroad/jdm-appshell/src/shell/persistence';
 import { listRemoteVersions, loadFromRemote, saveToRemote } from '../graph-persistence';
 
 const graph = { nodes: [{ id: 'in' }], edges: [] };

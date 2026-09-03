@@ -23,8 +23,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../components/ui/alert-dialog';
-import { Button } from '../components/ui/button';
+} from '@republicroad/jdm-appshell/src/components/ui/alert-dialog';
+import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -35,17 +35,17 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
-import { Separator } from '../components/ui/separator';
+} from '@republicroad/jdm-appshell/src/components/ui/dropdown-menu';
+import { Separator } from '@republicroad/jdm-appshell/src/components/ui/separator';
 import { DirectedGraph } from 'graphology';
 import { hasCycle } from 'graphology-dag';
 import { Stack } from '../components/stack.tsx';
 import { match, P } from 'ts-pattern';
 
 import classes from './decision-simple.module.css';
-import { ThemePreference, useTheme } from '../context/theme.provider.tsx';
+import { ThemePreference, useTheme } from '@republicroad/jdm-appshell';
 import { loadFromRemote, listRemoteVersions, saveToRemote, type GraphLike } from '../lib/graph-persistence.ts';
-import { createGraphsHttpAdapter, EditorShellProvider, useEditorShell } from '../shell';
+import { createGraphsHttpAdapter, EditorShellProvider, useEditorShell } from '@republicroad/jdm-appshell';
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',

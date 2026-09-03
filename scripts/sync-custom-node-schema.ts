@@ -1,5 +1,5 @@
 /**
- * 从 udfManager 合并注册表导出自定义节点 schema 镜像，写入 src/assets/custom-node-schema.json。
+ * 从 udfManager 合并注册表导出自定义节点 schema 镜像，写入 packages/appshell/src/assets/custom-node-schema.json。
  * 镜像用途：离线/库复用兜底夹具 + LLM 工具调用契约(与 /api/custom-nodes/schema 实时输出一致，含 namespace.type)。
  * 用法：注册或调整 contrib/ 扩展后执行 bun run sync:schema；
  *      门禁检查执行 bun run sync:schema:check(--check：不落盘，夹具漂移时以非零码退出)。
@@ -11,7 +11,8 @@ import { format } from 'prettier';
 
 import { udfManager } from '../apps/zen-rule/src/index.js';
 
-const OUT_FILE = path.resolve(import.meta.dir, '../src/assets/custom-node-schema.json');
+// 夹具随 appshell 抽包迁移（第四十三批）：归 packages/appshell 所有
+const OUT_FILE = path.resolve(import.meta.dir, '../packages/appshell/src/assets/custom-node-schema.json');
 const checkMode = process.argv.includes('--check');
 
 const namespaces = udfManager.udfFunctionSchemaNamespaces();

@@ -7,6 +7,7 @@ import { jsonPathNode } from '../components/custom-node/json-path-node';
 import { queryListNode } from '../components/custom-node/query-list-node';
 import { templateNode } from '../components/custom-node/template-node';
 import { currentDateNode } from '../components/custom-node/current-date-node';
+import { useTheme } from '../context/theme.provider';
 import {
   createLegacyUdfNode,
   fetchCustomNodeSchema,
@@ -14,6 +15,7 @@ import {
   type CustomNodeSchemaSource,
 } from '../lib/custom-node-registry';
 import type { CustomNodeNamespace } from '../lib/custom-node-types';
+import { applyNodeOverrides } from '../skin/apply';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 与 jdm-editor 内部 customNodes 类型约定一致
 type CustomNodeSpec = CustomNodeSpecification<object, any>;
@@ -71,9 +73,18 @@ export function useCustomNodes(options?: UseCustomNodesOptions): {
 
   const baseNodes = useMemo(() => composeBaseNodes(extraNodes), [extraNodes]);
 
+  // 皮肤节点 UI 槽位劫持：activeSkin.nodeOverrides 按 kind 覆写 renderTab/renderNode；
+  // 无 ThemeContextProvider 时 useTheme 兜底空对象，行为与未开皮肤一致
+  const { activeSkin } = useTheme();
+  const nodeOverrides = activeSkin?.nodeOverrides;
+
   const customNodes = useMemo<CustomNodeSpec[]>(
-    () => (schema ? [...baseNodes, ...schemaToCustomNodes(filterOverridden(schema))] : baseNodes),
-    [baseNodes, schema],
+    () =>
+      applyNodeOverrides(
+        schema ? [...baseNodes, ...schemaToCustomNodes(filterOverridden(schema))] : baseNodes,
+        nodeOverrides,
+      ),
+    [baseNodes, schema, nodeOverrides],
   );
 
   return { customNodes, schema, ready: schema !== null };

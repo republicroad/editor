@@ -21,9 +21,22 @@ import 'ace-builds/src-noconflict/snippets/javascript';
 import 'ace-builds/src-noconflict/theme-chrome';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { ThemeContextProvider } from '@republicroad/jdm-appshell';
+import { ThemeContextProvider, type SkinDefinition } from '@republicroad/jdm-appshell';
+import { OceanCurrentDateNode } from './components/skins/ocean-current-date-node';
 import { DecisionSimplePage } from './pages/decision-simple.tsx';
 import { NotFoundPage } from './pages/not-found';
+
+// 皮肤目录 = 宿主关注点：seeds 换配色，nodeOverrides 劫持节点 UI（一键换UI/换肤）
+const SKINS: SkinDefinition[] = [
+  { id: 'default', label: '默认' },
+  { id: 'violet', label: '品牌紫', seeds: { primary: '#7c3aed' } },
+  {
+    id: 'ocean',
+    label: '海洋蓝（接管 current_date UI）',
+    seeds: { primary: '#0369a1' },
+    nodeOverrides: { current_date: { renderNode: OceanCurrentDateNode } },
+  },
+];
 
 // Example of a basic polyfill for environments without crypto.randomUUID
 if (typeof crypto.randomUUID !== 'function') {
@@ -55,7 +68,7 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeContextProvider>
+    <ThemeContextProvider options={{ skins: SKINS, defaultSkinId: 'default' }}>
       <RouterProvider router={router} />
     </ThemeContextProvider>
   </React.StrictMode>,

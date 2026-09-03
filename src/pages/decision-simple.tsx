@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CirclePlay, Lightbulb } from 'lucide-react';
+import { CirclePlay, Lightbulb, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError, isUserAbort } from '../helpers/error-message.ts';
@@ -127,7 +127,7 @@ export const DecisionSimplePage: React.FC = () => {
 const DecisionSimpleInner: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
   const graphRef = React.useRef<DecisionGraphRef>(null);
-  const { themePreference, setThemePreference } = useTheme();
+  const { themePreference, setThemePreference, skins, skinId, setSkinId, activeSkin } = useTheme();
 
   const { customNodes, schema, userResolver, runSimulate, persistence } = useEditorShell();
 
@@ -552,6 +552,27 @@ const DecisionSimpleInner: React.FC = () => {
           }
           ghost={false}
           extra={[
+            skins.length > 0 && (
+              <DropdownMenu key="skin-switcher">
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="ghost" size="sm" className="gap-1.5" aria-label="切换皮肤">
+                    <Palette className="size-4" />
+                    {activeSkin?.label ?? '皮肤'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[180px]">
+                  {skins.map((skin) => (
+                    <DropdownMenuCheckboxItem
+                      key={skin.id}
+                      checked={skin.id === skinId}
+                      onCheckedChange={() => setSkinId(skin.id)}
+                    >
+                      {skin.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
             <DropdownMenu key="theme-preference">
               <DropdownMenuTrigger asChild>
                 <Button type="button" variant="ghost" size="icon" className="size-8" aria-label="切换主题">

@@ -1,5 +1,7 @@
 export * from './context/theme.provider';
 export { useCustomNodes, type UseCustomNodesOptions } from './hooks/useCustomNodes';
+export { applyNodeOverrides } from './skin/apply';
+export * from './skin/types';
 export * from './lib/custom-node-plans';
 export * from './lib/custom-node-schema-source';
 export * from './lib/custom-node-types';

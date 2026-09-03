@@ -22,7 +22,7 @@ export default defineConfig({
       external: ['react', 'react-dom', 'react/jsx-runtime', /^@republicroad\/jdm-editor(\/.*)?$/],
       output: {
         // css 统一命名 style.css，与 publishConfig exports("./dist/style.css") 对齐
-        assetFileNames: (asset) => (asset.name?.endsWith('.css') ? 'style.css' : asset.name ?? '[name]'),
+        assetFileNames: (asset) => (asset.name?.endsWith('.css') ? 'style.css' : (asset.name ?? '[name]')),
       },
     },
     target: 'esnext',

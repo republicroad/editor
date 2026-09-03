@@ -226,6 +226,14 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-03，第四十四批：换肤体系——SkinDefinition + 节点UI槽位劫持 + 切换示范)：**
+
+- **skin 模块（appshell）**：`skin/types.ts`（`SkinDefinition { id, label, seeds?, tokens?, nodeOverrides? }` + `NodeUiOverride { renderTab?, renderNode? }`；ThemeSeeds 内核 barrel 未导出，按公开形状本地镜像为 SkinSeeds）+ `skin/apply.ts`（`applyNodeOverrides` 纯函数：按 kind 只替换显式槽位、未命中保原引用、不改入参）+ 5 单测
+- **theme.provider 升级**：props 增 `options { skins?, defaultSkinId? }`，context 暴露 `skins/skinId/setSkinId/activeSkin`；activeSkin.seeds→`JdmConfigProvider seeds`、tokens→`theme.token`（seeds 派生与显式 token 共存，token 优先）；无 skins 时与纯主题模式逐字节一致
+- **useCustomNodes 接线**：合成 customNodes 后经 `applyNodeOverrides(nodes, activeSkin?.nodeOverrides)` 应用——皮肤劫持对专属节点与 schema 容器节点一体生效；无 Provider 兜底空覆写
+- **宿主示范（decision-simple）**：三套皮肤——default / 品牌紫(#7c3aed) / 海洋蓝(#0369a1 + `current_date.renderNode` 劫持)；`src/components/skins/ocean-current-date-node.tsx` 宿主接管组件（GraphNode 蓝调卡 + 接管标识 + key/仿真值回显）；顶栏 Palette 下拉一键切换（skins 由 main.tsx 宿主注入）
+- 门禁：typecheck:kernel/typecheck/typecheck:apps、lint 0 err/0 warn、主仓 152(+5)/组件 40/apps 72 全 pass、build ✓、build:storybook ✓；**未提交，待安排**
+
 **最新变更(2026-09-03，第四十三批：appshell 独立包抽取——@republicroad/jdm-appshell)：**
 
 - **建包**：`packages/appshell`（`@republicroad/jdm-appshell` v0.1.0）——main/types 直指 `src/index.ts`（monorepo 内源码直通），`publishConfig` 发布态切 dist；peerDeps = react/react-dom/内核(>=0.2)；vite lib 构建（react+内核外部化，产物 index.js 828KB + index.d.ts + style.css）；根 workspaces 增 `packages/*`

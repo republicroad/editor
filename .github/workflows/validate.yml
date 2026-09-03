@@ -47,9 +47,9 @@ jobs:
 
       - name: 'Test (apps)'
         run: bun test apps/zen-rule apps/editor
-      - name: 'Test (jdm-editor)'
-        working-directory: jdm-editor/packages/jdm-editor
-        run: bun run test
+      # 内核测试归内核仓 CI（其 validate.yaml 在自家 pnpm 树下跑 vitest 全套）：
+      # reui 内核 devDep react 19 与宿主树混合会导致双 React 实例，宿主 CI 不可复现其门禁。
+      # 宿主对内核的消费假设（react 18 类型桥、源码直通编译）由上方 Typecheck + Build job 验证。
       - name: 'Check custom-node schema fixture'
         run: bun run sync:schema:check
 

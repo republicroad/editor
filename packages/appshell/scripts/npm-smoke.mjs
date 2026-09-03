@@ -93,7 +93,11 @@ try {
   const installedPkg = JSON.parse(readFileSync(path.join(installedDir, 'package.json'), 'utf8'));
 
   // 3. published contract assertions
-  check('name matches @republicroad/jdm-appshell', installedPkg.name === '@republicroad/jdm-appshell', installedPkg.name);
+  check(
+    'name matches @republicroad/jdm-appshell',
+    installedPkg.name === '@republicroad/jdm-appshell',
+    installedPkg.name,
+  );
   check(
     'installed version matches expectation',
     !registryVersion || installedPkg.version === registryVersion,
@@ -102,7 +106,11 @@ try {
   check('publishConfig.access is public', installedPkg.publishConfig?.access === 'public');
   // dev 态入口指向 src/index.ts；pack 时必须已被 publishConfig 换成 dist
   check('publishConfig swapped main to dist', installedPkg.main === './dist/index.js', installedPkg.main ?? 'absent');
-  check('publishConfig swapped types to dist', installedPkg.types === './dist/index.d.ts', installedPkg.types ?? 'absent');
+  check(
+    'publishConfig swapped types to dist',
+    installedPkg.types === './dist/index.d.ts',
+    installedPkg.types ?? 'absent',
+  );
   check(
     'kernel peer declared >= 0.3.0',
     /^>=0\.3/.test(installedPkg.peerDependencies?.['@republicroad/jdm-editor'] ?? ''),
@@ -114,7 +122,11 @@ try {
   }
 
   const exportKeys = Object.keys(installedPkg.exports ?? {});
-  check('exports map covers entry and css', ['.', './dist/style.css'].every((k) => exportKeys.includes(k)), exportKeys.join(', '));
+  check(
+    'exports map covers entry and css',
+    ['.', './dist/style.css'].every((k) => exportKeys.includes(k)),
+    exportKeys.join(', '),
+  );
 
   // 多文件声明形态：聚合 dist/**/*.d.ts 全文检索公共 API（内核的单文件 bundle 形态不同）
   const dtsAll = [];
@@ -167,7 +179,13 @@ try {
 
   try {
     const mod = await import(pathToFileURL(entryPath).href);
-    const runtimeKeys = ['EditorShellProvider', 'useEditorShell', 'applyNodeOverrides', 'ThemeContextProvider', 'ThemePreference'];
+    const runtimeKeys = [
+      'EditorShellProvider',
+      'useEditorShell',
+      'applyNodeOverrides',
+      'ThemeContextProvider',
+      'ThemePreference',
+    ];
     const missingRuntime = runtimeKeys.filter((k) => !(k in mod));
     check(
       'full barrel evaluates under node + carries runtime exports',
@@ -183,10 +201,6 @@ try {
   for (const f of readdirSync(pkgDir).filter((f) => f.endsWith('.tgz'))) {
     rmSync(path.join(pkgDir, f), { force: true });
   }
-}
-
-function join(...parts) {
-  return parts.join('/');
 }
 
 console.log(results.join('\n'));

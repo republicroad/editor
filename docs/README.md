@@ -35,6 +35,7 @@
 | [Monorepo 多 npm 包编译与构建](./bestpractice/monorepo-multi-package-build.md)                | 多包依赖策略/类型桥/别名治理/解析矩阵/CI 门禁（多包视角） |
 | [Monorepo 别名机制](./bestpractice/monorepo-alias-mechanisms.md)                              | 业界别名实践对比（Nx/Turbo/shadcn）与本仓四层终态        |
 | [Bun Workspaces 最佳实践](./bestpractice/bun-workspaces-best-practices.md)                    | bun 工作区协议/lockfile/布局收敛/别名运行时语义/CI       |
+| [决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)         | 内核别名方案六轮演进复盘与可迁移工程教训                 |
 
 ---
 

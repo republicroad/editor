@@ -4,6 +4,8 @@
 > reui 的 shadcn 式 `@/*` 别名后，宿主源码直通失效，由此引发的一系列适配与决策。
 > 本文回答两个问题：**别名在 monorepo 里的业界共识是什么**、**本仓库为什么这样选**。
 > 姊妹篇：[多包编译与构建](./monorepo-multi-package-build.md)、[源码直通](./monorepo-source-passthrough.md)。
+> **决策过程复盘**（六轮演进 + 为什么 D 不是第一推荐 + 可迁移教训）见
+> [决策复盘：Subpath Imports](./decision-retrospective-subpath-imports.md)。
 
 ---
 

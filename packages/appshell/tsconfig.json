@@ -10,8 +10,13 @@
     "resolveJsonModule": true,
     "types": ["vite/client"],
     "paths": {
-      "@republicroad/jdm-editor": ["../../jdm-editor/packages/jdm-editor/src/index.ts"]
+      "@republicroad/jdm-editor": ["../../jdm-editor/packages/jdm-editor/src/index.ts"],
+      "react": ["../../node_modules/@types/react"],
+      "react/jsx-runtime": ["../../node_modules/@types/react/jsx-runtime"],
+      "@lezer/common": ["../../node_modules/@lezer/common"],
+      "@lezer/lr": ["../../node_modules/@lezer/lr"],
+      "monaco-editor": ["../../node_modules/monaco-editor"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../../jdm-editor/packages/jdm-editor/src/**/*.d.ts"]
 }

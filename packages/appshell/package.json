@@ -4,15 +4,26 @@
   "description": "Application shell for @republicroad/jdm-editor — custom node hosting, UI slot overrides and skinning",
   "type": "module",
   "license": "MIT",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./dist/style.css": "./dist/style.css"
+  },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:npm-smoke": "node scripts/npm-smoke.mjs"
   },
   "peerDependencies": {
     "@republicroad/jdm-editor": ">=0.3.0",
@@ -51,17 +62,6 @@
     "vite-plugin-dts": "^5.0.3"
   },
   "publishConfig": {
-    "access": "public",
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-      ".": {
-        "import": "./dist/index.js",
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "./dist/style.css": "./dist/style.css"
-    }
+    "access": "public"
   }
 }

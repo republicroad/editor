@@ -9,6 +9,9 @@ export default defineConfig({
       entryRoot: 'src',
       outDir: 'dist',
       include: ['src'],
+      // 多文件声明（镜像 src 结构）。不用 bundleTypes/api-extractor：
+      // 它会分析 import 闭包（含内核源码），对复杂 TS 构造有崩溃史且受
+      // api-extractor 内置 TS 版本拖累——发布契约由 npm-smoke 聚合断言守护。
     }),
   ],
   build: {

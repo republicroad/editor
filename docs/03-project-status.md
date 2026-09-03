@@ -236,6 +236,8 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **文档**：alias-mechanisms 篇新增方案 D 章节 + 四方案对照 + 决策记录修订；新增[决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)（六轮演进 + 为什么 D 不是第一推荐 + 五条可迁移教训）；bun-workspaces 篇新增；新增[TS imports 字段解析语义](./bestpractice/ts-imports-field-resolution.md)（扩展探测/通配字面填充/不回落 paths）
 - **文档收尾（D 事件闭环）**：docs/06 §7 重写（tsc 行改回"类型来自源码"；配置清单/排障表按方案 D 更新——`#` TS2307 = imports 映射缺失）；multi-package 构建篇 §3 类型桥降级为备案注记；appshell README 宿主要求 `>=0.3.0` + 消费契约（dist = 公共承诺）
 - **dev 实机冒烟（首次实跑）**：`bun run dev` 两轮——HTTP 200 + root div ✓；`/src/main.tsx` 转换 200（首触 6s 预构建，10.7KB）✓；dev 日志零错误 ✓（内核 `#` 导入 dev 链解析首次实跑通过）；进程树 taskkill 清理 ✓。**留手验**：7 节点渲染/模拟器/三皮肤切换/ocean 接管/暗亮（体验面）
+- **发布工程（B 轨）**：appshell 新增 `scripts/npm-smoke.mjs`（借内核模式，pack/registry 双模式，17 项契约断言）+ LICENSE + `test:npm-smoke` 脚本。**三实战发现**：① npm pack **不应用** publishConfig 字段重写（pnpm 特性）→ 形态反转——main/types/exports 正式指 dist，dev 直通全走 tsconfig paths（与内核形态统一，零场景受损）；② exports map 封锁子路径暴露根 tsconfig 通配模板双写 src 笔误（此前靠 node_modules 兜底侥幸绿）→ 模板修正 `["./packages/appshell/*"]`；③ api-extractor bundleTypes 分析跨包闭包崩溃（内置 TS 5.8.2 vs 项目 5.9.3）→ 回退多文件声明 + smoke 聚合断言（dist/**/*.d.ts）。npm-smoke **17/17 PASS**（1 WARN：浏览器产物 node 求值依赖 monaco 无 node 入口，非 appshell 契约，设计内降级）
+- **发布动作待用户**：`npm login` → `cd packages/appshell && npm publish --access public` → `bun run test:npm-smoke 0.1.0`（registry 模式复验已发布版本）
 - 门禁：本地全链绿——typecheck（源码直通一次通过）/ lint 0-0 / 主仓 152 / 组件 40 / apps 72 / build 27s（较桥时代 1m39s 显著提速）/ storybook 43s / 内核 build ✓ dist 零 `#` 残留 / CI Validate 绿（33770373760）+ 本批随推复验
 
 **最新变更(2026-09-03，第四十五批：同步内核 1c072ef + editor reui 首推 + A′ 决策落档)：**

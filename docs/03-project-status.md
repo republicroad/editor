@@ -230,8 +230,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 - **子模块同步**：reui tip 16bcd05→1c072ef（并行会话 0.3.0 路线图批次 B1-B3/R2-R4：lib-mode manualChunks 实验结论、custom-function 键盘拖拽、simulator story 离线、Playwright probes 收编、expression-store 单测；19 文件 +818/−29）——**宿主可见面零变动**（barrel/theme 未动、`@/` 仍 76 文件、components.json/tsconfig 未动）
 - **editor reui 首推**：`git push -u origin reui` 建立远端分支——本地 6+2 提交首次过 CI reui 门禁（此前远端无 reui 引用，本地孤本=门禁豁免缺口，已修）
+- **CI 首跑暴露并修复 4 项（门禁价值实证）**：
+  1. *lockfile 漂移*（a4e5faa）：内核新批次 devDep 增 rollup-plugin-visualizer，`--frozen-lockfile` 失败——指针提升后须重跑 `bun install` 同步 lockfile
+  2. *@lezer 双实例*（9f9cf3a）：CI 全新安装布局下 `@lezer/lr` 嵌套 `@lezer/common@1.2.3` 与顶层 `1.5.2` 形成 Tree/ParseWrapper 类型冲突（本地增量安装恰为旧布局故绿）——桥 tsconfig paths 钉顶层单实例（与 react 手法一致）
+  3. *内核 vitest 门禁归位*（ba8344e）：宿主树内嵌 react 19 devDep 致双 React 实例，宿主 CI 结构性不可绿；内核仓 validate.yaml（pnpm 树 vitest 全套）已权威覆盖——宿主 CI 移除该步骤，内核消费假设由宿主桥 typecheck + build 验证
+  4. *schema-sync 路径遗漏*（ef879b6）：Phase 2 搬走 `src/assets/custom-node-schema.json` 未同步脚本路径（独立 bun 程序在 tsc 程序外，typecheck 抓不到；本地 gates 当时漏跑此项）——OUT_FILE 改指 packages/appshell/src/assets/
 - **A′ 决策落档**：内核处于 0.3.0 活跃冲刺期（1 天 7 commits），**维持类型桥（C）为现行架构，`@kernel/*` 命名空间别名（A′）缓期至内核 0.3.0 发布后作为协调变更项**——业界实践：活跃开发期的共享包不做集成机制变更，跨仓重构在发布边界执行（届时一次 PR 完成 76 文件 + components.json + tsconfig paths + 宿主侧源码直通切换）
-- 门禁：新内核 1c072ef 下全链复验——typecheck:kernel/typecheck/typecheck:apps、lint 0-0、主仓 152/组件 40/apps 72、build、storybook 全绿；**未推送部分随本批一并推送**
+- 门禁：本地全链绿（新内核 1c072ef）+ **CI Validate 首次全绿**（33754834500）
 
 **最新变更(2026-09-03，第四十四批：换肤体系——SkinDefinition + 节点UI槽位劫持 + 切换示范)：**
 

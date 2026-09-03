@@ -69,6 +69,15 @@ export default defineConfig([
     },
   },
   {
+    // node 脚本（发布 smoke / 同步工具）：flat config 默认 lint .mjs，需声明 node 全局
+    files: ['scripts/**/*.mjs', 'packages/appshell/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     // vendored from @reui registry: shadcn CLI 落盘文件，不做源码级 lint 约束
     files: ['packages/appshell/src/components/reui/cascader/**/*.{ts,tsx}'],
     rules: {

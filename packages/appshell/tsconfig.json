@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "types": ["vite/client"],
     "paths": {
-      "@republicroad/jdm-editor": ["../../tmp/kernel-types/index.d.ts"]
+      "@republicroad/jdm-editor": ["../../jdm-editor/packages/jdm-editor/src/index.ts"]
     }
   },
   "include": ["src"]

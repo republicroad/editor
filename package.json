@@ -12,11 +12,10 @@
   "scripts": {
     "dev": "vite --host",
     "dev:api": "bun run --cwd apps/editor dev",
-    "build": "bun run typecheck:kernel && tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "lint:fix": "eslint . --ext ts,tsx --fix",
-    "typecheck:kernel": "tsc -p tsconfig.kernel.json",
-    "typecheck": "bun run typecheck:kernel && tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "typecheck:apps": "tsc -p apps/editor --noEmit && tsc -p apps/zen-rule --noEmit",
     "test:zen-rule": "bun run --cwd apps/zen-rule main",
     "test": "bun test src --path-ignore-patterns **/jdm-editor/**",

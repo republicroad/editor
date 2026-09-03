@@ -8,11 +8,15 @@
     "noImplicitAny": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@republicroad/jdm-editor": ["./tmp/kernel-types/index.d.ts"],
+      "@republicroad/jdm-editor": ["./jdm-editor/packages/jdm-editor/src/index.ts"],
       "@republicroad/jdm-appshell": ["./packages/appshell/src/index.ts"],
       "@republicroad/jdm-appshell/*": ["./packages/appshell/src/*"],
       "monaco-editor": ["./node_modules/monaco-editor"],
-      "monaco-editor/*": ["./node_modules/monaco-editor/*"]
+      "monaco-editor/*": ["./node_modules/monaco-editor/*"],
+      "react": ["./node_modules/@types/react"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+      "@lezer/common": ["./node_modules/@lezer/common"],
+      "@lezer/lr": ["./node_modules/@lezer/lr"]
     },
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -25,7 +29,12 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "component-tests", "packages/appshell/src"],
+  "include": [
+    "src",
+    "component-tests",
+    "packages/appshell/src",
+    "jdm-editor/packages/jdm-editor/src/**/*.d.ts"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"

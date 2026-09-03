@@ -226,6 +226,16 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-03，第四十六批：内核 0.3.0 同步 + 方案 D（`#` subpath imports）+ 宿主源码直通切换)：**
+
+- **内核 0.3.0 同步**：嵌套子模块检出 v0.3.0→987d55c（0.3.0 后 A-D 批：npm-smoke registry 模式、storybook GitHub Pages、CF 拖拽 sortable、operator-expression 单测、CI 缓存）；lockfile 零漂移（workspace 成员版本不入锁，frozen 幂等）
+- **方案 D 落地（内核 246a058，81 文件）**：内核 76 文件 `@/` → `#`（Node subpath imports，按最近 package.json 解析、规范级 per-package 零碰撞）；内核 package.json 新增 `imports` 字段（`#icons`/`#components/ui/*`/`#lib/*`/`#reui/icons/*`，**显式扩展名**——TS 对 imports 通配目标不做扩展探测，响亮失败优于静默）；内核 tsconfig paths `@/*`→`#*`（双声明：shadcn CLI aliases 校验对 paths，代码实际走 imports 字段，同指零分歧）；两处 components.json aliases→`#...`（CLI 写入口径）；.storybook 删 `'@'` alias（vite 5.1+ 原生解析 `#`）
+- **Spike 结论先行**：TS 类型解析 ✓ / vite lib build ✓ / dist 零 `#` 残留 ✓（构建期消化，外部宿主无感知）/ 内核 vitest 156 failed = 迁移前基线完全一致（宿主树双 React 结构问题，对照实验已证与 `#` 无关）
+- **宿主源码直通切换（类型桥退役）**：根 tsconfig `@republicroad/jdm-editor`→内核 src/index.ts；删 `tsconfig.kernel.json` 与 `typecheck:kernel` 链；桥内三项保护映射上收根 tsconfig（react/jsx-runtime 压平 18、`@lezer/common|lr` 钉单实例、monaco 保留）+ include 补内核 5 个 ambient d.ts；appshell tsconfig 内核映射同步改 src/index.ts（bun mock 绑定一致性）；appshell peerDeps `>=0.3.0`（monaco peer 正式化）
+- **A2/L2/2.3 未随 0.3.0**（gru-hl-view 仍在/`--grl-*` 契约未动）——登记 0.4.0 观察项，appshell 自定义节点全用 shadcn token，届时预期零成本
+- **文档**：alias-mechanisms 篇新增方案 D 章节 + 四方案对照 + 决策记录修订；新增[决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)（六轮演进 + 为什么 D 不是第一推荐 + 五条可迁移教训）；bun-workspaces 篇新增
+- 门禁：本地全链绿——typecheck（源码直通一次通过）/ lint 0-0 / 主仓 152 / 组件 40 / apps 72 / build 27s（较桥时代 1m39s 显著提速）/ storybook 43s / 内核 build ✓ dist 零 `#` 残留 / `sync:schema:check` 待随 CI 复验；**未推送部分随本批一并推送**
+
 **最新变更(2026-09-03，第四十五批：同步内核 1c072ef + editor reui 首推 + A′ 决策落档)：**
 
 - **子模块同步**：reui tip 16bcd05→1c072ef（并行会话 0.3.0 路线图批次 B1-B3/R2-R4：lib-mode manualChunks 实验结论、custom-function 键盘拖拽、simulator story 离线、Playwright probes 收编、expression-store 单测；19 文件 +818/−29）——**宿主可见面零变动**（barrel/theme 未动、`@/` 仍 76 文件、components.json/tsconfig 未动）

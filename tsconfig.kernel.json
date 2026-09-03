@@ -12,7 +12,9 @@
       "@/*": ["./jdm-editor/packages/jdm-editor/src/*"],
       "monaco-editor": ["./node_modules/monaco-editor"],
       "react": ["./node_modules/@types/react"],
-      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"]
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+      "@lezer/common": ["./node_modules/@lezer/common"],
+      "@lezer/lr": ["./node_modules/@lezer/lr"]
     }
   },
   "include": ["jdm-editor/packages/jdm-editor/src"]

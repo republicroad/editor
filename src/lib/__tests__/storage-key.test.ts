@@ -1,5 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 
+// bun test 无 DOM 全局（原 preload 随 zrule 内核的 setupBunDom 移除）——本套件自备最小 Storage 桩
+const store = new Map<string, string>();
+const localStorageStub: Storage = {
+  get length() {
+    return store.size;
+  },
+  clear: () => store.clear(),
+  getItem: (key) => (store.has(key) ? (store.get(key) as string) : null),
+  key: (index) => [...store.keys()][index] ?? null,
+  removeItem: (key) => void store.delete(key),
+  setItem: (key, value) => void store.set(key, String(value)),
+};
+globalThis.localStorage = localStorageStub;
+
 const { storageKey, readStorage, writeStorage } = await import('../storage-key');
 
 describe('storage-key', () => {

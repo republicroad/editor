@@ -1,13 +1,13 @@
 import {
   CodeEditor,
   GraphNode,
-  createJdmNode,
   jsonSchemaToVariableType,
   type MinimalNodeProps,
   type MinimalNodeSpecification,
   useDecisionGraphActions,
   useDecisionGraphState,
-} from '@gorules/jdm-editor';
+} from '@republicroad/jdm-editor';
+import { createSpecNode } from '../../lib/custom-node-registry';
 import { ReplaceIcon } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -309,7 +309,7 @@ const TemplateNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
   );
 };
 
-export const templateNode = createJdmNode({
+export const templateNode = createSpecNode({
   kind: KIND,
   displayName: '模板渲染',
   group: 'template',

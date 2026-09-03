@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { DecisionGraph, type DecisionGraphType } from '@gorules/jdm-editor';
+import { DecisionGraph, type DecisionGraphType } from '@republicroad/jdm-editor';
 
 import { httpRequestNode } from '../components/custom-node/http-request-node';
 import { queryListNode } from '../components/custom-node/query-list-node';

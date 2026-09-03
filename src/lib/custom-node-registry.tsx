@@ -1,10 +1,28 @@
-import { createJdmNode } from '@gorules/jdm-editor';
+import { createJdmNode, type CustomNodeSpecification } from '@republicroad/jdm-editor';
 
 import css from '../components/custom-node/custom-node.module.css';
 import CodeIcon from '../components/icons/code';
 import FlashCircleIcon from '../components/icons/flash-circle';
 import { legacyUdfPlan, schemaToNodePlans, type CustomNodePlan } from './custom-node-plans';
 import type { CustomNodeNamespace } from './custom-node-types';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 与 jdm-editor 内部 customNodes 类型约定一致
+export type CustomNodeSpec = CustomNodeSpecification<object, any>;
+
+type SpecExtras = Pick<CustomNodeSpec, 'renderTab' | 'calculateDiff' | 'inferTypes'>;
+
+type CreateSpecNodeOptions = Parameters<typeof createJdmNode>[0] & SpecExtras;
+
+/** createJdmNode 只收 BaseNode 画布字段；spec 级 renderTab/calculateDiff/inferTypes 由本组合器附加 */
+export const createSpecNode = (options: CreateSpecNodeOptions): CustomNodeSpec => {
+  const { renderTab, calculateDiff, inferTypes, ...base } = options;
+  return {
+    ...createJdmNode(base),
+    ...(renderTab ? { renderTab } : {}),
+    ...(calculateDiff ? { calculateDiff } : {}),
+    ...(inferTypes ? { inferTypes } : {}),
+  };
+};
 
 const nodeIcon = (icon: React.ReactNode) => (
   <span className={css.nodeIcon} aria-hidden="true">

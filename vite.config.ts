@@ -43,6 +43,15 @@ function findMonacoPackageJson(entry: string): string {
 
 const MONACO_VS_BASE = `/monaco-editor@${(JSON.parse(readFileSync(findMonacoPackageJson(resolveMonacoEntry()), 'utf8')) as { version: string }).version}/min/vs`;
 
+// 内核 tsconfig 的 `@/*` 别名指向内核自身 src；宿主的 `@/*` 指向主仓 src。
+// 两个 project 一起交给 vite-tsconfig-paths，按 importer 所在目录各解析各的；
+// 内核 barrel(@republicroad/jdm-editor) 由 resolve.alias 显式直通 src（优先级高于 paths，
+// 且绕开根 tsconfig paths 中面向 tsc 的 tmp/kernel-types 类型桥）。
+const tsconfigProjects = [
+  path.join(__dirname, 'tsconfig.json'),
+  path.join(__dirname, 'jdm-editor/packages/jdm-editor/tsconfig.json'),
+];
+
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
@@ -52,7 +61,7 @@ export default defineConfig({
     react(),
     wasm(),
     tailwindcss(),
-    tsconfigPaths(),
+    tsconfigPaths({ projects: tsconfigProjects }),
     viteStaticCopy({
       targets: [
         {
@@ -71,6 +80,9 @@ export default defineConfig({
     target: 'esnext',
   },
   resolve: {
+    alias: {
+      '@republicroad/jdm-editor': path.join(__dirname, 'jdm-editor/packages/jdm-editor/src/index.ts'),
+    },
     dedupe: ['react', 'react-dom'],
   },
   server: {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { JdmConfigProvider } from '@gorules/jdm-editor';
+import { JdmConfigProvider } from '@republicroad/jdm-editor';
 import { match } from 'ts-pattern';
 
 import { Toaster } from '../components/ui/sonner';

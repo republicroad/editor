@@ -1,13 +1,13 @@
 import {
   CodeEditor,
   GraphNode,
-  createJdmNode,
   jsonSchemaToVariableType,
   type MinimalNodeProps,
   type MinimalNodeSpecification,
   useDecisionGraphActions,
   useDecisionGraphState,
-} from '@gorules/jdm-editor';
+} from '@republicroad/jdm-editor';
+import { createSpecNode } from '../../lib/custom-node-registry';
 import { FingerprintIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { LockedCornerBadge } from './locked-corner-badge';
@@ -470,7 +470,7 @@ const CryptoNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpecif
   );
 };
 
-export const cryptoNode = createJdmNode({
+export const cryptoNode = createSpecNode({
   kind: KIND,
   displayName: '摘要签名',
   group: 'crypto',

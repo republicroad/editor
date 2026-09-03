@@ -7,8 +7,8 @@ import ReactDOM from 'react-dom/client';
 import './main.css';
 import './lib/monaco';
 
-// import '@gorules/jdm-editor/dist/style.css';
-import '@gorules/jdm-editor';
+// import '@republicroad/jdm-editor/dist/style.css';
+import '@republicroad/jdm-editor';
 
 import 'react-ace';
 

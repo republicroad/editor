@@ -1,13 +1,13 @@
 import {
   CodeEditor,
   GraphNode,
-  createJdmNode,
   jsonSchemaToVariableType,
   type MinimalNodeProps,
   type MinimalNodeSpecification,
   useDecisionGraphActions,
   useDecisionGraphState,
-} from '@gorules/jdm-editor';
+} from '@republicroad/jdm-editor';
+import { createSpecNode } from '../../lib/custom-node-registry';
 import { ListTreeIcon } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -287,7 +287,7 @@ const JsonPathNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpec
   );
 };
 
-export const jsonPathNode = createJdmNode({
+export const jsonPathNode = createSpecNode({
   kind: KIND,
   displayName: 'JSON 提取',
   group: 'json_path',

@@ -18,7 +18,15 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(['**/dist', '**/static', '**/.eslintrc.cjs', '**/target', 'jdm-editor/**', 'storybook-static/**']),
+  globalIgnores([
+    '**/dist',
+    '**/static',
+    '**/.eslintrc.cjs',
+    '**/target',
+    'jdm-editor/**',
+    'storybook-static/**',
+    'tmp/**',
+  ]),
   {
     extends: fixupConfigRules(
       compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:react-hooks/recommended'),

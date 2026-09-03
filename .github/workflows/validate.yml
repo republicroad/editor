@@ -1,14 +1,15 @@
 name: 'Validate'
 
+permissions:
+  contents: read
+
 on:
   pull_request:
   push:
     branches:
       - master
       - zrule
-
-permissions:
-  contents: read
+      - reui
 
 jobs:
   codequality:
@@ -48,7 +49,7 @@ jobs:
         run: bun test apps/zen-rule apps/editor
       - name: 'Test (jdm-editor)'
         working-directory: jdm-editor/packages/jdm-editor
-        run: bun test src
+        run: bun run test
       - name: 'Check custom-node schema fixture'
         run: bun run sync:schema:check
 

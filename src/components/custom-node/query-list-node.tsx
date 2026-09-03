@@ -1,13 +1,13 @@
 import {
   GraphNode,
-  createJdmNode,
   jsonSchemaToVariableType,
   type MinimalNodeProps,
   type MinimalNodeSpecification,
   useDecisionGraphActions,
   useDecisionGraphState,
   CodeEditor,
-} from '@gorules/jdm-editor';
+} from '@republicroad/jdm-editor';
+import { createSpecNode } from '../../lib/custom-node-registry';
 import React, { useEffect, useState } from 'react';
 
 import { Autocomplete as AutocompletePrimitive } from '@base-ui/react/autocomplete';
@@ -403,7 +403,7 @@ const QueryListNode: React.FC<MinimalNodeProps & { specification: MinimalNodeSpe
   );
 };
 
-export const queryListNode = createJdmNode({
+export const queryListNode = createSpecNode({
   kind: 'roster',
   displayName: '查询名单',
   group: '风险名单',

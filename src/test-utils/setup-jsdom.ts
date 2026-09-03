@@ -62,4 +62,17 @@ export const setupJsDom = (): void => {
     jsDomWindow = dom.window as unknown as Record<string, unknown>;
   }
   assignGlobals(jsDomWindow);
+  ensureAnimationFrames();
+};
+
+/** bun 运行时无 rAF；happy-dom preload 移除后由此兜底（jsdom 默认也不实现） */
+const ensureAnimationFrames = (): void => {
+  const globalTarget = globalThis as unknown as Record<string, unknown>;
+  if (typeof globalTarget.requestAnimationFrame !== 'function') {
+    globalTarget.requestAnimationFrame = (callback: (time: number) => void): number =>
+      setTimeout(() => callback(performance.now()), 0) as unknown as number;
+  }
+  if (typeof globalTarget.cancelAnimationFrame !== 'function') {
+    globalTarget.cancelAnimationFrame = (handle: number): void => clearTimeout(handle);
+  }
 };

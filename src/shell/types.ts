@@ -1,4 +1,4 @@
-import type { DecisionGraphType, Simulation } from '@gorules/jdm-editor';
+import type { DecisionGraphType, Simulation } from '@republicroad/jdm-editor';
 import type { AuthAdapter } from '../lib/auth/adapter';
 import type { CustomNodeSchemaSource } from '../lib/custom-node-schema-source';
 import type { GraphPersistenceAdapter } from './persistence';

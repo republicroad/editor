@@ -675,34 +675,38 @@ opencode 分支是一个**深度定制的开发分支**，基于 master 分支�
 
 ## 7. 源码直通消费链（主仓如何消费本库）
 
-> 2026-09-01 沉淀。主仓（editor）对本库（@gorules/jdm-editor）的消费方式为**源码直通**——不经过 dist 构建产物，直接解析并编译 src/ 源码。
+> 2026-09-01 沉淀；2026-09-03（第四十二批）随 reui 分支适配修订。主仓（editor）对本库
+> （`@republicroad/jdm-editor`，reui 分支 v0.2.x）的运行时消费方式为**源码直通**——
+> vite dev/build 直接解析并编译 src/ 源码；tsc 类型检查则消费**即时生成的 d.ts 类型桥**。
 
 ### 7.1 三端解析表
 
-同一个导入名 @gorules/jdm-editor，三种运行时各自解析：
+同一个导入名 @republicroad/jdm-editor，三种运行时各自解析：
 
 | 消费端                       | 解析机制                                                                                                                | 结果                                                                                  |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 主仓前端（vite dev / build） | `vite-tsconfig-paths` 插件（vite.config.ts）读取根 tsconfig `paths` → `jdm-editor/packages/jdm-editor/src`              | **源码直通**（dev 与 build 双端；样式随 src/index.ts 的 import styles.scss 自动带入） |
-| apps/editor 后端 + bun test  | bun workspace 链接（`"@gorules/jdm-editor": "workspace:*"`）→ 包目录 → `main: src/index.ts`；bun 原生按序解析 .js → .ts | 源码（运行时直接执行 ts）                                                             |
-| tsc typecheck                | 根 tsconfig `paths` 同名映射 → 子模块源码纳入 typecheck 程序                                                            | 类型来自源码（不依赖 dist 的 .d.ts）                                                  |
+| 主仓前端（vite dev / build） | `resolve.alias` 把 barrel 显式映射到子模块 `src/index.ts`（优先于 paths）；内核自身的 `@/*` 别名由 `tsconfigPaths({ projects: [宿主 tsconfig, 内核 tsconfig] })` 按 importer 所在目录各解析各的 | **源码直通**（dev 与 build 双端；tailwind.css/tokens.css 随 src/index.ts 自动带入） |
+| apps/editor 后端 + bun test  | 运行时**不解析包入口**：后端零内核导入；bun test 中 barrel 由 `mock-jdm-editor.ts` 的 `mock.module` 桩替换              | 源码不必可达（dist 缺省也不影响测试）                                                 |
+| tsc typecheck                | `tsconfig.kernel.json` 以内核自身 tsconfig 为基（保留其 `@/*` 别名）把内核 src 编译为声明，产物落在 `tmp/kernel-types/`；根 tsconfig `paths` 把导入名映射到该 d.ts | 类型来自**即时生成的 d.ts 桥**（每次 typecheck/build 前自动再生，无陈旧问题）         |
 
 ### 7.2 关键配置清单
 
 | 配置点                     | 文件                                                   | 作用                                                                                                                      |
 | -------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| paths 映射                 | 根 tsconfig.json                                       | `@/*`→`./src/*`、`@gorules/jdm-editor`→子模块 src、monaco-editor 双映射（配合 vite 静态拷贝与 **MONACO_VS_BASE** define） |
-| tsconfig-paths 桥接        | vite.config.ts（`tsconfigPaths()`）                    | 让 vite 的 dev/build 也按同一份 paths 解析（源码直通的运行时入口）                                                        |
-| moduleResolution           | tsconfig.base.json → `bundler`                         | 允许无后缀/敏感解析（现代打包器语义）                                                                                     |
+| 类型桥生成                 | tsconfig.kernel.json（`bun run typecheck:kernel`）     | emitDeclarationOnly → `tmp/kernel-types/`；内核源码**退出宿主编译程序**，`@/*` 别名冲突与双 @types/react 问题一并消解      |
+| paths 映射                 | 根 tsconfig.json                                       | `@/*`→`./src/*`、`@republicroad/jdm-editor`→`./tmp/kernel-types/index.d.ts`、monaco-editor 双映射                          |
+| barrel 别名                | vite.config.ts / .storybook/main.ts（resolve.alias）   | `@republicroad/jdm-editor`→子模块 src/index.ts（别名优先级高于 paths，绕开面向 tsc 的 d.ts 桥）                            |
+| tsconfig-paths 桥接        | vite.config.ts + .storybook/main.ts（`tsconfigPaths({ projects })`） | 双 project（宿主 + 内核）按 importer 目录解析各自 `@/*`（内核用 `@/icons`、`@/components/ui/*` 等）        |
+| 内核 react 类型对齐        | tsconfig.kernel.json `paths`（react→根 @types/react 18）| 内核 devDep @types/react 19 与宿主 18 隔离；bun `overrides` 无法穿透 workspace 成员，故在编译配置层收口                    |
 | allowImportingTsExtensions | apps/zen-rule、apps/editor 的 tsconfig                 | 子模块内部以 .ts 后缀互相导入——凡把子模块源码拉进编译程序的项目都必须开启（需 noEmit）                                    |
-| bun .js→.ts 宽容解析       | bun 运行时内建                                         | 相对导入写 .js 后缀也能命中 .ts 文件；仓外引用不受影响                                                                    |
 | wasm 支持                  | vite.config.ts（vite-plugin-wasm）                     | @gorules/zen-engine-wasm 的加载                                                                                           |
-| monaco                     | vite.config.ts（静态拷贝 + **MONACO_VS_BASE** define） | 版本化静态路径                                                                                                            |
+| monaco                     | vite.config.ts（静态拷贝 + **MONACO_VS_BASE** define） | 版本化静态路径（内核 0.3.0 起 monaco 转 peer，宿主已显式 pin 0.52.2）                                                     |
 | react 去重                 | vite.config.ts（`dedupe: [react, react-dom]`）         | 防止主仓与子模块解析出两份 React 实例                                                                                     |
+| bun test 排除内核          | package.json `test` 脚本（`--path-ignore-patterns`）   | 内核 reui 分支测试为 vitest 规格，由其自有 runner 执行（CI 单列 `bun run test`）；bunfig 的 setupBunDom preload 随 zrule 内核移除 |
 
 ### 7.3 样式链
 
-- src/index.ts 顶部 import styles.scss——源码直通下样式随组件自动带入，主仓**无需**引入 dist/style.css
+- reui 内核 src/index.ts 顶部 import tailwind.css + tokens.css——源码直通下样式随组件自动带入，主仓**无需**引入 dist/style.css
 - dist/style.css 仅作为外部消费方（非 workspace 场景）的兜底产物
 
 ### 7.4 排障
@@ -710,8 +714,9 @@ opencode 分支是一个**深度定制的开发分支**，基于 master 分支�
 | 症状                               | 原因                                                 | 处置                                             |
 | ---------------------------------- | ---------------------------------------------------- | ------------------------------------------------ |
 | 改子模块源码后主仓 dev 未生效      | vite 依赖预构建缓存 / 跨包变更触发热更粒度为整页刷新 | 重启 dev server；必要时删除 node_modules/.vite   |
-| TS5097（import path 以 .ts 结尾…） | 引用方 tsconfig 未开 allowImportingTsExtensions      | 对应项目 tsconfig 补开（需 noEmit）              |
-| 类型报错指向 dist 的 .d.ts         | tsconfig paths 缺失或被覆盖                          | 核对根 tsconfig paths 是否含 @gorules/jdm-editor |
+| TS2307 找不到 `@/icons` 等         | 内核源码被直接拉进宿主编译程序（未走类型桥）         | 核对根 tsconfig paths 是否映射到 tmp/kernel-types/index.d.ts，且 typecheck:kernel 先行 |
+| bigint 不能赋给 ReactNode / 双 @types/react 报错 | 内核 19 类型与宿主 18 类型同程序共存                 | 同上——内核须走类型桥；勿把子模块 src 加回根 include |
+| 类型报错指向 tmp/kernel-types 过期 | 理论不可能：typecheck/build 脚本已链式再生           | 手动 `bun run typecheck:kernel` 再生             |
 | 两份 React 实例（hooks 报错）      | vite 未去重                                          | 确认 dedupe: react/react-dom 在位                |
 
 ### 7.5 dist 的定位
@@ -721,4 +726,5 @@ dist/（vite lib 产物）仅两处用途：
 1. 非 workspace 的外部消费方（npm 场景兜底）
 2. 上游发布形态的保持
 
-主仓 workspace 消费**不经 dist**——exports map 中的 dist 入口被 tsconfigPaths 的源码解析覆盖。
+主仓 workspace 运行时消费**不经 dist**——vite 的 barrel 别名覆盖 exports map；
+tsc 的类型消费走 tmp/kernel-types（等价于"用完即弃的 dist 类型"）。

@@ -12,7 +12,7 @@ import {
   GraphSimulator,
   JdmUiMode,
   Simulation,
-} from '@gorules/jdm-editor';
+} from '@republicroad/jdm-editor';
 import { PageHeader } from '../components/page-header.tsx';
 import {
   AlertDialog,

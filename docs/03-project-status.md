@@ -8,10 +8,10 @@
 
 ### 1.1 分支状态
 
-| 仓库               | 当前分支 | 基于分支 | 说明                                |
-| ------------------ | -------- | -------- | ----------------------------------- |
-| editor(主项目)     | `zrule`  | `master` | 前后端 TypeScript monorepo 开发分支 |
-| jdm-editor(子模块) | `zrule`  | `master` | 外部化改造分支(与主项目同分支开发)  |
+| 仓库               | 当前分支 | 基于分支 | 说明                                              |
+| ------------------ | -------- | -------- | ------------------------------------------------- |
+| editor(主项目)     | `reui`   | `zrule`  | shadcn/ReUI 统一技术栈 + appshell 独立包开发分支  |
+| jdm-editor(子模块) | `reui`   | `master` | 内核重构分支（ReactFlow 12 + shadcn/ReUI，去 antd）|
 
 ### 1.2 版本信息
 
@@ -225,7 +225,18 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 203de98 feat: upgrade simulator request panel with full feature set
 ```
 
-### 7.3 zrule 分支变更摘要
+### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-03，第四十二批：appshell 适配 jdm-editor reui 内核——改名 + 类型桥 + spec 组合器)：**
+
+- **子模块换轨**：`.gitmodules` branch `zrule`→`reui`（b922227）；指针两连跳至 reui tip（0c1ca71→46733003、31cadcf→16bcd05）。内核 reui 分支 = `@republicroad/jdm-editor` v0.2.x 重构（ReactFlow 12、shadcn/ReUI 栈去 antd、seeds 主题、`.grl-root` 作用域注入、monaco 转 peer）
+- **全局改名**：`@gorules/jdm-editor`→`@republicroad/jdm-editor`（21 文件：src 导入族 + package.json workspace 依赖 + 根 tsconfig + .storybook 别名 + 组件测试 mock 键）；`bun install` 重链接 + 清 `.vite` 缓存
+- **类型桥（新架构）**：内核 reui 用自身 `@/*` 别名（与宿主 `@/*` 真实撞车于 button/label/lib-utils）且 devDep @types/react 19（宿主 18）——bun overrides 不穿透 workspace 成员，遂新建 `tsconfig.kernel.json`：以内核 tsconfig 为基 emitDeclarationOnly 生成 `tmp/kernel-types/`，根 paths 指向该 d.ts——内核源码退出宿主编译程序，冲突双消解；`typecheck`/`build` 脚本链式再生类型桥（零陈旧窗口）；内核侧 react 类型经 paths 强制对齐根 18
+- **内核一行修复(16bcd05)**：`expression-item` 的 `useRef<HTMLDivElement|null>`（18/19 双兼容可变 ref；内核 peer 声明 `>=18` 的类型兑现）
+- **spec 组合器**：reui 内核 `createJdmNode` 入参收窄为 BaseNode（无 renderTab/calculateDiff/inferTypes）——registry 新增 `createSpecNode`（createJdmNode 结果 + spec 级字段附加），6 个专属节点文件机械切换；`UserResolver` 内核 barrel 未导出，按 0.2.x host 契约在 `lib/user-resolver.ts` 本地镜像
+- **测试基建跟进**：bunfig 移除死 preload（zrule 的 setupBunDom 不复存在）；`test` 脚本加 `--path-ignore-patterns **/jdm-editor/**`（内核 31 个测试文件已 vitest 化）；storage-key 测试自备 Storage 桩；setup-jsdom 补 rAF 兜底（happy-dom preload 移除后 bun 无此全局）
+- **CI**：validate.yml push 分支加 `reui`；jdm-editor 测试步骤改 `bun run test`（vitest）
+- 门禁：typecheck:kernel/d.ts 桥、typecheck、typecheck:apps、lint 0 err/0 warn、主仓 147/组件 40/apps 72 全 pass、zen-rule 冒烟 exit 0、sync:schema:check 绿、build ✓（主 chunk 7.38MB，低于 zrule 源码直通基线 8.44MB——antd 移除红利）、build:storybook ✓（本机偶发 esbuild OOM 一次，重试通过）；**未提交，待安排**
+
 **最新变更(2026-09-01，第三十九~四十一批：库化收口——CI 库测试门禁 + 独立构建验证 + 文档)：**
 - **CI 库测试门禁(f9872f5)**：validate.yml 增 `Test (jdm-editor)` 步骤(working-directory 指向包目录 + bun test src)——库 58 测试首次纳入 CI 门禁
 - **barrel 导出补全(9347c43)**：`resolveFunctionScope`/`healExpressionsForScope`/`buildDefaultFunctionExpression`/`LEGACY_CUSTOM_FUNCTION_KIND`/`FunctionScope` 类型 + `useSimulatorAutoSync`/`AUTO_SYNC_DEBOUNCE_MS`(库级 API 面完成)；hook 声明转 function 形式

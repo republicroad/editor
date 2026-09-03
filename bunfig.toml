@@ -1,4 +1,4 @@
-# 根仓库 bun test 预加载：`bun test src` 会按路径子串连带运行 jdm-editor 子模块内测试，
-# 与子模块一致注册 happy-dom 全局，保证 @testing-library/react 可用
+# 主仓 bun test 说明：
+# - 内核(jdm-editor reui 分支)测试为 vitest 规格，由其自有 runner 执行（CI 单列步骤）；
+#   `bun test src` 通过 --path-ignore-patterns 排除子模块路径，避免按路径子串误捞。
 [test]
-preload = ["./jdm-editor/packages/jdm-editor/src/setupBunDom.ts"]

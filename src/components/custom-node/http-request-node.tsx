@@ -1,13 +1,13 @@
 import {
   CodeEditor,
   GraphNode,
-  createJdmNode,
   jsonSchemaToVariableType,
   type MinimalNodeProps,
   type MinimalNodeSpecification,
   useDecisionGraphActions,
   useDecisionGraphState,
-} from '@gorules/jdm-editor';
+} from '@republicroad/jdm-editor';
+import { createSpecNode } from '../../lib/custom-node-registry';
 import { GlobeIcon } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -546,7 +546,7 @@ export const HttpRequestTab: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-export const httpRequestNode = createJdmNode({
+export const httpRequestNode = createSpecNode({
   kind: KIND,
   displayName: 'HTTP 请求',
   group: 'http',

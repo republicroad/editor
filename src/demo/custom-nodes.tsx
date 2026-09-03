@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Network, Plug } from 'lucide-react';
-import { createJdmNode } from '@gorules/jdm-editor';
+import { createJdmNode } from '@republicroad/jdm-editor';
 
 export const demoNodes = [
   createJdmNode({

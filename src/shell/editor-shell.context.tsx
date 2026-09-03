@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import type { CustomNodeSpecification, UserResolver } from '@gorules/jdm-editor';
+import type { CustomNodeSpecification } from '@republicroad/jdm-editor';
 
 import { useCustomNodes } from '../hooks/useCustomNodes';
 import { createAnonymousAdapter } from '../lib/auth/adapter';
-import { createUserResolver } from '../lib/user-resolver';
+import { createUserResolver, type UserResolver } from '../lib/user-resolver';
 import type { CustomNodeNamespace } from '../lib/custom-node-types';
 
 import { createDefaultSimulate } from './default-simulate';

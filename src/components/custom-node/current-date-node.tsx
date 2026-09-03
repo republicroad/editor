@@ -1,12 +1,12 @@
 import {
   GraphNode,
-  createJdmNode,
   jsonSchemaToVariableType,
   type MinimalNodeProps,
   type MinimalNodeSpecification,
   useDecisionGraphActions,
   useDecisionGraphState,
-} from '@gorules/jdm-editor';
+} from '@republicroad/jdm-editor';
+import { createSpecNode } from '../../lib/custom-node-registry';
 import { CalendarDaysIcon } from 'lucide-react';
 import React from 'react';
 
@@ -131,7 +131,7 @@ const CurrentDateNode: React.FC<CurrentDateNodeProps> = ({ id, data, selected, s
   );
 };
 
-export const currentDateNode = createJdmNode({
+export const currentDateNode = createSpecNode({
   kind: KIND,
   displayName: '当前日期',
   group: 'debugui',

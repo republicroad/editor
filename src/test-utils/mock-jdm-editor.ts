@@ -50,7 +50,7 @@ const useGraphState = (selector: (store: MockGraphStore) => unknown): unknown =>
 let installed = false;
 
 /**
- * 用桩替换 @gorules/jdm-editor 全量桶(monaco 在 bun 下不可求值)。
+ * 用桩替换 @republicroad/jdm-editor 全量桶(monaco 在 bun 下不可求值)。
  * 必须在被测组件 import 之前调用；组件测试经 mockGraphStore 播种图状态，
  * updateNode 直接落到 store 并触发订阅组件重渲染。
  */
@@ -96,7 +96,7 @@ export const installJdmEditorMock = (): void => {
       children,
     );
 
-  mock.module('@gorules/jdm-editor', () => ({
+  mock.module('@republicroad/jdm-editor', () => ({
     CodeEditor,
     GraphNode,
     createJdmNode: (specification: unknown) => specification,

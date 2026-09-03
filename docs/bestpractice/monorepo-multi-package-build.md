@@ -3,7 +3,9 @@
 > 2026-09-03 沉淀。以本仓库三包布局（宿主应用 `src/` + 外壳包 `packages/appshell` +
 > 内核子模块 `jdm-editor/packages/jdm-editor`）的适配全程为实证来源——文中每条
 > 「症状/解法」都在第四十二~四十四批真实发生过，不是理论清单。
-> 姊妹篇：[源码直通消费链](./monorepo-source-passthrough.md)（单包视角）；
+> 姊妹篇：[源码直通消费链](./monorepo-source-passthrough.md)（单包视角）、
+> [别名机制对比](./monorepo-alias-mechanisms.md)、
+> [Bun Workspaces 最佳实践](./bun-workspaces-best-practices.md)（bun 语义差异专篇）；
 > 三端解析明细见 [docs/06 §7](../06-jdm-editor-submodule.md)。
 
 ---

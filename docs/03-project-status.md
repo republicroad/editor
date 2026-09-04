@@ -226,6 +226,18 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-04，第五十批：规则历史重设计——快照化历史（1a+4b）+ 版本历史面板（3b）+ C1 关闭)：**
+
+- **需求确认**：历史 = 完整现场快照（1a+4b）；UI = 版本历史面板（3b）；自动保存与 diff 对比记 backlog；C1（request Schema 保存丢失）**复现取消**（该节点实现历经三轮重写，旧记录已无代码继承），由重设计吸收关闭
+- **上游 serializer 契约接入**：内核 `GraphRef.serialize()/restore()`（上游 PR #239 设计）返回 `DecisionGraphSnapshot`——UI 现场半边（viewport/页签/各页签 slice），与图数据（受控 value）刻意分离；本批宿主首次接入该公开 API
+- **保存链**：`content.session = graphRef.serialize()`（兄弟键存储，图数据仍走受控 value）；**加载链**：`setGraph(content)` 后 `graphRef.restore(session)` 恢复现场（viewport/页签/滚动），旧记录无 session 降级跳过
+- **服务端**：`GraphContentSchema` 放行 `session` 兄弟键；**simulate 链路（DecisionContentSchema）明确不接收 session**——zen-engine wasm 对 content 未知键敏感（InvalidArg 实证），session 仅存存储链路
+- **appshell**：新增 `ui/sheet.tsx`（radix dialog 侧滑，@radix-ui/react-dialog 新入 deps）+ `components/version-history/version-history-panel.tsx`（受控组件：versions/currentRevision/loading/onRestore 由宿主喂入，adapter 装配留宿主）；barrel 导出
+- **宿主 decision-simple**：Versions 下拉 → 面板触发按钮 + Sheet 面板（恢复沿用确认对话框语义）；保存/加载链接 session
+- **测试**：component-tests +5（面板列表/当前版标记/恢复回调/空态/加载态）、apps +1（session 透传落盘+detail 原样）、graph-persistence +3（session round-trip/无 session 降级/content 内嵌剥离）
+- **C1 关闭记录**：docs/16 状态翻转（历史记录保留 + 处置方式 + 遗留观察项：TabRequest 未注册 useTabSerializer，快照不覆盖 input 在途编辑窗口——内核会话单点任务 ~30 行，需则交接）；docs/15 新增 §7.5 快照持久化
+- 门禁：本地全链绿——typecheck/lint 0-0/主仓 89(+3)/组件 45(+5)/apps 73(+1)/build/storybook/sync:schema:check；**未推送部分随本批一并推送**
+
 **最新变更(2026-09-03，第四十七批：appshell 迁入内核仓——jdm-editor/packages/appshell 同仓共发布)：**
 
 - **架构决策**：appshell 与内核强耦合（peer 依赖 + 协同设计 + 同节奏），迁入内核仓对齐 Nx/Turbo"同仓拥有全部可发布包"流派；editor 仓回归"app + 子模块消费"形态

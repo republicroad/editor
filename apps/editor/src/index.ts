@@ -178,6 +178,8 @@ async function writeRosterFile(roster: PersistableRoster): Promise<void> {
 }
 
 // --- OpenAPI schemas ---
+// 注意：simulate 的 content 走 zen-engine wasm 校验（未知键 InvalidArg），不接收 session；
+// session（UI 现场快照）仅存在于 graphs 存储链路（GraphContentSchema）。
 const DecisionContentSchema = z
   .object({
     contentType: z.string().optional(),
@@ -504,6 +506,8 @@ const GraphContentSchema = z
     contentType: z.string().optional(),
     nodes: z.array(z.record(z.string(), z.unknown())),
     edges: z.array(z.record(z.string(), z.unknown())).optional(),
+    // UI 会话现场快照（GraphRef.serialize()：viewport/页签/各页签 slice）——历史条目=完整现场
+    session: z.record(z.string(), z.unknown()).optional(),
   })
   .openapi('GraphContent');
 

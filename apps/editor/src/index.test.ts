@@ -452,6 +452,37 @@ describe('graph persistence routes', () => {
     expect(versions.map((v) => v.revision)).toEqual(['v1', 'v2']);
   });
 
+  test('content.session 随保存透传落盘，detail 返回原样（UI 现场快照）', async () => {
+    const name = `session-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    const session = {
+      graph: { viewport: { x: 10, y: 20, zoom: 1.5 }, tabs: { openTabs: ['graph'], activeTab: 'graph' } },
+    };
+    const put = await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({
+        ...graphBody('with-session'),
+        baseRevision: 'v1',
+        content: { ...graphBody('with-session').content, session },
+      }),
+    });
+    expect(put.status).toBe(200);
+
+    const detail = (await (await app.request(`/api/graphs/${created.id}`, { headers: asUser('user-a') })).json()) as {
+      content: { session?: unknown; nodes: unknown[] };
+    };
+    expect(detail.content.session).toEqual(session);
+    expect(Array.isArray(detail.content.nodes)).toBe(true);
+  });
+
   test('baseRevision 不匹配 head 返回 409 CONFLICT', async () => {
     const created = (await (
       await app.request('/api/graphs', {

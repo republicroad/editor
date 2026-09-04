@@ -193,6 +193,25 @@ head 文件 `{id}.json` 含 `{meta, content}`；历史版本为分版本文件 `
 3. **ExecCtx 无 actor = 管理员视角**：该路径仅供引擎直调/CLI，不得暴露为 HTTP 行为
 4. **http_request 出站不携带用户凭证**：如需第三方凭据，走服务端凭据库（设计先行）
 
+## 7.5 快照持久化（第五十批：历史 = 完整现场）
+
+内核 `GraphRef.serialize()/restore()`（上游 PR #239 的 serializer 设计）返回
+`DecisionGraphSnapshot`——图数据之外的 **UI 会话现场**：`viewport`（视口）、
+打开页签与活动页签、各页签 slice（滚动位置等）。本批把这一上游公开契约接入宿主持久化：
+
+- **保存**：`content.session = graphRef.serialize()`（UI 现场随图数据同批入库，兄弟键存储——
+  图数据本身仍走受控 `value` 通道，二者分离）
+- **加载**：`setGraph(content)` 后 `graphRef.restore(content.session)` 恢复现场
+  （内核 pending 机制兜底未挂载页签）；旧记录无 `session` 键 → 跳过 restore，向后兼容
+- **服务端**：`GraphContentSchema` 放行 `session` 兄弟键（`z.record` 宽松透传）；
+  simulate 链路（`DecisionContentSchema`）**不接收 session**——zen-engine wasm
+  对 content 未知键敏感（InvalidArg），session 仅存在于存储链路
+- **版本历史面板**（`VersionHistoryPanel`，appshell 导出）：受控组件，宿主喂入
+  `versions/currentRevision` 与 `onRestore` 回调，替换原 Versions 下拉
+
+> 已知限制：input 节点（TabRequest）的在途 schema 编辑（700ms 防抖窗口）未注册
+> tab slice，不被快照捕获——如需覆盖由内核仓注册（上游 tab-expression 模式，~30 行）。
+
 ## 8. 开放问题
 
 | #   | 问题                                                                  | 影响                       | 待定                               |

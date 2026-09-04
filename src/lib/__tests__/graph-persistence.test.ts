@@ -61,12 +61,21 @@ describe('saveToRemote', () => {
 });
 
 describe('loadFromRemote', () => {
-  test('返回 content 解包为图', async () => {
+  test('返回 {graph} 解包（旧记录无 session 降级）', async () => {
     const adapter: GraphPersistenceAdapter = {
       load: async () => ({ id: 'g1', name: 'n', revision: 'v1', content: graph }),
       save: async () => ({ id: 'x', revision: 'v1' }),
     };
-    expect(await loadFromRemote(adapter, 'g1')).toEqual(graph);
+    expect(await loadFromRemote(adapter, 'g1')).toEqual({ graph });
+  });
+
+  test('content 内嵌 session 解构剥离，graph 与 session 分开返回', async () => {
+    const session = { viewport: { x: 1, y: 2, zoom: 3 }, tabs: {} };
+    const adapter: GraphPersistenceAdapter = {
+      load: async () => ({ id: 'g1', name: 'n', revision: 'v3', content: { ...graph, session } }),
+      save: async () => ({ id: 'x', revision: 'v1' }),
+    };
+    expect(await loadFromRemote(adapter, 'g1')).toEqual({ graph, session });
   });
 
   test('load 返回 null(不可见/不存在)时返回 null', async () => {
@@ -88,6 +97,36 @@ describe('loadFromRemote', () => {
     };
     await loadFromRemote(adapter, 'g1', { revision: 'v2' });
     expect(seen).toEqual({ revision: 'v2' });
+  });
+});
+
+describe('saveToRemote session 透传', () => {
+  test('带 session：content 内嵌 session 兄弟键', async () => {
+    let seenRecord: { content?: unknown } | undefined;
+    const session = { tabs: {} };
+    const adapter: GraphPersistenceAdapter = {
+      load: async () => null,
+      save: async (record) => {
+        seenRecord = record as { content?: unknown };
+        return { id: 'g1', revision: 'v1' };
+      },
+    };
+    await saveToRemote(adapter, { graph: graph as never, name: 'n', id: 'g1', session: session as never });
+    expect((seenRecord?.content as Record<string, unknown>).session).toEqual(session);
+    expect((seenRecord?.content as Record<string, unknown>).nodes).toEqual(graph.nodes);
+  });
+
+  test('不带 session：content 保持纯图（向后兼容）', async () => {
+    let seenRecord: { content?: unknown } | undefined;
+    const adapter: GraphPersistenceAdapter = {
+      load: async () => null,
+      save: async (record) => {
+        seenRecord = record as { content?: unknown };
+        return { id: 'g1', revision: 'v1' };
+      },
+    };
+    await saveToRemote(adapter, { graph: graph as never, name: 'n', id: 'g1' });
+    expect(seenRecord?.content).toEqual(graph);
   });
 });
 

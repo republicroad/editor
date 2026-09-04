@@ -13,6 +13,7 @@ import {
   JdmUiMode,
   Simulation,
 } from '@republicroad/jdm-editor';
+import { VersionHistoryPanel } from '@republicroad/jdm-appshell';
 import { PageHeader } from '../components/page-header.tsx';
 import {
   AlertDialog,
@@ -139,6 +140,7 @@ const DecisionSimpleInner: React.FC = () => {
   const [remoteSource, setRemoteSource] = useState<{ id: string; revision?: string }>();
   const [libraryGraphs, setLibraryGraphs] = useState<Array<{ id: string; name: string; updatedAt?: string }>>();
   const [remoteVersions, setRemoteVersions] = useState<Array<{ revision: string; updatedAt?: string }>>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [graphTrace, setGraphTrace] = useState<Simulation>();
   const [pendingConfirm, setPendingConfirm] = useState<{
     title: string;
@@ -195,11 +197,14 @@ const DecisionSimpleInner: React.FC = () => {
     if (persistence) {
       try {
         checkCyclic();
+        // UI 会话现场（viewport/页签/各页签 slice）随保存入库——历史条目=完整现场快照
+        const session = graphRef.current?.serialize();
         const result = await saveToRemote(persistence, {
           graph: graph as unknown as GraphLike,
           name: fileName.replaceAll('.json', ''),
           id: remoteSource?.id,
           baseRevision: remoteSource?.revision,
+          session,
         });
         if (result.kind === 'conflict') {
           toast.error('This graph was modified by someone else. Refresh before saving to avoid overwriting.');
@@ -305,15 +310,19 @@ const DecisionSimpleInner: React.FC = () => {
   const openRemoteGraph = async (id: string, revision?: string) => {
     if (!persistence) return;
     try {
-      const content = await loadFromRemote(persistence, id, revision ? { revision } : undefined);
-      if (!content) {
+      const loaded = await loadFromRemote(persistence, id, revision ? { revision } : undefined);
+      if (!loaded) {
         toast.error('Graph not found');
         return;
       }
       setGraph({
-        nodes: normalizeGraphNodes((content as { nodes?: DecisionNode[] }).nodes ?? []),
-        edges: (content as { edges?: DecisionEdge[] }).edges ?? [],
+        nodes: normalizeGraphNodes((loaded.graph as { nodes?: DecisionNode[] }).nodes ?? []),
+        edges: (loaded.graph as { edges?: DecisionEdge[] }).edges ?? [],
       });
+      // UI 会话现场恢复（viewport/页签/各页签 slice）——旧记录无 session 时跳过
+      if (loaded.session) {
+        graphRef.current?.restore(loaded.session);
+      }
       setRemoteSource(revision ? { id, revision } : { id });
       setFileName(id);
     } catch (e) {
@@ -492,35 +501,17 @@ const DecisionSimpleInner: React.FC = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   {persistence?.listVersions && remoteSource && (
-                    <DropdownMenu
-                      onOpenChange={(open) => {
-                        if (open) void refreshVersions(remoteSource.id);
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        void refreshVersions(remoteSource.id);
+                        setHistoryOpen(true);
                       }}
                     >
-                      <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="ghost" size="sm">
-                          Versions
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="min-w-52" align="start">
-                        {remoteVersions.length === 0 ? (
-                          <DropdownMenuItem disabled>No versions</DropdownMenuItem>
-                        ) : (
-                          remoteVersions.map((v) => (
-                            <DropdownMenuItem
-                              key={v.revision}
-                              disabled={v.revision === remoteSource.revision}
-                              onSelect={() => confirmOpenVersion(remoteSource.id, v.revision)}
-                            >
-                              <span className="flex w-full items-center justify-between gap-3">
-                                <span>{v.revision}</span>
-                                <span className="text-muted-foreground">{v.updatedAt ?? ''}</span>
-                              </span>
-                            </DropdownMenuItem>
-                          ))
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      Versions
+                    </Button>
                   )}
                   {(supportFSApi || persistence) && (
                     <Button type="button" onClick={saveFile} variant="ghost" size="sm">
@@ -647,6 +638,15 @@ const DecisionSimpleInner: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {remoteSource && (
+        <VersionHistoryPanel
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          versions={remoteVersions}
+          currentRevision={remoteSource.revision}
+          onRestore={(revision) => confirmOpenVersion(remoteSource.id, revision)}
+        />
+      )}
     </>
   );
 };

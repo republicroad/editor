@@ -27,14 +27,13 @@
 
 ## 4. 已知问题 backlog
 
-### request 节点 Schema 数据保存丢失
+### request 节点 Schema 数据保存丢失（已关闭：由第五十批规则历史重设计吸收）
 
-- **现象**：保存规则时 `contrib.http_request` 节点(content: `{name, config}`)的 Schema 数据未保存。
-- **定位结论**：服务端非根因(`GraphContentSchema` 用 `z.record(z.string(), z.unknown())`，不剥字段)；`graphs-http-adapter` 与 `graph-persistence.ts` 均透传。
-- **待查(backlogged)**：request 节点 Schema 目前存储在 node.content 之外的位置，未进入保存序列化路径。已知方向，留待处理。
-- **状态**：未修复(留给后续批次)。
+- **现象（历史记录，2026-08-27 第十五批）**：保存规则时 `contrib.http_request` 节点(content: `{name, config}`)的 Schema 数据未保存。
+- **当时的定位结论**：服务端非根因(`GraphContentSchema` 用 `z.record(z.string(), z.unknown())`，不剥字段)；`graphs-http-adapter` 与 `graph-persistence.ts` 均透传；初判"Schema 存于 node.content 之外"。
+- **第五十批处置（2026-09-04）**：需求方确认不再复现旧场景（该节点实现已经历 zrule→reui→appshell 三轮完全重写，当时的实现已无代码继承）。处置方式：**规则历史重设计**——保存内容升级为完整现场快照（`GraphRef.serialize()` 的 `{viewport, 页签, 各页签 slice}` 随 `content.session` 入库），编辑器在途状态（含未落 content 的草稿）进入历史捕获范围；服务端 `GraphContentSchema` 放行 `session` 键。旧 bug 的根因面（保存边界不完整）由本设计结构性修正。
+- **遗留观察项**：input 节点（TabRequest）的在途 schema 编辑仍走 700ms 防抖落 content——其未注册 useTabSerializer，快照不捕获该窗口；如需覆盖，内核仓单点任务（照上游 tab-expression 模式注册，~30 行）。
 
 ## 5. 开放项(推进部署后续还需要的)
 
 - 真实部署配置：镜像对外推送仓库名、生产 env(`TRUST_PROXY_HEADERS`/`X-User-Id` 网关、`PORT`)、卷挂载编排(docker-compose / k8s)。
-- request 节点 Schema 保存修复(docs/03 §6.1 已知问题)。

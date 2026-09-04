@@ -135,8 +135,12 @@ node_modules 重装 → 确认成员本地 symlink 存在 → 全门禁 + dev/bu
 
 ## 6. 发布
 
-1. `publishConfig` 切换发布形态：dev 态 `main/types → src/index.ts`（源码直通），
-   发布态覆盖为 `dist` 入口 + `exports`。
+1. **main/exports 永久指 dist（发布契约形态，第四十七批反转）**：`main/types/exports`
+   描述消费者拿到什么（dist/index.js + index.d.ts + style.css）；dev 源码直通由根
+   tsconfig `paths` 承担，**不经 main**。⚠️ `npm pack/publish` 不应用 publishConfig
+   字段重写（那是 pnpm publish 的特性）——按"publishConfig 换 main"设计的 tarball
+   会指向不存在的 src（npm-smoke 实证）。详见
+   [ts 编译/链接/运行行为篇](./ts-compile-link-runtime.md)。
 2. vite lib mode：`external` 必须覆盖 peer 全集（含 `react/jsx-runtime`）+
    正则兜深路径；产物命名与 `exports` 逐字对齐。
 3. **vite lib mode 不支持 `manualChunks`**（内核 B1 实证）——分包走多 entry

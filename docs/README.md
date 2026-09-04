@@ -37,6 +37,7 @@
 | [Bun Workspaces 最佳实践](./bestpractice/bun-workspaces-best-practices.md)                    | bun 工作区协议/lockfile/布局收敛/别名运行时语义/CI       |
 | [决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)         | 内核别名方案六轮演进复盘与可迁移工程教训                 |
 | [TS imports 字段解析语义](./bestpractice/ts-imports-field-resolution.md)                      | 扩展探测/通配字面填充/不回落 paths——imports 写法守则     |
+| [Monorepo TS 编译·链接·运行](./bestpractice/ts-compile-link-runtime.md)                       | 三通道解析模型/包形态反转/发布契约——地基篇               |
 
 ---
 

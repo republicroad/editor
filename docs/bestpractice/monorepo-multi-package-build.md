@@ -36,27 +36,27 @@
 - 上下层包之间（appshell → 内核）永远 peer，绝不允许 appshell 把内核打进自己的
   dist（单实例 + 体积双重要求）。
 
-### 1.2 dev / publish 入口切换
+### 1.2 包形态：main/exports 永久指 dist，dev 走 tsconfig paths（第四十七批反转后的现行形态）
 
 ```jsonc
-// packages/appshell/package.json
-"main": "./src/index.ts",        // dev：bun 可直接执行 ts，vite 源码直通
-"types": "./src/index.ts",
-"publishConfig": {               // publish 时 npm/bun 自动换用
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": { ".": {...}, "./dist/style.css": "./dist/style.css" },
-  "access": "public"
-}
+// packages/appshell/package.json（现行）
+"main": "./dist/index.js",        // main/exports 即"发布契约"——永久描述消费者拿到什么
+"module": "./dist/index.js",
+"types": "./dist/index.d.ts",
+"exports": { ".": {...dist...}, "./dist/style.css": "./dist/style.css" },
+"publishConfig": { "access": "public" },   // 仅留 npm 真正支持的 registry 类字段
 ```
 
 要点：
-- **dev 入口指 src** 是 monorepo 内"零构建开发"的根基（改包源码即时生效）。
-- 有 `exports` 字段时它优先于 `main`——dev 态要么不写 `exports`，要么把 dev 入口
-  写进 `exports`；否则 bun/vite 会按 exports 找 dist 而报"模块不存在"。
-- 根 `workspaces` 记得纳入新包目录（本仓库 `["apps/*", "jdm-editor/packages/*", "packages/*"]`），
-  否则 `node_modules/@scope/pkg` 链接不会生成，bun 侧一切解析失效。
+- **dev 源码直通不依赖 main**——由根 tsconfig `paths` 承担（`@republicroad/jdm-appshell` →
+  包内 `src/index.ts`），tsc/vite/bun/storybook 四端都认 paths；改包源码即时生效不变。
+- ⚠️ **`npm pack/publish` 不应用 publishConfig 的字段重写**（main/types/exports 不会被
+  换成 dist）——字段重写是 **pnpm publish** 的特性。曾按"publishConfig 换用"设计导致
+  tarball 的 main 指向 src（src 又不在 files 白名单）→ 装了就断（npm-smoke 实证，
+  第四十七批）。详见 [ts 编译/链接/运行行为篇](./ts-compile-link-runtime.md)。
+- 根 `workspaces` 记得纳入新包目录（本仓库 `["apps/*", "jdm-editor/packages/*"]`——
+  子模块成员同样由 glob 收纳），否则 `node_modules/@scope/pkg` 链接不会生成，
+  bun 侧一切解析失效。
 
 ---
 

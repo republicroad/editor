@@ -139,7 +139,8 @@ node_modules 重装 → 确认成员本地 symlink 存在 → 全门禁 + dev/bu
    描述消费者拿到什么（dist/index.js + index.d.ts + style.css）；dev 源码直通由根
    tsconfig `paths` 承担，**不经 main**。⚠️ `npm pack/publish` 不应用 publishConfig
    字段重写（那是 pnpm publish 的特性）——按"publishConfig 换 main"设计的 tarball
-   会指向不存在的 src（npm-smoke 实证）。详见
+   会指向不存在的 src（npm-smoke 实证）。**发布流程全文见
+   [发布手册](./release-process.md)**。详见
    [ts 编译/链接/运行行为篇](./ts-compile-link-runtime.md)。
 2. vite lib mode：`external` 必须覆盖 peer 全集（含 `react/jsx-runtime`）+
    正则兜深路径；产物命名与 `exports` 逐字对齐。

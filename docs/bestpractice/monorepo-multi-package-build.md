@@ -38,6 +38,9 @@
 
 ### 1.2 包形态：main/exports 永久指 dist，dev 走 tsconfig paths（第四十七批反转后的现行形态）
 
+> **发布流程全文**（版本线规则/发布命令/回滚纪律/changesets 备案）见
+> [发布手册](./release-process.md)。
+
 ```jsonc
 // packages/appshell/package.json（现行）
 "main": "./dist/index.js",        // main/exports 即"发布契约"——永久描述消费者拿到什么

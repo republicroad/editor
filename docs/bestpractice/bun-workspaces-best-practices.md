@@ -1,7 +1,9 @@
 # Bun Workspaces（工作区）最佳实践与语义差异
 
-> 2026-09-03 沉淀。基于 bun 1.3.x 与本仓三包布局（宿主 `src/` + `packages/appshell`
-> + 子模块内核）的实测——文中每条 ✦ 都在第四十二~四十六批真实发生过。
+> 2026-09-03 沉淀。基于 bun 1.3.x 与本仓多包布局（宿主 `src/` + 子模块内
+> `jdm-editor/packages/jdm-editor` 内核 + `jdm-editor/packages/appshell` 外壳——
+> appshell 已于第四十七批迁入内核仓）的实测——文中每条 ✦ 都在第四十二~四十七批
+> 真实发生过。
 > 姊妹篇：[多包编译与构建](./monorepo-multi-package-build.md)、[别名机制对比](./monorepo-alias-mechanisms.md)。
 
 ---
@@ -15,8 +17,9 @@
 
 ## 1. 工作区声明与依赖协议
 
-1. 根 `workspaces` 用 glob 收纳全部成员（本仓 `["apps/*", "jdm-editor/packages/*", "packages/*"]`，
-   子模块成员同样纳入）；每个成员独立 package.json（自带 name/version/deps）。
+1. 根 `workspaces` 用 glob 收纳全部成员（本仓 `["apps/*", "jdm-editor/packages/*"]`——
+   glob 已覆盖子模块内的内核与 appshell 两个成员，第四十七批起 `packages/*` 已移除）；
+   每个成员独立 package.json（自带 name/version/deps）。
 2. 跨包依赖只走 `workspace:` 协议：
    - `workspace:*` → 发布时改写为**精确版本**
    - `workspace:^` → 改写为 `^x.y.z`（保留兼容范围，**对外发布的内部包推荐**）
@@ -55,10 +58,41 @@
    devDeps（实证：`@types/react@19` 在内核本地完好保留）。pnpm 的 overrides
    是 workspace 全局——**这是 bun 与 pnpm 在收敛能力上的最大差距**。
 4. 收敛手段按优先级：
-   1. **类型层 paths 钉单一实例**（tsconfig 层面，跨平台稳，实证 react/@lezer）
+   1. **类型层 paths 钉单一实例**（tsconfig 层面，跨平台稳，实证 react/@lezer；
+      双布局下用**多候选数组**——见 §3.5）
    2. 成员间 devDep 版本对齐
    3. overrides（仅对第三方传递依赖有效）
 5. 运行时单实例照旧：vite `resolve.dedupe: ['react', 'react-dom']` + peer 声明完整。
+
+### 3.5 布局模式：hoisted（现状）vs isolated——未来研发分支方向（备案）
+
+bun 安装器支持两种布局模式（**全局设置**，作用于整仓，bunfig.toml 配置或单次
+`bun install --linker isolated`；bun 1.2+ 支持，本仓 1.3.14 可用）：
+
+| 维度 | **hoisted**（现状，默认） | **isolated**（pnpm 式，备案方向） |
+| --- | --- | --- |
+| 布局 | store + 提升硬链接；成员本地 node_modules **仅版本冲突时嵌套** | 每成员 node_modules **实装其声明过的全部依赖**（symlink 到 store） |
+| 成员 devDeps 实装 | ❌ 提升到根（✦ appshell 的 `./node_modules/@types/react` 候选在 editor 树落空） | ✅（✦ 内核 pnpm 树天然如此） |
+| 幽灵依赖（未声明就 import） | ✅ 能跑（靠 eslint boundaries/CI 补位） | ❌ 结构性阻断（声明真实性强制成立） |
+| 跨成员双实例 | 可能（嵌套副本 vs 提升副本，✦ lezer/双 React 实证） | 结构性隔离（各成员只 symlink 自己声明的版本） |
+| paths 写法 | **多候选数组**（覆盖两布局的 18 副本位置，✦ 第四十七批） | 单候选 `./node_modules/...` 即可（可简化） |
+| 迁移成本 | — | 整仓布局切换：删 node_modules 重装 + monaco 静态拷贝 glob 复验（提升假设）+ `.vite` 预构建缓存 + storybook/CI 缓存路径 |
+
+**决策状态（第四十七批落档）**：备案未启用。当下问题（appshell 双布局类型对齐）
+已由多候选 paths 解决且版本安全（候选不含内核 19 副本）；isolated 的真正收益是
+**pnpm 级依赖纪律**（幽灵依赖阻断 + 双实例结构性消除）——值得单独立项评估，
+不作为 paths 问题的补丁顺手做。
+
+**启用触发条件**（满足其一再启动）：
+1. 幽灵依赖事故实际发生（未声明导入在布局变化后断裂）
+2. 双实例类问题第二次出现（类型/运行时多实例修复成本超过迁移成本）
+3. 需要与内核 pnpm 树的解析语义完全对齐（跨树联调排查成本显著上升时）
+
+**启用清单**（半天量）：bunfig.toml 加 `[install] linker = "isolated"` → 删
+node_modules 重装 → 确认成员本地 symlink 存在 → 全门禁 + dev/build/storybook
+冒烟 → monaco 静态拷贝完整性复核（根提升假设变化）→ CI 缓存路径确认
+（bun.lock 与 linker 无关，无需变更）→ 文档更新（本篇 §3/§4 + alias-mechanisms
+解析矩阵）。
 
 ---
 
@@ -136,8 +170,10 @@ oven-sh/setup-bun（版本与 engines 一致）
 | 成员 version bump 零漂移 | 第四十六批（内核 v0.3.0 bump，frozen 幂等） |
 | overrides 不穿透成员 | 第四十二批（内核 @types/react 19 钉不住） |
 | 类型层 paths 钉单实例 | 第四十二批（react 18 压平）、第四十六批（@lezer/common/lr） |
+| 双布局多候选 paths | 第四十七批（appshell 迁入内核仓，hoisted/pnpm 双布局对齐） |
 | 就近 tsconfig / mock 绑定一致性 | 第四十二批（monaco d.ts 崩溃） |
 | bun test 子串过滤 | 第四十二批（`--path-ignore-patterns` 引入） |
 | 成员测试归位成员树 | 第四十六批（内核 vitest 门禁归位内核仓 CI） |
 | lib mode manualChunks 限制 | 第四十五批（内核 B1 实验结论） |
 | 分支即推 / CI 前置 | 第四十六批（reui 首推连抓 4 项） |
+| linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题） |

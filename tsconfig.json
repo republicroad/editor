@@ -9,8 +9,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@republicroad/jdm-editor": ["./jdm-editor/packages/jdm-editor/src/index.ts"],
-      "@republicroad/jdm-appshell": ["./packages/appshell/src/index.ts"],
-      "@republicroad/jdm-appshell/*": ["./packages/appshell/*"],
+      "@republicroad/jdm-appshell": ["./jdm-editor/packages/appshell/src/index.ts"],
+      "@republicroad/jdm-appshell/*": ["./jdm-editor/packages/appshell/*"],
       "monaco-editor": ["./node_modules/monaco-editor"],
       "monaco-editor/*": ["./node_modules/monaco-editor/*"],
       "react": ["./node_modules/@types/react"],
@@ -32,7 +32,7 @@
   "include": [
     "src",
     "component-tests",
-    "packages/appshell/src",
+    "jdm-editor/packages/appshell/src",
     "jdm-editor/packages/jdm-editor/src/**/*.d.ts"
   ],
   "references": [

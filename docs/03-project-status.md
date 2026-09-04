@@ -226,6 +226,16 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-03，第四十七批：appshell 迁入内核仓——jdm-editor/packages/appshell 同仓共发布)：**
+
+- **架构决策**：appshell 与内核强耦合（peer 依赖 + 协同设计 + 同节奏），迁入内核仓对齐 Nx/Turbo"同仓拥有全部可发布包"流派；editor 仓回归"app + 子模块消费"形态
+- **内核侧**（b4fe3d9/9fc7784，85 文件）：`packages/appshell` 全量迁入（src/scripts/README/LICENSE/配置）；`validate.yaml` 增 Appshell typecheck/build 门禁（pnpm --filter 按包名）；pnpm-lock 吸收 appshell 依赖树（corepack pnpm 10.34.5 `--lockfile-only` 更新，本地无全局 pnpm 的替代手法）；`lerna publish from-package` 天然识别未发布的 appshell 0.1.0——同仓共发布
+- **appshell tsconfig 简化**：去 extends（消除双仓 tsconfig.base 歧义）自包含；paths 仅剩一条内核源码直通 `../jdm-editor/src/index.ts`（兄弟包语义，editor/内核两布局同指）；react/@lezer/monaco 映射全删——改常规就近解析，两棵树（editor bun 树 / 内核 pnpm 树）天然单实例
+- **editor 侧 rewiring**：`git rm packages/appshell`；workspaces 删 `packages/*`（`jdm-editor/packages/*` 自动收编 appshell）；根 tsconfig appshell 双映射/include 重指子模块路径；`sync:schema` OUT_FILE、`.storybook/preview.ts` css、component-tests ×4 深路径全部重指；eslint 删 appshell 作用域（appshell 归内核仓 eslint——其全局 eslintrc 规则宽松，appshell 代码零配置合规）
+- **归属原则实证**：appshell 的 67 个测试随包归内核（宿主 src 测试 152→85）；appshell 的 lint 归内核仓 eslint；宿主 CI 只验证宿主消费假设
+- 门禁：本地全链绿——typecheck/lint 0-0/主仓 85（=152−67 随包归内核）/组件 40/apps 72/build/storybook/sync:schema:check（新路径 ✓）；内核侧 build ✓（bun 树验证）；**未推送部分随本批一并推送**
+- 教训存档：PowerShell 单对数组扁平化（守卫 `$pair.Count -ge 2` 拦截破坏但静默跳过替换——批量改写后必须 grep 残留复核）
+
 **最新变更(2026-09-03，第四十六批：内核 0.3.0 同步 + 方案 D（`#` subpath imports）+ 宿主源码直通切换)：**
 
 - **内核 0.3.0 同步**：嵌套子模块检出 v0.3.0→987d55c（0.3.0 后 A-D 批：npm-smoke registry 模式、storybook GitHub Pages、CF 拖拽 sortable、operator-expression 单测、CI 缓存）；lockfile 零漂移（workspace 成员版本不入锁，frozen 幂等）

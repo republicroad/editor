@@ -69,36 +69,13 @@ export default defineConfig([
     },
   },
   {
-    // node 脚本（发布 smoke / 同步工具）：flat config 默认 lint .mjs，需声明 node 全局
-    files: ['scripts/**/*.mjs', 'packages/appshell/scripts/**/*.mjs'],
+    // node 脚本（同步工具）：flat config 默认 lint .mjs，需声明 node 全局
+    // （appshell 的 scripts 归内核仓 eslint 管）
+    files: ['scripts/**/*.mjs'],
     languageOptions: {
       globals: {
         ...globals.node,
       },
-    },
-  },
-  {
-    // vendored from @reui registry: shadcn CLI 落盘文件，不做源码级 lint 约束
-    files: ['packages/appshell/src/components/reui/cascader/**/*.{ts,tsx}'],
-    rules: {
-      'react-refresh/only-export-components': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-    },
-  },
-  {
-    // jdm 自定义节点 spec/hook 文件：导出节点规格(createJdmNode 产物)与配套常量——非纯 React 组件文件
-    files: [
-      'packages/appshell/src/components/custom-node/**/*.{ts,tsx}',
-      'packages/appshell/src/components/ui/**/*.{ts,tsx}',
-      'packages/appshell/src/components/reui/**/*.{ts,tsx}',
-      'packages/appshell/src/context/theme.provider.tsx',
-      'packages/appshell/src/hooks/useCustomNodes.ts',
-      'packages/appshell/src/lib/*.ts',
-      'packages/appshell/src/lib/*.tsx',
-      'packages/appshell/src/shell/*.tsx',
-    ],
-    rules: {
-      'react-refresh/only-export-components': 'off',
     },
   },
 ]);

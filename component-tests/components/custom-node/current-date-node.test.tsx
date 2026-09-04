@@ -18,7 +18,7 @@ installJdmEditorMock();
 
 const { cleanup, fireEvent, render, screen } = await import('@testing-library/react');
 const { CurrentDateTab, currentDateNode } =
-  await import('../../../packages/appshell/src/components/custom-node/current-date-node');
+  await import('../../../jdm-editor/packages/appshell/src/components/custom-node/current-date-node');
 
 const NODE_ID = 'cd-node';
 

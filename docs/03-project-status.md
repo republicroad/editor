@@ -233,7 +233,8 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **appshell tsconfig 简化**：去 extends（消除双仓 tsconfig.base 歧义）自包含；paths 仅剩一条内核源码直通 `../jdm-editor/src/index.ts`（兄弟包语义，editor/内核两布局同指）；react/@lezer/monaco 映射全删——改常规就近解析，两棵树（editor bun 树 / 内核 pnpm 树）天然单实例
 - **editor 侧 rewiring**：`git rm packages/appshell`；workspaces 删 `packages/*`（`jdm-editor/packages/*` 自动收编 appshell）；根 tsconfig appshell 双映射/include 重指子模块路径；`sync:schema` OUT_FILE、`.storybook/preview.ts` css、component-tests ×4 深路径全部重指；eslint 删 appshell 作用域（appshell 归内核仓 eslint——其全局 eslintrc 规则宽松，appshell 代码零配置合规）
 - **归属原则实证**：appshell 的 67 个测试随包归内核（宿主 src 测试 152→85）；appshell 的 lint 归内核仓 eslint；宿主 CI 只验证宿主消费假设
-- 门禁：本地全链绿——typecheck/lint 0-0/主仓 85（=152−67 随包归内核）/组件 40/apps 72/build/storybook/sync:schema:check（新路径 ✓）；内核侧 build ✓（bun 树验证）；**未推送部分随本批一并推送**
+- **历史语义化重写（appshell 迁移收口）**：内核 reui 的 9fc7784..b31de5b（7 提交，含 prettier 3.8 错误探索往返）以软重置法重写为 4 个语义提交——`feat(appshell) 入仓`（全部修正折叠）/ 并行会话 storybook 修复 ×2（cherry-pick 原样保留）/ `style: prettier 3.5.3 全仓对齐`（e82aa6f+a4371c3 净值，3.8 探索从历史消失）；**树等价断言通过**（`git diff b31de5b HEAD` 为空 = 纯历史语义化零内容变化）；`--force-with-lease` 推送 + editor gitlink 紧随 bump（3597db2）；回滚备案分支 `backup/reui-pre-squash`（本地保留）。教训：**跨仓 force-push 后必须同会话完成 gitlink 联动**，避免子模块悬空窗口
+- 门禁：本地全链绿——typecheck/lint 0-0/主仓 85（=152−67 随包归内核）/组件 40/apps 72/build/storybook/sync:schema:check（新路径 ✓）；内核侧 build ✓（bun 树验证）；**双 CI 最终全绿**——editor Validate（33839880057）+ 内核 Validate 重写后首跑（33839861246，5m22s 全套）
 - 教训存档：PowerShell 单对数组扁平化（守卫 `$pair.Count -ge 2` 拦截破坏但静默跳过替换——批量改写后必须 grep 残留复核）
 
 **最新变更(2026-09-03，第四十六批：内核 0.3.0 同步 + 方案 D（`#` subpath imports）+ 宿主源码直通切换)：**

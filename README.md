@@ -2,13 +2,23 @@
 
 URL: https://editor.gorules.io
 
+## 版本线（2026-09-04）
+
+> 本仓为 GoRules editor 的**硬分叉**，独立维护、独立版本线：
+> - editor fork 起点版本 **0.1.0**（继承自上游 1.16.1，不延续上游 1.x 版本号，避免误读）
+> - 内核子模块为 `@republicroad/jdm-editor`（**0.3.x**，同样为独立 0.x 版本线的硬分叉）
+> - 外壳包 `@republicroad/jdm-appshell`（**0.1.0**）
+> - 开发分支：`reui`（shadcn/ReUI 技术栈 + 独立内核 fork）；master 退役冻结于上游 1.16.1
+> - kernel 0.3.1 / appshell 0.1.0 已发布 npm；editor 为应用不发布 npm
+
 ## install
 
 注意以下点:
 
 1. 此项目是以 editor 和 jdm-editor (editor的 jdm-editor 子仓库)组成
 2. 未来editor项目的前后端都会使用bun, 为了使用mono pacakge, 建议使用 bun >=1.3 版本.
-3. editor 和 jdm-editor 的 master 分支用于同步上游分支, 使用 standalone 分支用于开源分支版本.
+3. ~~editor 和 jdm-editor 的 master 分支用于同步上游分支, 使用 standalone 分支用于开源分支版本.~~
+   **master 已退役冻结于上游 1.16.1；开发主线为 reui 分支（独立内核 fork + appshell 同仓）。**
 4. 使用 zrule 完成前后端 typescript 的开发和改造.
 
 使用以下命令clone项目:

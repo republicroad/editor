@@ -1,3 +1,10 @@
+# Changelog
+
+> **版本线说明（2026-09-04）**：v1.16.1 及以下为上游 GoRules editor 的继承记录（semantic-release 生成归档）。
+> 自 0.1.0 起为独立 fork 版本线（republicroad/editor，硬分叉自上游 1.16.1，与内核 @republicroad/jdm-editor 0.x 家族对齐）。
+
+---
+
 ## [1.16.1](https://github.com/gorules/editor/compare/v1.16.0...v1.16.1) (2026-02-13)
 
 ### Bug Fixes

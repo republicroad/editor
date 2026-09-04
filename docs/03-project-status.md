@@ -226,6 +226,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-04，第五十一批：C1 遗留收口（TabRequest 快照）+ editor 版本线独立（0.1.0）+ reui 转正默认分支)：**
+
+- **TabRequest 快照收口（内核 99e48c6）**：新增 `request-session-draft.ts`（build/apply 纯逻辑 + `useRequestSessionDraftSerializer` 封装）；TabRequest 注册 `'request'` tab slice——序列化 700ms 防抖窗口的在途编辑（schema 草稿/示例 JSON 草稿/描述/活动页签），保存入库、重开恢复；内核 vitest 三用例（编辑器树跑内核 vitest 为已知双 React 基线失败，新用例单独跑绿）；docs/16 遗留观察项关闭
+- **editor 版本线独立（0.1.0）**：semantic-release 退役（删 `semantic-version.yml` + `.releaserc.json` + 7 个 devDeps，bun.lock 同步 −856 行）；package.json 版本 `1.16.1`→`0.1.0`（0.x 家族：内核 0.3.1/appshell 0.1.0/editor 0.1.0——硬分叉独立线，不与上游 1.16.x 混淆）；CHANGELOG.md 归档注记（1.x = 上游继承记录）
+- **reui 转正**：tag `v0.1.0` + GitHub release（fork 独立版本线起点声明）；**default branch → reui**（gh api PATCH，master 退役冻结于上游 1.16.1 不删除）；README 版本叙事更新（版本线/分支策略改写）
+- 门禁：本地全链绿——typecheck/lint 0-0/主仓 89/组件 45/apps 73/build/storybook；**双 CI 绿**——editor Validate（33879465651）+ 内核 Validate（33839861246 起的系列，TabRequest 提交 99e48c6 后首跑绿）；**待用户**：npm login 后发布 appshell 0.1.0 + dev 实机手验清单
+
 **最新变更(2026-09-04，第五十批：规则历史重设计——快照化历史（1a+4b）+ 版本历史面板（3b）+ C1 关闭)：**
 
 - **需求确认**：历史 = 完整现场快照（1a+4b）；UI = 版本历史面板（3b）；自动保存与 diff 对比记 backlog；C1（request Schema 保存丢失）**复现取消**（该节点实现历经三轮重写，旧记录已无代码继承），由重设计吸收关闭

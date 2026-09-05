@@ -363,7 +363,12 @@ export async function listGraphVersions(
     const match = new RegExp(`^${safeId}\\.(v\\d+)\\.json$`).exec(entry.name);
     if (!match) continue;
     const graph = await readHeadFile(join(dir, entry.name));
-    versions.push({ revision: match[1], versionName: graph?.versionName, updatedAt: graph?.updatedAt ?? '', auto: graph?.auto });
+    versions.push({
+      revision: match[1],
+      versionName: graph?.versionName,
+      updatedAt: graph?.updatedAt ?? '',
+      auto: graph?.auto,
+    });
   }
   versions.sort((a, b) => a.revision.localeCompare(b.revision));
   return versions;

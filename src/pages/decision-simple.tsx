@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CirclePlay, Lightbulb, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { decisionTemplates } from '../assets/decision-templates';
@@ -193,28 +193,48 @@ const DecisionSimpleInner: React.FC = () => {
     }
   };
 
+  /**
+   * 远程持久化（手动/自动保存共用）：session 快照入库 + 乐观锁推进。
+   * 返回 {ok:false, reason:'conflict'|'no-source'} 时调用方自行处理反馈。
+   */
+  const persistToRemote = async (opts: {
+    auto: boolean;
+  }): Promise<{ ok: boolean; reason?: 'conflict' | 'no-source'; id?: string; revision?: string }> => {
+    if (!persistence) {
+      return { ok: false, reason: 'no-source' };
+    }
+    try {
+      checkCyclic();
+      // UI 会话现场（viewport/页签/各页签 slice）随保存入库——历史条目=完整现场快照
+      const session = graphRef.current?.serialize();
+      const result = await saveToRemote(persistence, {
+        graph: graph as unknown as GraphLike,
+        name: fileName.replaceAll('.json', ''),
+        id: remoteSource?.id,
+        baseRevision: remoteSource?.revision,
+        session,
+        auto: opts.auto,
+      });
+      if (result.kind === 'conflict') {
+        return { ok: false, reason: 'conflict' };
+      }
+      // 乐观锁基线推进：auto 保存后手动保存才能命中新 head（否则必 CONFLICT 误报）
+      setRemoteSource({ id: result.id, revision: result.revision });
+      return { ok: true, id: result.id, revision: result.revision };
+    } catch (e) {
+      displayError(e);
+      return { ok: false };
+    }
+  };
+
   const saveFileAs = async () => {
     if (persistence) {
-      try {
-        checkCyclic();
-        // UI 会话现场（viewport/页签/各页签 slice）随保存入库——历史条目=完整现场快照
-        const session = graphRef.current?.serialize();
-        const result = await saveToRemote(persistence, {
-          graph: graph as unknown as GraphLike,
-          name: fileName.replaceAll('.json', ''),
-          id: remoteSource?.id,
-          baseRevision: remoteSource?.revision,
-          session,
-        });
-        if (result.kind === 'conflict') {
-          toast.error('This graph was modified by someone else. Refresh before saving to avoid overwriting.');
-          return;
-        }
-        setRemoteSource({ id: result.id, revision: result.revision });
+      const result = await persistToRemote({ auto: false });
+      if (result.ok) {
         setFileName(`${result.id}.json`);
         toast.success('Saved to graph library');
-      } catch (e) {
-        displayError(e);
+      } else if (result.reason === 'conflict') {
+        toast.error('This graph was modified by someone else. Refresh before saving to avoid overwriting.');
       }
       return;
     }
@@ -246,6 +266,31 @@ const DecisionSimpleInner: React.FC = () => {
       writable?.close?.();
     }
   };
+
+  // ── 自动保存（第五十二批）──────────────────────────────────────────
+  // dirty 签名比对（对齐内核 auto-sync 模式）：图内容变化后 30s 防抖触发，
+  // 失败静默；成功推进 remoteSource 乐观锁基线；面板打开时暂停（不干扰查看）。
+  const AUTO_SAVE_DEBOUNCE_MS = 30_000;
+  const graphSignature = useMemo(() => JSON.stringify(graph), [graph]);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const autoSavingRef = useRef(false);
+  autoSavingRef.current = autoSaving;
+
+  useEffect(() => {
+    if (!persistence || !remoteSource || historyOpen || autoSavingRef.current) {
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      if (autoSavingRef.current) return;
+      setAutoSaving(true);
+      try {
+        await persistToRemote({ auto: true });
+      } finally {
+        setAutoSaving(false);
+      }
+    }, AUTO_SAVE_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [graphSignature, persistence, remoteSource?.id, remoteSource?.revision, historyOpen]);
 
   const saveFile = async () => {
     if (persistence) {

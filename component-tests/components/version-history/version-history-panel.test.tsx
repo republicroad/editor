@@ -84,6 +84,23 @@ describe('VersionHistoryPanel', () => {
     expect(seen).toBe('v1');
   });
 
+  test('auto 条目带 auto 徽标、manual 条目不带', async () => {
+    render(
+      <VersionHistoryPanel
+        open
+        onOpenChange={() => {}}
+        versions={[
+          { revision: 'v1', updatedAt: '2026-01-01' },
+          { revision: 'v2', updatedAt: '2026-01-02', auto: true },
+        ]}
+        currentRevision="v2"
+        onRestore={() => {}}
+      />,
+    );
+    await waitFor(() => expect(screen.getByText('v1')).toBeTruthy());
+    expect(screen.getByText('auto')).toBeTruthy();
+  });
+
   test('空态与加载态', async () => {
     const { rerender } = render(
       <VersionHistoryPanel open onOpenChange={() => {}} versions={[]} currentRevision="" onRestore={() => {}} />,

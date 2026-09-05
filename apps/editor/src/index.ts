@@ -496,6 +496,7 @@ const GraphMetaSchema = z
     tags: z.array(z.string()).optional(),
     extensions: z.record(z.string(), z.unknown()).optional(),
     revision: z.string(),
+    auto: z.boolean().optional(),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
   })
@@ -508,6 +509,8 @@ const GraphContentSchema = z
     edges: z.array(z.record(z.string(), z.unknown())).optional(),
     // UI 会话现场快照（GraphRef.serialize()：viewport/页签/各页签 slice）——历史条目=完整现场
     session: z.record(z.string(), z.unknown()).optional(),
+    // 自动保存条目标记（面板区分显示；治理策略见 graphs-store AUTO_VERSIONS_KEEP）
+    auto: z.boolean().optional(),
   })
   .openapi('GraphContent');
 
@@ -519,6 +522,7 @@ const GraphSaveSchema = z
     extensions: z.record(z.string(), z.unknown()).optional(),
     content: GraphContentSchema,
     baseRevision: z.string().optional(),
+    auto: z.boolean().optional(),
   })
   .openapi('GraphSave');
 
@@ -526,6 +530,7 @@ const GraphVersionSchema = z
   .object({
     revision: z.string(),
     updatedAt: z.string(),
+    auto: z.boolean().optional(),
   })
   .openapi('GraphVersion');
 
@@ -928,6 +933,7 @@ app.openapi(graphCreateRoute, async (c) => {
         tags: body.tags,
         extensions: body.extensions,
         content: body.content,
+        auto: body.auto,
       },
       execCtx.userId,
       { newId: id },
@@ -953,6 +959,7 @@ app.openapi(graphUpdateRoute, async (c) => {
         tags: body.tags,
         extensions: body.extensions,
         content: body.content,
+        auto: body.auto,
       },
       execCtx.userId,
       { baseRevision: body.baseRevision },

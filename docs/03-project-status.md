@@ -226,6 +226,17 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+**最新变更(2026-09-04，第五十二批：自动保存 + 版本治理——快照历史闭环（方案 A）：**
+
+- **自动保存（宿主 decision-simple）**：dirty 签名比对（`JSON.stringify(graph)` 缓存）+ **30s 防抖**触发 `persistToRemote({auto:true})`——手动/自动保存共用持久化纯函数；auto 失败静默、成功推进 `remoteSource.revision` 乐观锁基线（关键细节：不推进则手动保存必 CONFLICT 误报）；面板打开（historyOpen）时暂停不干扰查看
+- **版本标记契约**：appshell `GraphRecordMeta.auto?: boolean` + adapter（HttpGraphMeta/toMeta/listVersions）三处透传；服务端 `StoredGraphMeta.auto`、`GraphSaveSchema.auto`、`GraphVersionSchema.auto`、`GraphMetaSchema.auto` 全链放行
+- **保留策略治理（服务端）**：`AUTO_VERSIONS_KEEP=20`（导出可测）；`pruneAutoVersions`——全部 manual 保留 + 最近 20 条 auto，超限删最旧 auto 归档文件；每次 saveGraph 尾部执行
+- **测试**：apps +4（保留策略：21 归档=1 manual+20 auto、v2 治理删除、auto 标记在 head 与归档）+ 组件 +1（auto 徽标/manual 无徽标）+ graph-persistence ±（session round-trip 已有）——注意归档时序语义：PUT(N) 归档的是 **v(N-1) 旧 head**（auto 标记随旧 head 走）
+- **门禁**：tsc/lint 0-0/主仓 92(+3 auto 徽标用例)/组件 46(+1)/apps 76(+3 治理+透传)/build/storybook/sync:schema 全绿
+- **约束遵守**：本批**全部提交仅存本地**（editor 仓），不推送远程（用户指令）；doc 数字修正——宿主测试现为 92
+- **Backlog 登记**：idle 检测触发、按天合并版本、auto→manual 升格、diff 对比——待真实使用反馈
+- 教训存档：**PUT(N) 归档的是 v(N-1) 旧 head**（auto 标记随旧 head 走）——断言/治理都要按"归档滞后一拍"推演；空 nodes 图 wasm 会 500（诊断时的预期行为）
+
 **最新变更(2026-09-04，第五十一批：C1 遗留收口（TabRequest 快照）+ editor 版本线独立（0.1.0）+ reui 转正默认分支)：**
 
 - **TabRequest 快照收口（内核 99e48c6）**：新增 `request-session-draft.ts`（build/apply 纯逻辑 + `useRequestSessionDraftSerializer` 封装）；TabRequest 注册 `'request'` tab slice——序列化 700ms 防抖窗口的在途编辑（schema 草稿/示例 JSON 草稿/描述/活动页签），保存入库、重开恢复；内核 vitest 三用例（编辑器树跑内核 vitest 为已知双 React 基线失败，新用例单独跑绿）；docs/16 遗留观察项关闭

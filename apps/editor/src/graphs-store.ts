@@ -27,6 +27,8 @@ export interface StoredGraphMeta {
   tags?: string[];
   extensions?: Record<string, unknown>;
   revision: string;
+  /** 自动保存条目（保留策略：保留全部 manual + 最近 AUTO_VERSIONS_KEEP 条 auto） */
+  auto?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +41,7 @@ export interface StoredGraph {
   tags?: string[];
   extensions?: Record<string, unknown>;
   revision: string;
+  auto?: boolean;
   createdAt: string;
   updatedAt: string;
   content: unknown;
@@ -174,6 +177,7 @@ export async function saveGraph(
     tags?: string[];
     extensions?: Record<string, unknown>;
     content: unknown;
+    auto?: boolean;
   },
   owner: string | undefined,
   opts?: { newId?: string; baseRevision?: string },
@@ -220,6 +224,7 @@ export async function saveGraph(
     tags: input.tags,
     extensions: input.extensions,
     revision: nextRevision,
+    auto: input.auto,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
@@ -241,6 +246,7 @@ export async function saveGraph(
       tags: existing.tags,
       extensions: existing.extensions,
       revision: prevRevision,
+      auto: existing.auto,
       createdAt: existing.createdAt,
       updatedAt: existing.updatedAt,
     };
@@ -251,7 +257,42 @@ export async function saveGraph(
     );
   }
 
+  // 自动版本保留策略：全部 manual + 最近 AUTO_VERSIONS_KEEP 条 auto，超限删最旧
+  await pruneAutoVersions(targetRoot, sanitizeGraphId(id));
+
   return { id, revision: nextRevision };
+}
+
+/** 自动版本保留条数（manual 版本不受治理） */
+export const AUTO_VERSIONS_KEEP = 20;
+
+/** 超出保留策略的最旧 auto 版本文件删除 */
+async function pruneAutoVersions(dir: string, safeId: string): Promise<void> {
+  let entries: import('fs').Dirent[];
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  const autos: Array<{ n: number; file: string }> = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const match = new RegExp(`^${safeId}\\.(v\\d+)\\.json$`).exec(entry.name);
+    if (!match) continue;
+    const graph = await readHeadFile(join(dir, entry.name));
+    if (!graph?.auto) continue;
+    autos.push({ n: Number(match[1]), file: join(dir, entry.name) });
+  }
+  autos.sort((a, b) => a.n - b.n);
+  const excess = autos.length - AUTO_VERSIONS_KEEP;
+  for (let i = 0; i < excess; i++) {
+    try {
+      await unlink(autos[i].file);
+      console.log(`[graphs] pruned auto version ${path.basename(autos[i].file)}`);
+    } catch (error) {
+      console.warn(`[graphs] auto-version prune failed:`, error);
+    }
+  }
 }
 
 /** revision 单调递增：v1 → v2 → v3 */
@@ -296,7 +337,7 @@ export async function deleteGraph(id: string, owner: string | undefined): Promis
 export async function listGraphVersions(
   id: string,
   owner: string | undefined,
-): Promise<Array<{ revision: string; updatedAt: string }>> {
+): Promise<Array<{ revision: string; updatedAt: string; auto?: boolean }>> {
   const headFile = await findHeadFile(id, owner);
   if (!headFile) return [];
   const head = await readHeadFile(headFile);
@@ -311,13 +352,13 @@ export async function listGraphVersions(
     return [];
   }
   const safeId = sanitizeGraphId(id);
-  const versions: Array<{ revision: string; updatedAt: string }> = [];
+  const versions: Array<{ revision: string; updatedAt: string; auto?: boolean }> = [];
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     const match = new RegExp(`^${safeId}\\.(v\\d+)\\.json$`).exec(entry.name);
     if (!match) continue;
     const graph = await readHeadFile(join(dir, entry.name));
-    versions.push({ revision: match[1], updatedAt: graph?.updatedAt ?? '' });
+    versions.push({ revision: match[1], updatedAt: graph?.updatedAt ?? '', auto: graph?.auto });
   }
   versions.sort((a, b) => a.revision.localeCompare(b.revision));
   return versions;

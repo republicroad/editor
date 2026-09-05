@@ -24,6 +24,8 @@ export interface SaveToRemoteOptions {
   extensions?: Record<string, unknown>;
   /** UI 会话现场（GraphRef.serialize() 快照）——随 content.session 兄弟存储，历史=完整现场 */
   session?: TabSnapshot;
+  /** 自动保存条目（面板区分显示、服务端保留策略治理），缺省 = 手动 */
+  auto?: boolean;
 }
 
 /** 加载结果：graph 为图数据（供 DecisionGraph value），session 为 UI 现场（供 restore） */
@@ -46,6 +48,7 @@ export const saveToRemote = async (
     name: opts.name,
     revision: opts.baseRevision ?? '',
     content: opts.session ? { ...opts.graph, session: opts.session } : opts.graph,
+    ...(opts.auto ? { auto: true } : {}),
     ...(opts.extensions ? { extensions: opts.extensions } : {}),
   };
   try {

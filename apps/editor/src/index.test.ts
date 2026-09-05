@@ -483,6 +483,102 @@ describe('graph persistence routes', () => {
     expect(Array.isArray(detail.content.nodes)).toBe(true);
   });
 
+  test('auto 条目在版本表中带 auto 标记', async () => {
+    const name = `auto-flag-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('auto-upd'), baseRevision: 'v1', auto: true }),
+    });
+    // 第二次 auto 保存：v2 归档进版本表（归档的 meta.auto 取自旧 head 的 auto 标记）
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('auto-upd-2'), baseRevision: 'v2', auto: true }),
+    });
+
+    const versions = (await (
+      await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
+    ).json()) as Array<{ revision: string; auto?: boolean }>;
+    // 版本表 = 两次 auto 保存的归档：v1(首次 POST 的 manual head) + v2(首次 auto PUT 的 head, auto=true)
+    // head v3(auto) 不在版本表中
+    expect(versions).toHaveLength(2);
+    const byRevision = new Map(versions.map((v) => [v.revision, v]));
+    expect(byRevision.get('v1')?.auto).toBeFalsy(); // 首次 POST 的 manual head
+    expect(byRevision.get('v2')?.auto).toBe(true); // 首次 auto PUT 的 head
+  });
+
+  test('auto 版本保留策略：全部 manual 保留 + 最近 20 条 auto，超限最旧 auto 被删', async () => {
+    const name = `auto-prune-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    // 22 次 auto 保存 → 归档 v1(manual POST 产生的 head) + v2..v22(21 条 auto)
+    // 保留策略：auto 仅保留最近 20 条 → 最旧的 v2 归档被删
+    for (let i = 2; i <= 23; i++) {
+      const put = await app.request(`/api/graphs/${created.id}`, {
+        method: 'PUT',
+        headers: asUser('user-a'),
+        body: JSON.stringify({ ...graphBody(`${name}-a${i}`), baseRevision: `v${i - 1}`, auto: true }),
+      });
+      expect(put.status).toBe(200);
+    }
+
+    const versions = (await (
+      await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
+    ).json()) as Array<{ revision: string; auto?: boolean }>;
+    // 注意：版本表按 revision 字典序排列（v1, v10, v11, ... v2, v20...）
+    expect(versions).toHaveLength(21); // v1(manual) + 20 条 auto（v2 被治理，具体删哪条不 pin）
+    const byRevision = new Map(versions.map((v) => [v.revision, v]));
+    expect(byRevision.has('v1')).toBe(true); // manual 保留
+    expect(byRevision.get('v1')?.auto).toBeUndefined();
+    expect(byRevision.get('v22')?.auto).toBe(true); // 最新归档的 auto 保留（v23=head 不在版本表）
+    expect(versions.filter((v) => v.auto)).toHaveLength(20); // auto 恰好 20 条
+  });
+
+  test('auto 条目：detail 与版本表均带 auto 标记', async () => {
+    const name = `auto-flag-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('auto-upd'), baseRevision: 'v1', auto: true }),
+    });
+
+    const detail = (await (await app.request(`/api/graphs/${created.id}`, { headers: asUser('user-a') })).json()) as {
+      auto?: boolean;
+    };
+    expect(detail.auto).toBe(true); // auto 标记在 head 上
+
+    const versions = (await (
+      await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
+    ).json()) as Array<{ revision: string; auto?: boolean }>;
+    // 版本表仅含该次 auto 保存前的旧 head 归档（manual v1，无 auto）——auto 标记随下一次保存才归档
+    expect(versions).toHaveLength(1);
+    expect(versions[0].revision).toBe('v1');
+    expect(versions[0].auto).toBeUndefined();
+  });
+
   test('baseRevision 不匹配 head 返回 409 CONFLICT', async () => {
     const created = (await (
       await app.request('/api/graphs', {

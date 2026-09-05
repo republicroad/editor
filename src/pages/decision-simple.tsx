@@ -368,8 +368,13 @@ const DecisionSimpleInner: React.FC = () => {
       if (loaded.session) {
         graphRef.current?.restore(loaded.session);
       }
-      setRemoteSource(revision ? { id, revision } : { id });
+      // 恢复即前进（restore is forward）：加载历史版本后，remoteSource 不带 revision——
+      // 后续保存创建新版本（不覆盖其后版本，历史不可破坏）
+      setRemoteSource({ id });
       setFileName(id);
+      if (revision) {
+        toast.success(`Restored ${revision} — saving will create a new version`);
+      }
     } catch (e) {
       displayError(e);
     }

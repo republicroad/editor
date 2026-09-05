@@ -509,6 +509,7 @@ const GraphContentSchema = z
     edges: z.array(z.record(z.string(), z.unknown())).optional(),
     // UI 会话现场快照（GraphRef.serialize()：viewport/页签/各页签 slice）——历史条目=完整现场
     session: z.record(z.string(), z.unknown()).optional(),
+    versionName: z.string().optional(),
     // 自动保存条目标记（面板区分显示；治理策略见 graphs-store AUTO_VERSIONS_KEEP）
     auto: z.boolean().optional(),
   })
@@ -529,8 +530,8 @@ const GraphSaveSchema = z
 const GraphVersionSchema = z
   .object({
     revision: z.string(),
+    versionName: z.string().optional(),
     updatedAt: z.string(),
-    auto: z.boolean().optional(),
   })
   .openapi('GraphVersion');
 
@@ -960,6 +961,7 @@ app.openapi(graphUpdateRoute, async (c) => {
         extensions: body.extensions,
         content: body.content,
         auto: body.auto,
+        versionName: body.versionName,
       },
       execCtx.userId,
       { baseRevision: body.baseRevision },

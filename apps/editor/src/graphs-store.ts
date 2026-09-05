@@ -29,6 +29,7 @@ export interface StoredGraphMeta {
   revision: string;
   /** 自动保存条目（保留策略：保留全部 manual + 最近 AUTO_VERSIONS_KEEP 条 auto） */
   auto?: boolean;
+  versionName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,6 +43,7 @@ export interface StoredGraph {
   extensions?: Record<string, unknown>;
   revision: string;
   auto?: boolean;
+  versionName?: string;
   createdAt: string;
   updatedAt: string;
   content: unknown;
@@ -178,6 +180,7 @@ export async function saveGraph(
     extensions?: Record<string, unknown>;
     content: unknown;
     auto?: boolean;
+    versionName?: string;
   },
   owner: string | undefined,
   opts?: { newId?: string; baseRevision?: string },
@@ -225,6 +228,7 @@ export async function saveGraph(
     extensions: input.extensions,
     revision: nextRevision,
     auto: input.auto,
+    versionName: input.versionName,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
@@ -247,6 +251,7 @@ export async function saveGraph(
       extensions: existing.extensions,
       revision: prevRevision,
       auto: existing.auto,
+      versionName: existing.versionName,
       createdAt: existing.createdAt,
       updatedAt: existing.updatedAt,
     };
@@ -337,7 +342,7 @@ export async function deleteGraph(id: string, owner: string | undefined): Promis
 export async function listGraphVersions(
   id: string,
   owner: string | undefined,
-): Promise<Array<{ revision: string; updatedAt: string; auto?: boolean }>> {
+): Promise<Array<{ revision: string; versionName?: string; updatedAt: string; auto?: boolean }>> {
   const headFile = await findHeadFile(id, owner);
   if (!headFile) return [];
   const head = await readHeadFile(headFile);
@@ -352,13 +357,13 @@ export async function listGraphVersions(
     return [];
   }
   const safeId = sanitizeGraphId(id);
-  const versions: Array<{ revision: string; updatedAt: string; auto?: boolean }> = [];
+  const versions: Array<{ revision: string; versionName?: string; updatedAt: string; auto?: boolean }> = [];
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     const match = new RegExp(`^${safeId}\\.(v\\d+)\\.json$`).exec(entry.name);
     if (!match) continue;
     const graph = await readHeadFile(join(dir, entry.name));
-    versions.push({ revision: match[1], updatedAt: graph?.updatedAt ?? '', auto: graph?.auto });
+    versions.push({ revision: match[1], versionName: graph?.versionName, updatedAt: graph?.updatedAt ?? '', auto: graph?.auto });
   }
   versions.sort((a, b) => a.revision.localeCompare(b.revision));
   return versions;

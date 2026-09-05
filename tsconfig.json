@@ -35,6 +35,10 @@
     "jdm-editor/packages/appshell/src",
     "jdm-editor/packages/jdm-editor/src/**/*.d.ts"
   ],
+  "exclude": [
+    "jdm-editor/packages/appshell/src/integration",
+    "jdm-editor/packages/appshell/src/**/*.stories.tsx"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"

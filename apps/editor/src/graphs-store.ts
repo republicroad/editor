@@ -370,7 +370,14 @@ export async function listGraphVersions(
       auto: graph?.auto,
     });
   }
-  versions.sort((a, b) => a.revision.localeCompare(b.revision));
+  // 数字序排列（修正字典序 v10 < v2 的乱序）+ 追加 head（当前版本）——业界惯例：历史含当前态
+  versions.sort((a, b) => Number(a.revision.slice(1)) - Number(b.revision.slice(1)));
+  versions.push({
+    revision: head.revision,
+    versionName: head.versionName,
+    updatedAt: head.updatedAt,
+    auto: head.auto,
+  });
   return versions;
 }
 

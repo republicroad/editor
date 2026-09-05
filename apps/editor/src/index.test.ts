@@ -445,11 +445,11 @@ describe('graph persistence routes', () => {
     expect(v1Body.revision).toBe('v1');
     expect(v1Body.name).toBe(name);
 
-    // 版本表不含 head
+    // 版本表含归档 + head（当前版本）
     const versions = (await (
       await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
     ).json()) as Array<{ revision: string }>;
-    expect(versions.map((v) => v.revision)).toEqual(['v1', 'v2']);
+    expect(versions.map((v) => v.revision)).toEqual(['v1', 'v2', 'v3']);
   });
 
   test('content.session 随保存透传落盘，detail 返回原样（UI 现场快照）', async () => {
@@ -508,12 +508,12 @@ describe('graph persistence routes', () => {
     const versions = (await (
       await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
     ).json()) as Array<{ revision: string; auto?: boolean }>;
-    // 版本表 = 两次 auto 保存的归档：v1(首次 POST 的 manual head) + v2(首次 auto PUT 的 head, auto=true)
-    // head v3(auto) 不在版本表中
-    expect(versions).toHaveLength(2);
+    // 版本表 = 归档(v1 manual head + v2 auto head) + head v3(auto)——含当前版本
+    expect(versions).toHaveLength(3);
     const byRevision = new Map(versions.map((v) => [v.revision, v]));
-    expect(byRevision.get('v1')?.auto).toBeFalsy(); // 首次 POST 的 manual head
+    expect(byRevision.get('v1')?.auto).toBeFalsy(); // 首次 POST 为 manual head
     expect(byRevision.get('v2')?.auto).toBe(true); // 首次 auto PUT 的 head
+    expect(byRevision.get('v3')?.auto).toBe(true); // 当前 head
   });
 
   test('auto 版本保留策略：全部 manual 保留 + 最近 20 条 auto，超限最旧 auto 被删', async () => {
@@ -540,13 +540,14 @@ describe('graph persistence routes', () => {
     const versions = (await (
       await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
     ).json()) as Array<{ revision: string; auto?: boolean }>;
-    // 注意：版本表按 revision 字典序排列（v1, v10, v11, ... v2, v20...）
-    expect(versions).toHaveLength(21); // v1(manual) + 20 条 auto（v2 被治理，具体删哪条不 pin）
+    // 数字序排列 + 含 head：v1(manual) + v2..v22(21 auto 归档) + v23(head auto)
+    expect(versions).toHaveLength(22); // v1(manual) + 21 auto 归档 + head v23
     const byRevision = new Map(versions.map((v) => [v.revision, v]));
     expect(byRevision.has('v1')).toBe(true); // manual 保留
     expect(byRevision.get('v1')?.auto).toBeUndefined();
-    expect(byRevision.get('v22')?.auto).toBe(true); // 最新归档的 auto 保留（v23=head 不在版本表）
-    expect(versions.filter((v) => v.auto)).toHaveLength(20); // auto 恰好 20 条
+    expect(byRevision.get('v22')?.auto).toBe(true); // 最新归档的 auto 保留
+    expect(byRevision.get('v23')?.auto).toBe(true); // head（当前版本）
+    expect(versions.filter((v) => v.auto)).toHaveLength(21); // 21 归档 auto + head
   });
 
   test('auto 条目：detail 与版本表均带 auto 标记', async () => {
@@ -573,10 +574,10 @@ describe('graph persistence routes', () => {
     const versions = (await (
       await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
     ).json()) as Array<{ revision: string; auto?: boolean }>;
-    // 版本表仅含该次 auto 保存前的旧 head 归档（manual v1，无 auto）——auto 标记随下一次保存才归档
-    expect(versions).toHaveLength(1);
+    // 版本表含 head：v1(manual 首存) + v2(首次 auto 保存)——均为 manual/auto 演进的真实序列
+    expect(versions).toHaveLength(2);
     expect(versions[0].revision).toBe('v1');
-    expect(versions[0].auto).toBeUndefined();
+    expect(versions[1].revision).toBe('v2');
   });
 
   test('baseRevision 不匹配 head 返回 409 CONFLICT', async () => {

@@ -51,9 +51,11 @@
 ### 文件修改清单
 
 1. **新建文件**：`src/helpers/json-path-extractor.ts`
+
    - 解析 JSON 文本，提取字段路径和位置
 
 2. **修改文件**：`src/components/decision-graph/graph/tab-request.tsx`
+
    - 在 `useEffect` 中注册 Inlay Hints Provider
    - 创建定义描述映射
    - 更新编辑器配置

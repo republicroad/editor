@@ -8,10 +8,10 @@
 
 ### 1.1 分支状态
 
-| 仓库               | 当前分支 | 基于分支 | 说明                                              |
-| ------------------ | -------- | -------- | ------------------------------------------------- |
-| editor(主项目)     | `reui`   | `zrule`  | shadcn/ReUI 统一技术栈 + appshell 独立包开发分支  |
-| jdm-editor(子模块) | `reui`   | `master` | 内核重构分支（ReactFlow 12 + shadcn/ReUI，去 antd）|
+| 仓库               | 当前分支 | 基于分支 | 说明                                                |
+| ------------------ | -------- | -------- | --------------------------------------------------- |
+| editor(主项目)     | `reui`   | `zrule`  | shadcn/ReUI 统一技术栈 + appshell 独立包开发分支    |
+| jdm-editor(子模块) | `reui`   | `master` | 内核重构分支（ReactFlow 12 + shadcn/ReUI，去 antd） |
 
 ### 1.2 版本信息
 
@@ -226,6 +226,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+
 **最新变更(2026-09-04，第五十二批：自动保存 + 版本治理——快照历史闭环（方案 A）：**
 
 - **自动保存（宿主 decision-simple）**：dirty 签名比对（`JSON.stringify(graph)` 缓存）+ **30s 防抖**触发 `persistToRemote({auto:true})`——手动/自动保存共用持久化纯函数；auto 失败静默、成功推进 `remoteSource.revision` 乐观锁基线（关键细节：不推进则手动保存必 CONFLICT 误报）；面板打开（historyOpen）时暂停不干扰查看
@@ -277,7 +278,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **文档**：alias-mechanisms 篇新增方案 D 章节 + 四方案对照 + 决策记录修订；新增[决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)（六轮演进 + 为什么 D 不是第一推荐 + 五条可迁移教训）；bun-workspaces 篇新增；新增[TS imports 字段解析语义](./bestpractice/ts-imports-field-resolution.md)（扩展探测/通配字面填充/不回落 paths）
 - **文档收尾（D 事件闭环）**：docs/06 §7 重写（tsc 行改回"类型来自源码"；配置清单/排障表按方案 D 更新——`#` TS2307 = imports 映射缺失）；multi-package 构建篇 §3 类型桥降级为备案注记；appshell README 宿主要求 `>=0.3.0` + 消费契约（dist = 公共承诺）
 - **dev 实机冒烟（首次实跑）**：`bun run dev` 两轮——HTTP 200 + root div ✓；`/src/main.tsx` 转换 200（首触 6s 预构建，10.7KB）✓；dev 日志零错误 ✓（内核 `#` 导入 dev 链解析首次实跑通过）；进程树 taskkill 清理 ✓。**留手验**：7 节点渲染/模拟器/三皮肤切换/ocean 接管/暗亮（体验面）
-- **发布工程（B 轨）**：appshell 新增 `scripts/npm-smoke.mjs`（借内核模式，pack/registry 双模式，17 项契约断言）+ LICENSE + `test:npm-smoke` 脚本。**三实战发现**：① npm pack **不应用** publishConfig 字段重写（pnpm 特性）→ 形态反转——main/types/exports 正式指 dist，dev 直通全走 tsconfig paths（与内核形态统一，零场景受损）；② exports map 封锁子路径暴露根 tsconfig 通配模板双写 src 笔误（此前靠 node_modules 兜底侥幸绿）→ 模板修正 `["./packages/appshell/*"]`；③ api-extractor bundleTypes 分析跨包闭包崩溃（内置 TS 5.8.2 vs 项目 5.9.3）→ 回退多文件声明 + smoke 聚合断言（dist/**/*.d.ts）。npm-smoke **17/17 PASS**（1 WARN：浏览器产物 node 求值依赖 monaco 无 node 入口，非 appshell 契约，设计内降级）
+- **发布工程（B 轨）**：appshell 新增 `scripts/npm-smoke.mjs`（借内核模式，pack/registry 双模式，17 项契约断言）+ LICENSE + `test:npm-smoke` 脚本。**三实战发现**：① npm pack **不应用** publishConfig 字段重写（pnpm 特性）→ 形态反转——main/types/exports 正式指 dist，dev 直通全走 tsconfig paths（与内核形态统一，零场景受损）；② exports map 封锁子路径暴露根 tsconfig 通配模板双写 src 笔误（此前靠 node_modules 兜底侥幸绿）→ 模板修正 `["./packages/appshell/*"]`；③ api-extractor bundleTypes 分析跨包闭包崩溃（内置 TS 5.8.2 vs 项目 5.9.3）→ 回退多文件声明 + smoke 聚合断言（dist/**/\*.d.ts）。npm-smoke **17/17 PASS\*\*（1 WARN：浏览器产物 node 求值依赖 monaco 无 node 入口，非 appshell 契约，设计内降级）
 - **发布动作待用户**：`npm login` → `cd packages/appshell && npm publish --access public` → `bun run test:npm-smoke 0.1.0`（registry 模式复验已发布版本）
 - 门禁：本地全链绿——typecheck（源码直通一次通过）/ lint 0-0 / 主仓 152 / 组件 40 / apps 72 / build 27s（较桥时代 1m39s 显著提速）/ storybook 43s / 内核 build ✓ dist 零 `#` 残留 / CI Validate 绿（33770373760）+ 本批随推复验
 
@@ -286,10 +287,10 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **子模块同步**：reui tip 16bcd05→1c072ef（并行会话 0.3.0 路线图批次 B1-B3/R2-R4：lib-mode manualChunks 实验结论、custom-function 键盘拖拽、simulator story 离线、Playwright probes 收编、expression-store 单测；19 文件 +818/−29）——**宿主可见面零变动**（barrel/theme 未动、`@/` 仍 76 文件、components.json/tsconfig 未动）
 - **editor reui 首推**：`git push -u origin reui` 建立远端分支——本地 6+2 提交首次过 CI reui 门禁（此前远端无 reui 引用，本地孤本=门禁豁免缺口，已修）
 - **CI 首跑暴露并修复 4 项（门禁价值实证）**：
-  1. *lockfile 漂移*（a4e5faa）：内核新批次 devDep 增 rollup-plugin-visualizer，`--frozen-lockfile` 失败——指针提升后须重跑 `bun install` 同步 lockfile
-  2. *@lezer 双实例*（9f9cf3a）：CI 全新安装布局下 `@lezer/lr` 嵌套 `@lezer/common@1.2.3` 与顶层 `1.5.2` 形成 Tree/ParseWrapper 类型冲突（本地增量安装恰为旧布局故绿）——桥 tsconfig paths 钉顶层单实例（与 react 手法一致）
-  3. *内核 vitest 门禁归位*（ba8344e）：宿主树内嵌 react 19 devDep 致双 React 实例，宿主 CI 结构性不可绿；内核仓 validate.yaml（pnpm 树 vitest 全套）已权威覆盖——宿主 CI 移除该步骤，内核消费假设由宿主桥 typecheck + build 验证
-  4. *schema-sync 路径遗漏*（ef879b6）：Phase 2 搬走 `src/assets/custom-node-schema.json` 未同步脚本路径（独立 bun 程序在 tsc 程序外，typecheck 抓不到；本地 gates 当时漏跑此项）——OUT_FILE 改指 packages/appshell/src/assets/
+  1. _lockfile 漂移_（a4e5faa）：内核新批次 devDep 增 rollup-plugin-visualizer，`--frozen-lockfile` 失败——指针提升后须重跑 `bun install` 同步 lockfile
+  2. _@lezer 双实例_（9f9cf3a）：CI 全新安装布局下 `@lezer/lr` 嵌套 `@lezer/common@1.2.3` 与顶层 `1.5.2` 形成 Tree/ParseWrapper 类型冲突（本地增量安装恰为旧布局故绿）——桥 tsconfig paths 钉顶层单实例（与 react 手法一致）
+  3. _内核 vitest 门禁归位_（ba8344e）：宿主树内嵌 react 19 devDep 致双 React 实例，宿主 CI 结构性不可绿；内核仓 validate.yaml（pnpm 树 vitest 全套）已权威覆盖——宿主 CI 移除该步骤，内核消费假设由宿主桥 typecheck + build 验证
+  4. _schema-sync 路径遗漏_（ef879b6）：Phase 2 搬走 `src/assets/custom-node-schema.json` 未同步脚本路径（独立 bun 程序在 tsc 程序外，typecheck 抓不到；本地 gates 当时漏跑此项）——OUT_FILE 改指 packages/appshell/src/assets/
 - **A′ 决策落档**：内核处于 0.3.0 活跃冲刺期（1 天 7 commits），**维持类型桥（C）为现行架构，`@kernel/*` 命名空间别名（A′）缓期至内核 0.3.0 发布后作为协调变更项**——业界实践：活跃开发期的共享包不做集成机制变更，跨仓重构在发布边界执行（届时一次 PR 完成 76 文件 + components.json + tsconfig paths + 宿主侧源码直通切换）
 - 门禁：本地全链绿（新内核 1c072ef）+ **CI Validate 首次全绿**（33754834500）
 
@@ -305,9 +306,9 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 - **建包**：`packages/appshell`（`@republicroad/jdm-appshell` v0.1.0）——main/types 直指 `src/index.ts`（monorepo 内源码直通），`publishConfig` 发布态切 dist；peerDeps = react/react-dom/内核(>=0.2)；vite lib 构建（react+内核外部化，产物 index.js 828KB + index.d.ts + style.css）；根 workspaces 增 `packages/*`
 - **纯搬移（git mv 保历史，73+ 文件）**：shell 全家、useCustomNodes、custom-node 9 组件、UI kit（components/ui 18 + components/reui 14 + components/icons 2 + reui/icons 4 + custom-node.module.css）、lib 11（plans/registry/schema-source/types/user-resolver/storage-key/三协议/auth+auth-client/utils）、theme.provider、JSON 夹具 assets/custom-node-schema.json——app 页面反向消费包（deep path 导 ui、barrel 导 shell/nodes/theme）
-- **`@/` 别名清零**：包内 34 文件 `@/components|lib|reui` 相对化（发布包零工具链耦合）；根 eslint 豁免作用域同步迁至 packages/appshell/**
+- **`@/` 别名清零**：包内 34 文件 `@/components|lib|reui` 相对化（发布包零工具链耦合）；根 eslint 豁免作用域同步迁至 packages/appshell/\*\*
 - **接线与断点**：根 tsconfig paths 增 `@republicroad/jdm-appshell(/*)` 双映射 + include 增包 src；.storybook preview.css 路径、stories×2、component-tests 深路径、graph-persistence(+test) 深导入 `@republicroad/jdm-appshell/src/shell/persistence`（barrel 会拉内核运行时，bun test 必须走深路径）
-- **bun 就近 tsconfig 断点**：组件测试经 packages/** 加载后 bun 取 appshell tsconfig（无内核映射）→ 内核真实源码被解析、monaco d.ts 当 JS 执行崩溃——appshell tsconfig 补 `paths: @republicroad/jdm-editor → ../../tmp/kernel-types/index.d.ts` 后恢复（mock 按解析路径绑定，两端必须一致）
+- **bun 就近 tsconfig 断点**：组件测试经 packages/\*\* 加载后 bun 取 appshell tsconfig（无内核映射）→ 内核真实源码被解析、monaco d.ts 当 JS 执行崩溃——appshell tsconfig 补 `paths: @republicroad/jdm-editor → ../../tmp/kernel-types/index.d.ts` 后恢复（mock 按解析路径绑定，两端必须一致）
 - 门禁：typecheck:kernel/typecheck/typecheck:apps、lint 0 err、主仓 147/组件 40/apps 72 全 pass、build ✓、build:storybook ✓、appshell lib build ✓（style.css 命名与 exports 对齐）；**未提交，待安排**
 
 **最新变更(2026-09-03，第四十二批：appshell 适配 jdm-editor reui 内核——改名 + 类型桥 + spec 组合器)：**
@@ -322,12 +323,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - 门禁：typecheck:kernel/d.ts 桥、typecheck、typecheck:apps、lint 0 err/0 warn、主仓 147/组件 40/apps 72 全 pass、zen-rule 冒烟 exit 0、sync:schema:check 绿、build ✓（主 chunk 7.38MB，低于 zrule 源码直通基线 8.44MB——antd 移除红利）、build:storybook ✓（本机偶发 esbuild OOM 一次，重试通过）；**未提交，待安排**
 
 **最新变更(2026-09-01，第三十九~四十一批：库化收口——CI 库测试门禁 + 独立构建验证 + 文档)：**
+
 - **CI 库测试门禁(f9872f5)**：validate.yml 增 `Test (jdm-editor)` 步骤(working-directory 指向包目录 + bun test src)——库 58 测试首次纳入 CI 门禁
 - **barrel 导出补全(9347c43)**：`resolveFunctionScope`/`healExpressionsForScope`/`buildDefaultFunctionExpression`/`LEGACY_CUSTOM_FUNCTION_KIND`/`FunctionScope` 类型 + `useSimulatorAutoSync`/`AUTO_SYNC_DEBOUNCE_MS`(库级 API 面完成)；hook 声明转 function 形式
 - **独立构建复现验证(docs/06 §3.6)**：bun install + build 多次复现(42~58s)、同形式测试 58/58——独立链路稳定；**主仓消费体积记录**(源码直通：JS 8.44MB/87 文件，CSS 273KB；dist 对比方法附注)
 - **主仓推送**：a795423..d613cd9 已推(zrule)；子模块远端此前已同步(含 force-with-lease 处理 35c9c39 重写)——CI 首跑待 GitHub Actions 页确认，红了即治理
 - 门禁：lint 0 err/0 warn、typecheck×2、全测试套件绿、build ✓；docs/03 本条
-
 
 **最新变更(2026-09-01，第四十批：源码直通消费链文档化 + 最佳实践独立文档)：**
 

@@ -17,10 +17,12 @@ import {
 installJdmEditorMock();
 
 const { cleanup, fireEvent, render, screen, within } = await import('@testing-library/react');
-const { HttpRequestTab, httpRequestNode } =
-  await import('../../../jdm-editor/packages/appshell/src/components/custom-node/http-request-node');
-const { serializeAuthExpr, toHttpRequestValue } =
-  await import('../../../jdm-editor/packages/appshell/src/lib/http-request-protocol');
+const { HttpRequestTab, httpRequestNode } = await import(
+  '../../../jdm-editor/packages/appshell/src/components/custom-node/http-request-node'
+);
+const { serializeAuthExpr, toHttpRequestValue } = await import(
+  '../../../jdm-editor/packages/appshell/src/lib/http-request-protocol'
+);
 
 import type { HttpRequestFields } from '../../../jdm-editor/packages/appshell/src/lib/http-request-protocol';
 

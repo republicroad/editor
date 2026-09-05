@@ -25,11 +25,11 @@
 
 ### 1.1 peer / dependencies 边界
 
-| 类别 | 判据 | 本仓库实例 |
-| --- | --- | --- |
-| `peerDependencies` | 宿主**必然拥有**且必须单实例的运行时 | `react`、`react-dom`、`@republicroad/jdm-editor`（内核） |
-| `dependencies` | 包自用的 UI/工具库，允许与宿主共置 | radix 族、`sonner`、`lucide-react`、`clsx`、`tailwind-merge`、`axios`、`better-auth` |
-| `devDependencies` | 仅构建/测试用，声明在包内但 monorepo 内可靠根提升 | `vite`、`vite-plugin-dts`、`typescript`、`@types/react` |
+| 类别               | 判据                                              | 本仓库实例                                                                           |
+| ------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `peerDependencies` | 宿主**必然拥有**且必须单实例的运行时              | `react`、`react-dom`、`@republicroad/jdm-editor`（内核）                             |
+| `dependencies`     | 包自用的 UI/工具库，允许与宿主共置                | radix 族、`sonner`、`lucide-react`、`clsx`、`tailwind-merge`、`axios`、`better-auth` |
+| `devDependencies`  | 仅构建/测试用，声明在包内但 monorepo 内可靠根提升 | `vite`、`vite-plugin-dts`、`typescript`、`@types/react`                              |
 
 - peer 用 **semver range**（`>=18`、`>=0.2.0`），不要写 `workspace:*`——npm 发布时
   `workspace:` 协议不会被 npm 改写（bun/pnpm 会），跨包管理器发布必踩坑。
@@ -51,6 +51,7 @@
 ```
 
 要点：
+
 - **dev 源码直通不依赖 main**——由根 tsconfig `paths` 承担（`@republicroad/jdm-appshell` →
   包内 `src/index.ts`），tsc/vite/bun/storybook 四端都认 paths；改包源码即时生效不变。
 - ⚠️ **`npm pack/publish` 不应用 publishConfig 的字段重写**（main/types/exports 不会被
@@ -98,20 +99,21 @@ npm 包 ──┼─ publish（外部）──── exports/main → dist/index
 ```jsonc
 // tsconfig.kernel.json（宿主仓根）
 {
-  "extends": "./jdm-editor/packages/jdm-editor/tsconfig.json",  // 继承子包自身配置（含其 paths 语义）
+  "extends": "./jdm-editor/packages/jdm-editor/tsconfig.json", // 继承子包自身配置（含其 paths 语义）
   "compilerOptions": {
     "noEmit": false,
     "emitDeclarationOnly": true,
     "declaration": true,
     "allowJs": false,
-    "outDir": "tmp/kernel-types",                     // 产物落在宿主仓 gitignore 目录
+    "outDir": "tmp/kernel-types", // 产物落在宿主仓 gitignore 目录
     "rootDir": "jdm-editor/packages/jdm-editor/src",
-    "paths": {                                        // 子包程序内的依赖对齐（见 §5）
+    "paths": {
+      // 子包程序内的依赖对齐（见 §5）
       "react": ["./node_modules/@types/react"],
-      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"]
-    }
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+    },
   },
-  "include": ["jdm-editor/packages/jdm-editor/src"]
+  "include": ["jdm-editor/packages/jdm-editor/src"],
 }
 ```
 
@@ -128,6 +130,7 @@ npm 包 ──┼─ publish（外部）──── exports/main → dist/index
 ```
 
 判据与收益：
+
 - tsc 只见 `index.d.ts` + `skipLibCheck` → 子包内部错误、双 @types/react、别名冲突
   **一次性全部消失**；
 - 桥产物即时再生、用完即弃，等价于"新鲜的 dist 类型"而无需跑完整 lib build；
@@ -150,12 +153,12 @@ tsc 的 paths 是**程序级**的，无法按 importer 目录区分 → 精确�
 
 ### 4.2 四类工具的别名解析矩阵
 
-| 工具 | paths 来源 | 语义 |
-| --- | --- | --- |
-| tsc | 程序所属 tsconfig（单数） | **程序级**，无 per-importer 能力 |
-| vite（`vite-tsconfig-paths`） | `projects: [tsconfigA, tsconfigB]` | **按 importer 目录**匹配所属 project，各解析各的 |
-| bun | 文件**最近的 tsconfig** | 就近取 paths——子包 tsconfig 缺映射时静默落到 node_modules（实证：组件测试崩溃，§6.2） |
-| rollup/storybook | 同 vite（viteFinal 里装同一插件） | 同 vite |
+| 工具                          | paths 来源                         | 语义                                                                                  |
+| ----------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------- |
+| tsc                           | 程序所属 tsconfig（单数）          | **程序级**，无 per-importer 能力                                                      |
+| vite（`vite-tsconfig-paths`） | `projects: [tsconfigA, tsconfigB]` | **按 importer 目录**匹配所属 project，各解析各的                                      |
+| bun                           | 文件**最近的 tsconfig**            | 就近取 paths——子包 tsconfig 缺映射时静默落到 node_modules（实证：组件测试崩溃，§6.2） |
+| rollup/storybook              | 同 vite（viteFinal 里装同一插件）  | 同 vite                                                                               |
 
 ### 4.3 规则
 
@@ -163,7 +166,7 @@ tsc 的 paths 是**程序级**的，无法按 importer 目录区分 → 精确�
    本仓库 appshell 抽包时把 34 个文件的 `@/components|lib|reui` 全部相对化。
 2. 包内确需别名（内核 `@/`）时，该包**自带完整 tsconfig paths**，且不得与宿主
    短别名同名冲突；宿主侧用 §3 的类型桥隔离。
-3. vite 侧需要跨包源码直通时：`tsconfigPaths({ projects: [宿主, 子包] })` + 
+3. vite 侧需要跨包源码直通时：`tsconfigPaths({ projects: [宿主, 子包] })` +
    barrel 级 `resolve.alias`（alias 优先级高于 paths，可用来绕开"paths 指向 d.ts 桥"的
    tsc 专用映射，让运行时仍走 src）。
 
@@ -299,28 +302,28 @@ bun install --frozen-lockfile          # 子模块/子包必须先就位（check
 
 ## 10. 本仓库映射
 
-| 实践 | 配置点 |
-| --- | --- |
-| 三包布局 | 宿主 `src/`（页面/参考宿主）· `packages/appshell`（外壳/节点/UI kit/皮肤）· `jdm-editor/packages/jdm-editor`（内核，子模块） |
-| 入口三态 | `packages/appshell/package.json`（main→src + publishConfig→dist）；内核包 dev 态不消费 dist |
-| 类型桥 | `tsconfig.kernel.json` → `tmp/kernel-types/`；根 tsconfig paths；`typecheck`/`build` 脚本链 |
-| 别名治理 | 包内相对导入（appshell）；内核 `@/*` 由其自身 tsconfig + vite projects 隔离 |
-| 依赖收敛 | 桥 tsconfig paths 对齐 react 类型；vite dedupe；内核 ref 写法 18/19 双兼容 |
-| mock 绑定 | `packages/appshell/tsconfig.json` paths 与根 tsconfig 同指 `tmp/kernel-types/index.d.ts` |
-| 测试 | `bun test src --path-ignore-patterns **/jdm-editor/**`；组件测试 setup-jsdom + rAF shim；内核 vitest（CI 独立步骤 `bun run test`） |
-| 产物 | appshell `vite build` → `dist/{index.js,index.d.ts,style.css}`，peer external |
-| CI | `.github/workflows/validate.yml`（顺序见 §9，push 分支含 reui） |
+| 实践      | 配置点                                                                                                                             |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 三包布局  | 宿主 `src/`（页面/参考宿主）· `packages/appshell`（外壳/节点/UI kit/皮肤）· `jdm-editor/packages/jdm-editor`（内核，子模块）       |
+| 入口三态  | `packages/appshell/package.json`（main→src + publishConfig→dist）；内核包 dev 态不消费 dist                                        |
+| 类型桥    | `tsconfig.kernel.json` → `tmp/kernel-types/`；根 tsconfig paths；`typecheck`/`build` 脚本链                                        |
+| 别名治理  | 包内相对导入（appshell）；内核 `@/*` 由其自身 tsconfig + vite projects 隔离                                                        |
+| 依赖收敛  | 桥 tsconfig paths 对齐 react 类型；vite dedupe；内核 ref 写法 18/19 双兼容                                                         |
+| mock 绑定 | `packages/appshell/tsconfig.json` paths 与根 tsconfig 同指 `tmp/kernel-types/index.d.ts`                                           |
+| 测试      | `bun test src --path-ignore-patterns **/jdm-editor/**`；组件测试 setup-jsdom + rAF shim；内核 vitest（CI 独立步骤 `bun run test`） |
+| 产物      | appshell `vite build` → `dist/{index.js,index.d.ts,style.css}`，peer external                                                      |
+| CI        | `.github/workflows/validate.yml`（顺序见 §9，push 分支含 reui）                                                                    |
 
 ---
 
 ## 11. 排障速查
 
-| 症状 | 根因 | 处置 |
-| --- | --- | --- |
-| `Cannot find module '@/icons'`（tsc） | 子包源码被直接拉进宿主程序 | 走类型桥；根 paths 指向 tmp 产物 |
-| bigint / Promise\<ReactNode\> 类型错 | 双 @types/react 大版本共存 | §5：类型隔离 + 桥内对齐 react |
-| bun 测试崩溃：monaco `.d.ts` 被当 JS 执行 | mock 与被测文件解析路径不一致（就近 tsconfig 缺映射） | 被测包 tsconfig 补同名 paths（§6.2） |
-| `The constant "X" must be initialized` | 同上（.d.ts 被执行的具体形态） | 同上 |
-| workspace 包模块不存在 | workspaces 未含新包 / exports 指向缺失 dist / dev 入口被 exports 覆盖 | §1.2 |
-| lint 报生成目录大量错误 | d.ts 桥产物被 eslint 扫描 | eslint globalIgnores 增 `tmp/**` |
-| 改子包源码宿主 dev 不生效 | vite 预构建缓存 | 删 `node_modules/.vite`，整页刷新 |
+| 症状                                      | 根因                                                                  | 处置                                 |
+| ----------------------------------------- | --------------------------------------------------------------------- | ------------------------------------ |
+| `Cannot find module '@/icons'`（tsc）     | 子包源码被直接拉进宿主程序                                            | 走类型桥；根 paths 指向 tmp 产物     |
+| bigint / Promise\<ReactNode\> 类型错      | 双 @types/react 大版本共存                                            | §5：类型隔离 + 桥内对齐 react        |
+| bun 测试崩溃：monaco `.d.ts` 被当 JS 执行 | mock 与被测文件解析路径不一致（就近 tsconfig 缺映射）                 | 被测包 tsconfig 补同名 paths（§6.2） |
+| `The constant "X" must be initialized`    | 同上（.d.ts 被执行的具体形态）                                        | 同上                                 |
+| workspace 包模块不存在                    | workspaces 未含新包 / exports 指向缺失 dist / dev 入口被 exports 覆盖 | §1.2                                 |
+| lint 报生成目录大量错误                   | d.ts 桥产物被 eslint 扫描                                             | eslint globalIgnores 增 `tmp/**`     |
+| 改子包源码宿主 dev 不生效                 | vite 预构建缓存                                                       | 删 `node_modules/.vite`，整页刷新    |

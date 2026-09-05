@@ -184,6 +184,7 @@ apps/zen-rule/src/
 ### 8.3 Backlog（插件化演进，刻意不进本次）
 
 - **重建移除的函数域（2026-09-01 放弃现存任务，未来按需重新实现）**：
+
   - `custom_list_query`（roster 存储已有 queryRoster 可直接复用）、`rate_1h`/`group_distinct_1h`（内存窗口计数，生产 Redis 化留宿主层）、`ip_location`（需 geo 数据集）——重建后撞库攻击防御.json 仿真验收恢复
   - `lexicon`（Aho–Corasick 词表匹配，文件名建议 `aho-corasick.ts`）——2026-09-01 裁决未来重新实现
   - `http_call`/`http_call_with_headers` **无需重建**：已被 `http_request`（http 域专属节点）替代

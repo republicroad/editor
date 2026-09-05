@@ -6,8 +6,9 @@ import { setupJsDom } from '../../../src/test-utils/setup-jsdom';
 setupJsDom();
 
 const { cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react');
-const { VersionHistoryPanel } =
-  await import('../../../jdm-editor/packages/appshell/src/components/version-history/version-history-panel');
+const { VersionHistoryPanel } = await import(
+  '../../../jdm-editor/packages/appshell/src/components/version-history/version-history-panel'
+);
 
 afterEach(() => cleanup());
 

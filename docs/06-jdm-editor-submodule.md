@@ -278,7 +278,7 @@ type Diff = {
 
 | 文件                                | 行数  | 说明                      |
 | ----------------------------------- | ----- | ------------------------- |
-| `helpers/json-schema.ts`            | 78    | JSON ↔ JSON Schema 转换   |
+| `helpers/json-schema.ts`            | 78    | JSON ↔ JSON Schema 转换  |
 | `helpers/custom-function-schema.ts` | 58    | 自定义函数 Schema         |
 | `helpers/request-schema.ts`         | 1,236 | Request Schema 完整工具库 |
 
@@ -439,7 +439,7 @@ bun run test           # 等价于 cd packages/jdm-editor && bun test src(单测
 
 **独立构建复现验证（2026-09-01）**：zrule 分支 `bun install` + `bun run build` 多次复现通过（42~58s）；同形式 `bun test src` 58/58 全绿——独立构建链路稳定。
 
-**主仓消费体积（源码直通，2026-09-01 记录）**：主仓 `bun run build`（tsconfigPaths 源码直通）产物 `static/assets/`：JS 87 文件共 8.44MB（最大 chunk index-*.js 7.85MB）+ CSS 273KB。与 dist 消费的对比未测（需临时摘除 tsconfigPaths，成本高）——如需对比，临时注释 vite.config 的 `tsconfigPaths()` 后构建即可。
+**主仓消费体积（源码直通，2026-09-01 记录）**：主仓 `bun run build`（tsconfigPaths 源码直通）产物 `static/assets/`：JS 87 文件共 8.44MB（最大 chunk index-\*.js 7.85MB）+ CSS 273KB。与 dist 消费的对比未测（需临时摘除 tsconfigPaths，成本高）——如需对比，临时注释 vite.config 的 `tsconfigPaths()` 后构建即可。
 
 发布到 npm(`prepublishOnly: vite build` 会自动重跑构建)：
 
@@ -685,27 +685,27 @@ opencode 分支是一个**深度定制的开发分支**，基于 master 分支�
 
 同一个导入名 @republicroad/jdm-editor，三种运行时各自解析：
 
-| 消费端                       | 解析机制                                                                                                                | 结果                                                                                  |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| 主仓前端（vite dev / build） | `resolve.alias` 把 barrel 显式映射到子模块 `src/index.ts`；内核内部导入已全部为 `#` subpath imports + 相对导入，由 vite 原生（imports 字段）解析 | **源码直通**（dev 与 build 双端；tailwind.css/tokens.css 随 src/index.ts 自动带入） |
-| apps/editor 后端 + bun test  | 运行时**不解析包入口**：后端零内核导入；bun test 中 barrel 由 `mock-jdm-editor.ts` 的 `mock.module` 桩替换              | 源码不必可达（dist 缺省也不影响测试）                                                 |
-| tsc typecheck                | 根 tsconfig `paths` 把导入名映射到子模块 `src/index.ts`；tsc 沿 import 闭包**直接编译内核源码**——内核内部 `#` 导入由内核 package.json `imports` 字段解析（TS 5.4+ bundler），react 压平 18、`@lezer/*` 钉单实例均经根 paths 收口 | 类型来自**源码**（类型桥已退役，见 bestpractice/alias-mechanisms §5 备案）           |
+| 消费端                       | 解析机制                                                                                                                                                                                                                         | 结果                                                                                |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 主仓前端（vite dev / build） | `resolve.alias` 把 barrel 显式映射到子模块 `src/index.ts`；内核内部导入已全部为 `#` subpath imports + 相对导入，由 vite 原生（imports 字段）解析                                                                                 | **源码直通**（dev 与 build 双端；tailwind.css/tokens.css 随 src/index.ts 自动带入） |
+| apps/editor 后端 + bun test  | 运行时**不解析包入口**：后端零内核导入；bun test 中 barrel 由 `mock-jdm-editor.ts` 的 `mock.module` 桩替换                                                                                                                       | 源码不必可达（dist 缺省也不影响测试）                                               |
+| tsc typecheck                | 根 tsconfig `paths` 把导入名映射到子模块 `src/index.ts`；tsc 沿 import 闭包**直接编译内核源码**——内核内部 `#` 导入由内核 package.json `imports` 字段解析（TS 5.4+ bundler），react 压平 18、`@lezer/*` 钉单实例均经根 paths 收口 | 类型来自**源码**（类型桥已退役，见 bestpractice/alias-mechanisms §5 备案）          |
 
 ### 7.2 关键配置清单
 
-| 配置点                     | 文件                                                   | 作用                                                                                                                      |
-| -------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| 内核别名（方案 D）         | 内核 package.json `imports` 字段                       | `#icons`/`#components/ui/*`/`#lib/*`/`#reui/icons/*`（显式扩展名——TS 对 imports 通配目标不做扩展探测，见 ts-imports-field-resolution 篇） |
-| 内核别名双声明             | 内核 tsconfig.json paths（`"#*": ["./src/*"]`）        | 供 shadcn/reui CLI 的 aliases 校验命中（CLI 写入口径）；代码实际经 imports 字段解析，两处同指零分歧                          |
-| paths 映射                 | 根 tsconfig.json                                       | `@republicroad/jdm-editor`→`./jdm-editor/.../src/index.ts`、`@/*`→`./src/*`（宿主 reui 装机）、monaco-editor 双映射        |
-| 类型对齐（内核源码入根程序） | 根 tsconfig paths                                   | `react`/`react/jsx-runtime`→根 @types/react 18（内核 devDep 19 隔离）；`@lezer/common`/`@lezer/lr`→顶层单实例（防双实例）  |
-| ambient 声明               | 根 tsconfig include（`内核 src/**/*.d.ts`）            | lezer 模块声明 + function helpers 全局声明（无人 import 它们，必须显式收编）                                              |
-| barrel 别名                | vite.config.ts / .storybook/main.ts（resolve.alias）   | `@republicroad/jdm-editor`→子模块 src/index.ts（运行时源码直通）                                                           |
-| allowImportingTsExtensions | apps/zen-rule、apps/editor 的 tsconfig                 | 子模块内部以 .ts 后缀互相导入——凡把子模块源码拉进编译程序的项目都必须开启（需 noEmit）                                    |
-| wasm 支持                  | vite.config.ts（vite-plugin-wasm）                     | @gorules/zen-engine-wasm 的加载                                                                                           |
-| monaco                     | vite.config.ts（静态拷贝 + **MONACO_VS_BASE** define） | 版本化静态路径（内核 0.3.0 起 monaco 转 peer，宿主已显式 pin 0.52.2）                                                     |
-| react 去重                 | vite.config.ts（`dedupe: [react, react-dom]`）         | 防止主仓与子模块解析出两份 React 实例                                                                                     |
-| bun test 排除内核          | package.json `test` 脚本（`--path-ignore-patterns`）   | 内核测试为 vitest 规格，由内核仓自有 CI 在自家 pnpm 树执行；bunfig 的 setupBunDom preload 随 zrule 内核移除                |
+| 配置点                       | 文件                                                   | 作用                                                                                                                                      |
+| ---------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 内核别名（方案 D）           | 内核 package.json `imports` 字段                       | `#icons`/`#components/ui/*`/`#lib/*`/`#reui/icons/*`（显式扩展名——TS 对 imports 通配目标不做扩展探测，见 ts-imports-field-resolution 篇） |
+| 内核别名双声明               | 内核 tsconfig.json paths（`"#*": ["./src/*"]`）        | 供 shadcn/reui CLI 的 aliases 校验命中（CLI 写入口径）；代码实际经 imports 字段解析，两处同指零分歧                                       |
+| paths 映射                   | 根 tsconfig.json                                       | `@republicroad/jdm-editor`→`./jdm-editor/.../src/index.ts`、`@/*`→`./src/*`（宿主 reui 装机）、monaco-editor 双映射                       |
+| 类型对齐（内核源码入根程序） | 根 tsconfig paths                                      | `react`/`react/jsx-runtime`→根 @types/react 18（内核 devDep 19 隔离）；`@lezer/common`/`@lezer/lr`→顶层单实例（防双实例）                 |
+| ambient 声明                 | 根 tsconfig include（`内核 src/**/*.d.ts`）            | lezer 模块声明 + function helpers 全局声明（无人 import 它们，必须显式收编）                                                              |
+| barrel 别名                  | vite.config.ts / .storybook/main.ts（resolve.alias）   | `@republicroad/jdm-editor`→子模块 src/index.ts（运行时源码直通）                                                                          |
+| allowImportingTsExtensions   | apps/zen-rule、apps/editor 的 tsconfig                 | 子模块内部以 .ts 后缀互相导入——凡把子模块源码拉进编译程序的项目都必须开启（需 noEmit）                                                    |
+| wasm 支持                    | vite.config.ts（vite-plugin-wasm）                     | @gorules/zen-engine-wasm 的加载                                                                                                           |
+| monaco                       | vite.config.ts（静态拷贝 + **MONACO_VS_BASE** define） | 版本化静态路径（内核 0.3.0 起 monaco 转 peer，宿主已显式 pin 0.52.2）                                                                     |
+| react 去重                   | vite.config.ts（`dedupe: [react, react-dom]`）         | 防止主仓与子模块解析出两份 React 实例                                                                                                     |
+| bun test 排除内核            | package.json `test` 脚本（`--path-ignore-patterns`）   | 内核测试为 vitest 规格，由内核仓自有 CI 在自家 pnpm 树执行；bunfig 的 setupBunDom preload 随 zrule 内核移除                               |
 
 ### 7.3 样式链
 
@@ -714,13 +714,13 @@ opencode 分支是一个**深度定制的开发分支**，基于 master 分支�
 
 ### 7.4 排障
 
-| 症状                               | 原因                                                 | 处置                                             |
-| ---------------------------------- | ---------------------------------------------------- | ------------------------------------------------ |
-| 改子模块源码后主仓 dev 未生效      | vite 依赖预构建缓存 / 跨包变更触发热更粒度为整页刷新 | 重启 dev server；必要时删除 node_modules/.vite   |
-| TS2307 找不到 `#xxx`               | 内核 package.json `imports` 字段缺该映射（显式扩展名要求，见 ts-imports-field-resolution 篇） | 补一条 imports 映射（值须带 .ts/.tsx 扩展或以扩展结尾的通配模板） |
-| TS2307 找不到 `@/icons` 等（`@` 旧形态） | 内核已迁移 `#`，残留 `@/` 导入属违例             | `git grep "from '@/" -- 内核 src` 应为空；违例改 `#` |
-| bigint 不能赋给 ReactNode / 双 @types/react 报错 | 内核 19 类型与宿主 18 类型同程序共存                 | 核对根 paths 的 react/@lezer 钉单一实例映射是否在位 |
-| 两份 React 实例（hooks 报错）      | vite 未去重                                          | 确认 dedupe: react/react-dom 在位                |
+| 症状                                             | 原因                                                                                          | 处置                                                              |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 改子模块源码后主仓 dev 未生效                    | vite 依赖预构建缓存 / 跨包变更触发热更粒度为整页刷新                                          | 重启 dev server；必要时删除 node_modules/.vite                    |
+| TS2307 找不到 `#xxx`                             | 内核 package.json `imports` 字段缺该映射（显式扩展名要求，见 ts-imports-field-resolution 篇） | 补一条 imports 映射（值须带 .ts/.tsx 扩展或以扩展结尾的通配模板） |
+| TS2307 找不到 `@/icons` 等（`@` 旧形态）         | 内核已迁移 `#`，残留 `@/` 导入属违例                                                          | `git grep "from '@/" -- 内核 src` 应为空；违例改 `#`              |
+| bigint 不能赋给 ReactNode / 双 @types/react 报错 | 内核 19 类型与宿主 18 类型同程序共存                                                          | 核对根 paths 的 react/@lezer 钉单一实例映射是否在位               |
+| 两份 React 实例（hooks 报错）                    | vite 未去重                                                                                   | 确认 dedupe: react/react-dom 在位                                 |
 
 ### 7.5 dist 的定位
 

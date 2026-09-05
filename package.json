@@ -96,7 +96,7 @@
     "globals": "^17.3.0",
     "jsdom": "^30.0.1",
     "monaco-editor": "0.52.2",
-    "prettier": "^3.8.1",
+    "prettier": "3.5.3",
     "storybook": "8.6.12",
     "storybook-dark-mode": "4.0.2",
     "tailwindcss": "^4.3.3",

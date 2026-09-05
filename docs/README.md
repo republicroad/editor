@@ -29,16 +29,16 @@
 
 ## 最佳实践
 
-| 文档                                                                                          | 说明                                                     |
-| --------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| [Monorepo 源码直通](./bestpractice/monorepo-source-passthrough.md)                            | 单包子模块的源码直通消费链与防回灌                       |
-| [Monorepo 多 npm 包编译与构建](./bestpractice/monorepo-multi-package-build.md)                | 多包依赖策略/类型桥/别名治理/解析矩阵/CI 门禁（多包视角） |
-| [Monorepo 别名机制](./bestpractice/monorepo-alias-mechanisms.md)                              | 业界别名实践对比（Nx/Turbo/shadcn）与本仓四层终态        |
-| [Bun Workspaces 最佳实践](./bestpractice/bun-workspaces-best-practices.md)                    | bun 工作区协议/lockfile/布局收敛/别名运行时语义/CI       |
-| [决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md)         | 内核别名方案六轮演进复盘与可迁移工程教训                 |
-| [TS imports 字段解析语义](./bestpractice/ts-imports-field-resolution.md)                      | 扩展探测/通配字面填充/不回落 paths——imports 写法守则     |
-| [发布手册](./bestpractice/release-process.md)                                                 | 版本线规则/三包发布命令/回滚纪律/changesets 备案         |
-| [Monorepo TS 编译·链接·运行](./bestpractice/ts-compile-link-runtime.md)                       | 三通道解析模型/包形态反转/发布契约——地基篇               |
+| 文档                                                                                  | 说明                                                      |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [Monorepo 源码直通](./bestpractice/monorepo-source-passthrough.md)                    | 单包子模块的源码直通消费链与防回灌                        |
+| [Monorepo 多 npm 包编译与构建](./bestpractice/monorepo-multi-package-build.md)        | 多包依赖策略/类型桥/别名治理/解析矩阵/CI 门禁（多包视角） |
+| [Monorepo 别名机制](./bestpractice/monorepo-alias-mechanisms.md)                      | 业界别名实践对比（Nx/Turbo/shadcn）与本仓四层终态         |
+| [Bun Workspaces 最佳实践](./bestpractice/bun-workspaces-best-practices.md)            | bun 工作区协议/lockfile/布局收敛/别名运行时语义/CI        |
+| [决策复盘：Subpath Imports](./bestpractice/decision-retrospective-subpath-imports.md) | 内核别名方案六轮演进复盘与可迁移工程教训                  |
+| [TS imports 字段解析语义](./bestpractice/ts-imports-field-resolution.md)              | 扩展探测/通配字面填充/不回落 paths——imports 写法守则      |
+| [发布手册](./bestpractice/release-process.md)                                         | 版本线规则/三包发布命令/回滚纪律/changesets 备案          |
+| [Monorepo TS 编译·链接·运行](./bestpractice/ts-compile-link-runtime.md)               | 三通道解析模型/包形态反转/发布契约——地基篇                |
 
 ---
 

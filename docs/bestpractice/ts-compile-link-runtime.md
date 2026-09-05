@@ -14,11 +14,11 @@
 
 monorepo 里一个导入 specifier（如 `@scope/pkg`）能被解析，靠的是三条**互相独立的通道**：
 
-| 通道 | 载体 | 谁认它 | 生效时机 |
-| --- | --- | --- | --- |
-| **A. tsconfig paths** | 根/成员各自 tsconfig 的 `paths` | tsc（程序级）、vite（`tsconfigPaths` 插件）、**bun（原生，按就近 tsconfig）** | 类型检查 + vite/bun 运行时 |
-| **B. node_modules 链接** | workspace 协议（`workspace:*`）→ symlink/硬链接 → 包的 `main`/`exports`/`imports` | node、bun、npm、所有工具的兜底路径 | 运行时 + tsc（paths 未命中时） |
-| **C. 打包器 alias** | vite `resolve.alias` / storybook viteFinal | vite build/dev、storybook | **优先级最高**，压过 A/B |
+| 通道                     | 载体                                                                              | 谁认它                                                                        | 生效时机                       |
+| ------------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------ |
+| **A. tsconfig paths**    | 根/成员各自 tsconfig 的 `paths`                                                   | tsc（程序级）、vite（`tsconfigPaths` 插件）、**bun（原生，按就近 tsconfig）** | 类型检查 + vite/bun 运行时     |
+| **B. node_modules 链接** | workspace 协议（`workspace:*`）→ symlink/硬链接 → 包的 `main`/`exports`/`imports` | node、bun、npm、所有工具的兜底路径                                            | 运行时 + tsc（paths 未命中时） |
+| **C. 打包器 alias**      | vite `resolve.alias` / storybook viteFinal                                        | vite build/dev、storybook                                                     | **优先级最高**，压过 A/B       |
 
 **四条铁律**（全部实证）：
 
@@ -86,13 +86,13 @@ registry 类字段（`access`/`tag`/`registry`/`provenance`）。
 
 ## 3. 完整矩阵：monorepo 里 TS 的编译、链接、运行全景
 
-| 场景 | 编译/类型（tsc） | 链接（依赖安装） | 运行（vite dev/build） | 运行（bun test/节点脚本） |
-| --- | --- | --- | --- | --- |
-| 宿主 import 包名 | 根 tsconfig paths → 包 src（类型来自源码） | workspace: 协议 → symlink/硬链接（main=dist 但被 paths 压住） | tsconfigPaths projects / 显式 alias → src | bun 就近 tsconfig paths；barrel 由 mock.module 桩替换 |
-| 包内相对导入 | 跟随文件位置，天然正确 | — | 同左 | 同左 |
-| 包内作用域别名 | 包 tsconfig paths（`#*`/`@kernel/*`） | — | vite-tsconfig-paths projects 按 importer 取 | bun 就近 tsconfig |
-| 包的 `#` subpath imports | TS 5.4+ bundler（显式扩展名） | — | vite 5.1+ 原生 | bun 原生 |
-| 外部消费者（npm） | 包的 dist/index.d.ts | main/exports → dist | — | — |
+| 场景                     | 编译/类型（tsc）                           | 链接（依赖安装）                                              | 运行（vite dev/build）                      | 运行（bun test/节点脚本）                             |
+| ------------------------ | ------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- |
+| 宿主 import 包名         | 根 tsconfig paths → 包 src（类型来自源码） | workspace: 协议 → symlink/硬链接（main=dist 但被 paths 压住） | tsconfigPaths projects / 显式 alias → src   | bun 就近 tsconfig paths；barrel 由 mock.module 桩替换 |
+| 包内相对导入             | 跟随文件位置，天然正确                     | —                                                             | 同左                                        | 同左                                                  |
+| 包内作用域别名           | 包 tsconfig paths（`#*`/`@kernel/*`）      | —                                                             | vite-tsconfig-paths projects 按 importer 取 | bun 就近 tsconfig                                     |
+| 包的 `#` subpath imports | TS 5.4+ bundler（显式扩展名）              | —                                                             | vite 5.1+ 原生                              | bun 原生                                              |
+| 外部消费者（npm）        | 包的 dist/index.d.ts                       | main/exports → dist                                           | —                                           | —                                                     |
 
 **读法**：同一份包源码，在"本仓开发"时走 paths（源码直通），在"被 npm 安装"时走
 main/exports（dist）——**两个世界由包形态隔离，互不越界**。这就是"包形态必须
@@ -102,11 +102,11 @@ main/exports（dist）——**两个世界由包形态隔离，互不越界**。
 
 ## 4. 链接行为：三种布局的语义差（详解见 Bun Workspaces §3.5）
 
-| 布局 | 成员本地 node_modules | 幽灵依赖 | 双实例 |
-| --- | --- | --- | --- |
-| bun hoisted（默认） | 仅版本冲突时嵌套（✦ appshell paths 候选落空的根源） | ✅ 能跑 | 可能（嵌套 vs 提升副本） |
-| bun isolated（`[install] linker`，备案方向） | ✅ symlink 实装声明过的 deps | ❌ 阻断 | 结构性隔离 |
-| pnpm（内核仓） | ✅ 符号链接农场 | ❌ 阻断 | 结构性隔离 |
+| 布局                                         | 成员本地 node_modules                               | 幽灵依赖 | 双实例                   |
+| -------------------------------------------- | --------------------------------------------------- | -------- | ------------------------ |
+| bun hoisted（默认）                          | 仅版本冲突时嵌套（✦ appshell paths 候选落空的根源） | ✅ 能跑  | 可能（嵌套 vs 提升副本） |
+| bun isolated（`[install] linker`，备案方向） | ✅ symlink 实装声明过的 deps                        | ❌ 阻断  | 结构性隔离               |
+| pnpm（内核仓）                               | ✅ 符号链接农场                                     | ❌ 阻断  | 结构性隔离               |
 
 **双布局适配**：tsconfig paths 用**多候选数组**按序探测（✦ appshell react/`@lezer`
 映射——候选清单绝不能包含冲突版本副本，如内核的 @types/react@19）。
@@ -142,13 +142,13 @@ main/exports（dist）——**两个世界由包形态隔离，互不越界**。
 
 ## 7. 本仓实证对照
 
-| 行为 | 实证出处 |
-| --- | --- |
-| tsc paths 程序级 vs vite projects/bun 就近 | 第四十二批（`@/` 冲突仅 tsc 暴露） |
-| bun 运行时执行 paths 解析 | 第四十二批（monaco d.ts 崩溃） |
-| npm pack 不应用 publishConfig 字段重写 | 第四十七批（appshell tarball 坏包） |
-| exports 封锁子路径 + paths 双写 src 笔误 | 第四十七批（双通道齐断诊断） |
-| 包形态反转（main→dist 永久化） | 第四十七批（零场景破坏验证） |
-| 双布局多候选 paths | 第四十七批（appshell 迁入内核仓） |
-| wasm 对 content 未知键 InvalidArg | 第五十批（simulate/session 隔离） |
-| mock.module 按解析路径绑定 | 第四十二批（monaco d.ts 崩溃） |
+| 行为                                       | 实证出处                            |
+| ------------------------------------------ | ----------------------------------- |
+| tsc paths 程序级 vs vite projects/bun 就近 | 第四十二批（`@/` 冲突仅 tsc 暴露）  |
+| bun 运行时执行 paths 解析                  | 第四十二批（monaco d.ts 崩溃）      |
+| npm pack 不应用 publishConfig 字段重写     | 第四十七批（appshell tarball 坏包） |
+| exports 封锁子路径 + paths 双写 src 笔误   | 第四十七批（双通道齐断诊断）        |
+| 包形态反转（main→dist 永久化）             | 第四十七批（零场景破坏验证）        |
+| 双布局多候选 paths                         | 第四十七批（appshell 迁入内核仓）   |
+| wasm 对 content 未知键 InvalidArg          | 第五十批（simulate/session 隔离）   |
+| mock.module 按解析路径绑定                 | 第四十二批（monaco d.ts 崩溃）      |

@@ -26,8 +26,8 @@
 3. 版本对齐优先用 catalog（bun 新版支持，语法以所用版本文档为准）；低版本用根
    `overrides`（注意其作用域边界，见 §4）。
 4. **绝不混用包管理器**：一仓一锁。子模块自带另一套包管理器时（本仓内核 = pnpm
-   + 自己的 lockfile），必须文档化"双树现实"——宿主树（bun）供 monorepo 消费，
-   子模块树（pnpm）供其自治开发。
+   - 自己的 lockfile），必须文档化"双树现实"——宿主树（bun）供 monorepo 消费，
+     子模块树（pnpm）供其自治开发。
 
 ---
 
@@ -69,14 +69,14 @@
 bun 安装器支持两种布局模式（**全局设置**，作用于整仓，bunfig.toml 配置或单次
 `bun install --linker isolated`；bun 1.2+ 支持，本仓 1.3.14 可用）：
 
-| 维度 | **hoisted**（现状，默认） | **isolated**（pnpm 式，备案方向） |
-| --- | --- | --- |
-| 布局 | store + 提升硬链接；成员本地 node_modules **仅版本冲突时嵌套** | 每成员 node_modules **实装其声明过的全部依赖**（symlink 到 store） |
-| 成员 devDeps 实装 | ❌ 提升到根（✦ appshell 的 `./node_modules/@types/react` 候选在 editor 树落空） | ✅（✦ 内核 pnpm 树天然如此） |
-| 幽灵依赖（未声明就 import） | ✅ 能跑（靠 eslint boundaries/CI 补位） | ❌ 结构性阻断（声明真实性强制成立） |
-| 跨成员双实例 | 可能（嵌套副本 vs 提升副本，✦ lezer/双 React 实证） | 结构性隔离（各成员只 symlink 自己声明的版本） |
-| paths 写法 | **多候选数组**（覆盖两布局的 18 副本位置，✦ 第四十七批） | 单候选 `./node_modules/...` 即可（可简化） |
-| 迁移成本 | — | 整仓布局切换：删 node_modules 重装 + monaco 静态拷贝 glob 复验（提升假设）+ `.vite` 预构建缓存 + storybook/CI 缓存路径 |
+| 维度                        | **hoisted**（现状，默认）                                                       | **isolated**（pnpm 式，备案方向）                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 布局                        | store + 提升硬链接；成员本地 node_modules **仅版本冲突时嵌套**                  | 每成员 node_modules **实装其声明过的全部依赖**（symlink 到 store）                                                     |
+| 成员 devDeps 实装           | ❌ 提升到根（✦ appshell 的 `./node_modules/@types/react` 候选在 editor 树落空） | ✅（✦ 内核 pnpm 树天然如此）                                                                                           |
+| 幽灵依赖（未声明就 import） | ✅ 能跑（靠 eslint boundaries/CI 补位）                                         | ❌ 结构性阻断（声明真实性强制成立）                                                                                    |
+| 跨成员双实例                | 可能（嵌套副本 vs 提升副本，✦ lezer/双 React 实证）                             | 结构性隔离（各成员只 symlink 自己声明的版本）                                                                          |
+| paths 写法                  | **多候选数组**（覆盖两布局的 18 副本位置，✦ 第四十七批）                        | 单候选 `./node_modules/...` 即可（可简化）                                                                             |
+| 迁移成本                    | —                                                                               | 整仓布局切换：删 node_modules 重装 + monaco 静态拷贝 glob 复验（提升假设）+ `.vite` 预构建缓存 + storybook/CI 缓存路径 |
 
 **决策状态（第四十七批落档）**：备案未启用。当下问题（appshell 双布局类型对齐）
 已由多候选 paths 解决且版本安全（候选不含内核 19 副本）；isolated 的真正收益是
@@ -84,6 +84,7 @@ bun 安装器支持两种布局模式（**全局设置**，作用于整仓，bun
 不作为 paths 问题的补丁顺手做。
 
 **启用触发条件**（满足其一再启动）：
+
 1. 幽灵依赖事故实际发生（未声明导入在布局变化后断裂）
 2. 双实例类问题第二次出现（类型/运行时多实例修复成本超过迁移成本）
 3. 需要与内核 pnpm 树的解析语义完全对齐（跨树联调排查成本显著上升时）
@@ -98,13 +99,13 @@ node_modules 重装 → 确认成员本地 symlink 存在 → 全门禁 + dev/bu
 
 ## 4. 别名机制的 Bun 语义差异（对照 pnpm/npm）
 
-| 维度 | **Bun** | pnpm | npm/yarn classic |
-|---|---|---|---|
-| tsconfig paths 运行时生效 | ✅ 原生读取（别名即运行时事实） | ❌ 仅编译期/打包期 | ❌ 需 loader hook |
-| 读哪份 tsconfig | **按导入文件就近取**（成员各自生效） | 不适用 | 不适用 |
-| node_modules 布局 | store + 提升硬链接（幽灵依赖敞开） | 符号链接农场（幽灵依赖被阻断） | npm 全扁平 |
-| overrides 作用域 | 仅根 | workspace 全局 | npm 不达成员 |
-| 内置测试器 | `bun test`（`mock.module` 按**解析后路径**绑定） | 无（vitest 自备 alias/dedupe） | 无 |
+| 维度                      | **Bun**                                          | pnpm                           | npm/yarn classic  |
+| ------------------------- | ------------------------------------------------ | ------------------------------ | ----------------- |
+| tsconfig paths 运行时生效 | ✅ 原生读取（别名即运行时事实）                  | ❌ 仅编译期/打包期             | ❌ 需 loader hook |
+| 读哪份 tsconfig           | **按导入文件就近取**（成员各自生效）             | 不适用                         | 不适用            |
+| node_modules 布局         | store + 提升硬链接（幽灵依赖敞开）               | 符号链接农场（幽灵依赖被阻断） | npm 全扁平        |
+| overrides 作用域          | 仅根                                             | workspace 全局                 | npm 不达成员      |
+| 内置测试器                | `bun test`（`mock.module` 按**解析后路径**绑定） | 无（vitest 自备 alias/dedupe） | 无                |
 
 **四条后果**（全部实证）：
 
@@ -169,16 +170,16 @@ oven-sh/setup-bun（版本与 engines 一致）
 
 ## 8. 本仓实证对照表
 
-| 实践 | 出处 |
-| --- | --- |
-| 成员 devDep 变更 → lockfile 漂移 | 第四十六批 CI 首跑（rollup-plugin-visualizer） |
-| 成员 version bump 零漂移 | 第四十六批（内核 v0.3.0 bump，frozen 幂等） |
-| overrides 不穿透成员 | 第四十二批（内核 @types/react 19 钉不住） |
-| 类型层 paths 钉单实例 | 第四十二批（react 18 压平）、第四十六批（@lezer/common/lr） |
-| 双布局多候选 paths | 第四十七批（appshell 迁入内核仓，hoisted/pnpm 双布局对齐） |
-| 就近 tsconfig / mock 绑定一致性 | 第四十二批（monaco d.ts 崩溃） |
-| bun test 子串过滤 | 第四十二批（`--path-ignore-patterns` 引入） |
-| 成员测试归位成员树 | 第四十六批（内核 vitest 门禁归位内核仓 CI） |
-| lib mode manualChunks 限制 | 第四十五批（内核 B1 实验结论） |
-| 分支即推 / CI 前置 | 第四十六批（reui 首推连抓 4 项） |
-| linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题） |
+| 实践                                  | 出处                                                        |
+| ------------------------------------- | ----------------------------------------------------------- |
+| 成员 devDep 变更 → lockfile 漂移      | 第四十六批 CI 首跑（rollup-plugin-visualizer）              |
+| 成员 version bump 零漂移              | 第四十六批（内核 v0.3.0 bump，frozen 幂等）                 |
+| overrides 不穿透成员                  | 第四十二批（内核 @types/react 19 钉不住）                   |
+| 类型层 paths 钉单实例                 | 第四十二批（react 18 压平）、第四十六批（@lezer/common/lr） |
+| 双布局多候选 paths                    | 第四十七批（appshell 迁入内核仓，hoisted/pnpm 双布局对齐）  |
+| 就近 tsconfig / mock 绑定一致性       | 第四十二批（monaco d.ts 崩溃）                              |
+| bun test 子串过滤                     | 第四十二批（`--path-ignore-patterns` 引入）                 |
+| 成员测试归位成员树                    | 第四十六批（内核 vitest 门禁归位内核仓 CI）                 |
+| lib mode manualChunks 限制            | 第四十五批（内核 B1 实验结论）                              |
+| 分支即推 / CI 前置                    | 第四十六批（reui 首推连抓 4 项）                            |
+| linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题）      |

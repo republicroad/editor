@@ -12,11 +12,11 @@
 
 ### 1.1 三包版本现状（各线独立）
 
-| 包 | 仓库 | 当前版本 | 发布物 | 发布方式 |
-| --- | --- | --- | --- | --- |
-| editor（应用） | republicroad/editor（reui 分支） | 0.1.0 | 不发 npm；tag + GitHub release（+ docker 镜像可选） | 手动 |
-| @republicroad/jdm-editor（内核） | republicroad/jdm-editor（reui 分支） | 0.3.1 | npm + dist | `lerna publish from-package`（读 package.json 版本） |
-| @republicroad/jdm-appshell（外壳） | 同上（内核仓 packages/appshell） | 0.1.0 | npm + dist | `npm publish --access public` |
+| 包                                 | 仓库                                 | 当前版本 | 发布物                                              | 发布方式                                             |
+| ---------------------------------- | ------------------------------------ | -------- | --------------------------------------------------- | ---------------------------------------------------- |
+| editor（应用）                     | republicroad/editor（reui 分支）     | 0.1.0    | 不发 npm；tag + GitHub release（+ docker 镜像可选） | 手动                                                 |
+| @republicroad/jdm-editor（内核）   | republicroad/jdm-editor（reui 分支） | 0.3.1    | npm + dist                                          | `lerna publish from-package`（读 package.json 版本） |
+| @republicroad/jdm-appshell（外壳） | 同上（内核仓 packages/appshell）     | 0.1.0    | npm + dist                                          | `npm publish --access public`                        |
 
 ### 1.2 语义
 
@@ -87,26 +87,29 @@ cd packages/appshell && bun run test:npm-smoke 0.1.0    # 传入已发布版本�
 
 ## 4. 回滚纪律
 
-| 场景 | 处置 |
-| --- | --- |
-| npm 包发现问题 | **72h 内**可 `npm unpublish <pkg>@<ver>`（deprecation 通知替代：`npm deprecate`）；超过 72h 发修复版本并 deprecate 旧版 |
-| tag 打错 | `git push origin :refs/tags/v0.x.y` 删除远端 tag → 修正 → 重打；**已创建的 GitHub release** 需手动删除重建 |
-| 应用（editor）发版后回滚 | tag 不可变纪律：重打前先删远端 tag + release；生产回滚 = 重新部署上一个镜像/commit |
-| 历史重写类操作 | 分支级 force-push 必须先打 `backup/*` 本地分支 + 双树等价断言（✦ 第四十七批内核 9→4 提交重写先例） |
+| 场景                     | 处置                                                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| npm 包发现问题           | **72h 内**可 `npm unpublish <pkg>@<ver>`（deprecation 通知替代：`npm deprecate`）；超过 72h 发修复版本并 deprecate 旧版 |
+| tag 打错                 | `git push origin :refs/tags/v0.x.y` 删除远端 tag → 修正 → 重打；**已创建的 GitHub release** 需手动删除重建              |
+| 应用（editor）发版后回滚 | tag 不可变纪律：重打前先删远端 tag + release；生产回滚 = 重新部署上一个镜像/commit                                      |
+| 历史重写类操作           | 分支级 force-push 必须先打 `backup/*` 本地分支 + 双树等价断言（✦ 第四十七批内核 9→4 提交重写先例）                      |
 
 ---
 
 ## 5. changesets 引入（备案，触发即启动）
 
 **触发条件**（任一）：
+
 1. 内核/appshell 需要按包独立的 CHANGELOG.md（外部消费者出现）
 2. 双包发布步骤开始互相绊脚（漏发/错发）
 3. 外部贡献者参与内核仓（需要低门槛的发布意图表达）
 
 **引入步骤**：
+
 ```bash
 cd jdm-editor && corepack pnpm add -D -w @changesets/cli && corepack pnpm changesets init
 ```
+
 - 流程：每个 PR 放 `.changeset/<name>.md`（声明 bump 级别 + 描述）→ CI `changeset status`
   门禁 → 发布时 `changeset version`（统一升版 + 生成 CHANGELOG）→ `changeset publish`
 - **与手动的边界**：changesets 是"意图文件"流派（声明式），取代手动版本 bump；
@@ -116,7 +119,7 @@ cd jdm-editor && corepack pnpm add -D -w @changesets/cli && corepack pnpm change
 
 ## 6. 职责与边界
 
-| 包 | 发布责任会话 | 说明 |
-| --- | --- | --- |
-| editor | editor 会话 | 应用发布，手动 |
+| 包              | 发布责任会话                                                                                      | 说明                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| editor          | editor 会话                                                                                       | 应用发布，手动                                                  |
 | 内核 + appshell | 内核仓会话优先（同仓 CI/发布自动化在彼）；editor 会话可在内核会话暂停期代发布（流程本文即可执行） | 双仓提交竞争：内核仓变更归内核会话，editor 仓变更归 editor 会话 |

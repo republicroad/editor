@@ -4,13 +4,13 @@
 
 ## 1. 为什么源码直通
 
-| 维度 | dist 消费 | 源码直通 |
-|---|---|---|
-| 改包源码后生效 | 需先构建包（build）再刷新应用 | 保存即热更新 |
-| 类型来源 | 包的 .d.ts（可能陈旧） | 包源码（实时） |
-| 断点/报错定位 | 映射到构建产物 | 直接映射源码行号 |
-| 调试 | 需 sourcemap 链路 | 原生 |
-| 发起到落地的环节 | 改码 → build 包 → 刷新应用 | 改码 → 生效 |
+| 维度             | dist 消费                     | 源码直通         |
+| ---------------- | ----------------------------- | ---------------- |
+| 改包源码后生效   | 需先构建包（build）再刷新应用 | 保存即热更新     |
+| 类型来源         | 包的 .d.ts（可能陈旧）        | 包源码（实时）   |
+| 断点/报错定位    | 映射到构建产物                | 直接映射源码行号 |
+| 调试             | 需 sourcemap 链路             | 原生             |
+| 发起到落地的环节 | 改码 → build 包 → 刷新应用    | 改码 → 生效      |
 
 **代价**：应用构建链需消化包源码的特殊语法/资源（scss、wasm、worker）；首启预构建可能变慢；跨包热更粒度通常为整页刷新而非局部。
 
@@ -18,11 +18,11 @@
 
 以导入名 `@scope/pkg` 指向 `packages/pkg/src` 为例：
 
-| 运行时 | 解析机制 | 结果 |
-|---|---|---|
-| **tsc typecheck** | tsconfig `paths` 映射 → 包源码纳入 typecheck 程序 | 类型来自源码 |
-| **vite dev/build** | `vite-tsconfig-paths` 插件读取同一份 paths（或显式 `resolve.alias`）→ 源码纳入编译与 HMR 体系 | 源码 |
-| **bun / node 运行时** | workspace 协议链接（`"workspace:*"`）→ 包 `main`/`exports` 入口 | 源码（bun 可直接执行 ts） |
+| 运行时                | 解析机制                                                                                      | 结果                      |
+| --------------------- | --------------------------------------------------------------------------------------------- | ------------------------- |
+| **tsc typecheck**     | tsconfig `paths` 映射 → 包源码纳入 typecheck 程序                                             | 类型来自源码              |
+| **vite dev/build**    | `vite-tsconfig-paths` 插件读取同一份 paths（或显式 `resolve.alias`）→ 源码纳入编译与 HMR 体系 | 源码                      |
+| **bun / node 运行时** | workspace 协议链接（`"workspace:*"`）→ 包 `main`/`exports` 入口                               | 源码（bun 可直接执行 ts） |
 
 **关键点**：三条链必须指向**同一处**（源码），否则出现「typecheck 过了但运行时错」「dev 正常 build 异常」的双形态问题。
 
@@ -33,11 +33,11 @@
 ```jsonc
 {
   "compilerOptions": {
-    "moduleResolution": "bundler",   // 现代打包器语义
+    "moduleResolution": "bundler", // 现代打包器语义
     "paths": {
-      "@scope/pkg": ["packages/pkg/src"]
-    }
-  }
+      "@scope/pkg": ["packages/pkg/src"],
+    },
+  },
 }
 ```
 
@@ -54,8 +54,8 @@
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],          // 桥接 tsconfig paths → vite 解析
-  resolve: { dedupe: ['react', 'react-dom'] },  // 防双实例（跨包引用时必配）
+  plugins: [tsconfigPaths()], // 桥接 tsconfig paths → vite 解析
+  resolve: { dedupe: ['react', 'react-dom'] }, // 防双实例（跨包引用时必配）
 });
 ```
 
@@ -70,12 +70,12 @@ export default defineConfig({
 
 ## 4. 排障速查
 
-| 症状 | 原因 | 处置 |
-|---|---|---|
-| 改包源码后应用未生效 | 依赖预构建缓存（vite 的 `node_modules/.vite`） | 删缓存重启 dev server |
-| TS5097（.ts 后缀导入报错） | 引用方 tsconfig 未开 `allowImportingTsExtensions` | 补开（需 noEmit） |
-| hooks 报「两份 React」 | 构建未去重 | `resolve.dedupe` |
-| 双形态问题（dev 正常 build 异常） | 三层解析链指向不一致 | 核对 paths / alias / workspace 入口三处同源 |
+| 症状                              | 原因                                              | 处置                                        |
+| --------------------------------- | ------------------------------------------------- | ------------------------------------------- |
+| 改包源码后应用未生效              | 依赖预构建缓存（vite 的 `node_modules/.vite`）    | 删缓存重启 dev server                       |
+| TS5097（.ts 后缀导入报错）        | 引用方 tsconfig 未开 `allowImportingTsExtensions` | 补开（需 noEmit）                           |
+| hooks 报「两份 React」            | 构建未去重                                        | `resolve.dedupe`                            |
+| 双形态问题（dev 正常 build 异常） | 三层解析链指向不一致                              | 核对 paths / alias / workspace 入口三处同源 |
 
 ## 5. 何时不该源码直通
 
@@ -85,10 +85,10 @@ export default defineConfig({
 
 ## 6. 本仓库映射（示例参照）
 
-| 概念 | 本仓库位置 |
-|---|---|
-| 包 | `jdm-editor/packages/jdm-editor`（git submodule，fork 自上游） |
-| paths | 根 `tsconfig.json`（`@gorules/jdm-editor` → 子模块 src） |
-| vite 桥接 | `vite.config.ts`（`tsconfigPaths()` + wasm + monaco + dedupe） |
+| 概念         | 本仓库位置                                                                            |
+| ------------ | ------------------------------------------------------------------------------------- |
+| 包           | `jdm-editor/packages/jdm-editor`（git submodule，fork 自上游）                        |
+| paths        | 根 `tsconfig.json`（`@gorules/jdm-editor` → 子模块 src）                              |
+| vite 桥接    | `vite.config.ts`（`tsconfigPaths()` + wasm + monaco + dedupe）                        |
 | 包内特殊资源 | styles.scss / dg.scss（sass）、`@gorules/zen-engine-wasm`（wasm）、monaco（静态拷贝） |
-| 排障 | 见 docs/06 §7.4 |
+| 排障         | 见 docs/06 §7.4                                                                       |

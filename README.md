@@ -5,6 +5,7 @@ URL: https://editor.gorules.io
 ## 版本线（2026-09-04）
 
 > 本仓为 GoRules editor 的**硬分叉**，独立维护、独立版本线：
+>
 > - editor fork 起点版本 **0.1.0**（继承自上游 1.16.1，不延续上游 1.x 版本号，避免误读）
 > - 内核子模块为 `@republicroad/jdm-editor`（**0.3.x**，同样为独立 0.x 版本线的硬分叉）
 > - 外壳包 `@republicroad/jdm-appshell`（**0.1.0**）

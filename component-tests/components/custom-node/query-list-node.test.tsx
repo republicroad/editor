@@ -17,8 +17,9 @@ import {
 installJdmEditorMock();
 
 const { cleanup, fireEvent, render, screen } = await import('@testing-library/react');
-const { QueryListTab, queryListNode } =
-  await import('../../../jdm-editor/packages/appshell/src/components/custom-node/query-list-node');
+const { QueryListTab, queryListNode } = await import(
+  '../../../jdm-editor/packages/appshell/src/components/custom-node/query-list-node'
+);
 
 const NODE_ID = 'ql-node';
 

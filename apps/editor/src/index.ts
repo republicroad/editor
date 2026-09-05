@@ -524,6 +524,7 @@ const GraphSaveSchema = z
     content: GraphContentSchema,
     baseRevision: z.string().optional(),
     auto: z.boolean().optional(),
+    versionName: z.string().optional(),
   })
   .openapi('GraphSave');
 

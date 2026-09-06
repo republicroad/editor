@@ -227,6 +227,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
+**最新变更(2026-09-06，第五十九批补丁：保留策略 Linux 删除随机版本 bug——CI 首次暴露)**
+
+- **真 bug（第五十二批引入，本地+CI 一直潜伏）**：`pruneAutoVersions` 正则组 `(v\d+)` 捕获带 `v` 前缀 → `Number("v22")` = **NaN** → 升序比较器失效 → 退化为 readdir 顺序删"第一个"。Windows NTFS 目录名字母序返回（v2 恰在首）掩盖；Linux ext4 顺序任意 → **随机删除最新 auto 版本**（本次 CI 实删 v22）。保留策略在 Linux 生产环境从未正确工作过
+- 修复：捕获组改为 `\.v(\d+)\.` 纯数字 → n 有效整数；正则自证（v2/v22 解析 + 升序删除 v2 最旧，字典序 v10<v2 陷阱同时消除）
+- 教训入档：**`Number("vNN")` 型 NaN 静默失效靠"目录返回恰好有序"存活**——排序比较器必须以真实数据类型为前提；跨平台 FS 的 readdir 顺序不保证（NTFS 字母序 vs ext4 任意序）
+
 **最新变更(2026-09-06，第五十九批：本地 Podman 部署落地——镜像/编排/实机验证全链)：**
 
 - **Dockerfile 硬化**：bun 1.4.2 对齐；**补 appshell 成员清单 COPY**（appshell 迁入内核仓后旧文件缺失该项，镜像内 frozen-lockfile 必炸——上游遗产陈旧缺陷）；`bunfig.toml` 提前 COPY（isolated linker 镜像内生效）；数据目录 `/data/{graphs,rosters}` + VOLUME + HEALTHCHECK（bun fetch 探 /healthz）

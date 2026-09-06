@@ -301,7 +301,9 @@ async function pruneAutoVersions(dir: string, safeId: string): Promise<void> {
   const autos: Array<{ n: number; file: string }> = [];
   for (const entry of entries) {
     if (!entry.isFile()) continue;
-    const match = new RegExp(`^${safeId}\\.(v\\d+)\\.json$`).exec(entry.name);
+    // 捕获组只取数字段（不含 v 前缀）——Number("v22") 为 NaN 会让排序失效，
+    // 退化为 readdir 顺序删"第一个"（Linux 上即随机版本，第五十九批 CI 实证）
+    const match = new RegExp(`^${safeId}\\.v(\\d+)\\.json$`).exec(entry.name);
     if (!match) continue;
     const graph = await readHeadFile(join(dir, entry.name));
     if (!graph?.auto) continue;

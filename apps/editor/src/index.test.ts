@@ -550,6 +550,63 @@ describe('graph persistence routes', () => {
     expect(versions.filter((v) => v.auto)).toHaveLength(21); // 21 归档 auto + head
   });
 
+  test('auto 版本按天折叠：检查点救回滚动溢出条目，同日折叠以最新替代（第六十一批按天检查点）', async () => {
+    const name = `auto-daily-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    // 22 次 auto 保存 → 归档 v1(manual) + v2..v22(21 auto) + head v23；
+    // 全部同一 UTC 日 → 按天检查点不参与，滚动窗口(20)删除最旧 v2（与上一用例一致）
+    for (let i = 2; i <= 23; i++) {
+      const put = await app.request(`/api/graphs/${created.id}`, {
+        method: 'PUT',
+        headers: asUser('user-a'),
+        body: JSON.stringify({ ...graphBody(`${name}-a${i}`), baseRevision: `v${i - 1}`, auto: true }),
+      });
+      expect(put.status).toBe(200);
+    }
+
+    const ownerDir = path.join(graphsDir, 'users', 'user-a');
+    const dayIso = (offsetDaysAgo: number) => new Date(Date.now() - offsetDaysAgo * 86_400_000).toISOString();
+    const rewriteUpdatedAt = async (revision: string, isoUpdatedAt: string) => {
+      const filePath = path.join(ownerDir, `${created.id}.${revision}.json`);
+      const raw = JSON.parse(await readFile(filePath, 'utf-8')) as { meta: { updatedAt: string } };
+      raw.meta.updatedAt = isoUpdatedAt;
+      await writeFile(filePath, `${JSON.stringify(raw, null, 2)}\n`, 'utf-8');
+    };
+    const listRevisions = async () => {
+      const versions = (await (
+        await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
+      ).json()) as Array<{ revision: string }>;
+      return new Set(versions.map((v) => v.revision));
+    };
+
+    // v3 改为前天 → 下一次保存治理时 v3 已被滚动窗口挤出，但作为前天检查点被救回
+    await rewriteUpdatedAt('v3', dayIso(2));
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody(`${name}-a24`), baseRevision: 'v23', auto: true }),
+    });
+    expect((await listRevisions()).has('v3')).toBe(true); // 按天检查点救回
+
+    // v4 也改为前天 → 前天检查点归最新 v4，v3 被同日折叠删除；v4 作为检查点保留
+    await rewriteUpdatedAt('v4', dayIso(2));
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody(`${name}-a25`), baseRevision: 'v24', auto: true }),
+    });
+    const revisions = await listRevisions();
+    expect(revisions.has('v3')).toBe(false); // 同日旧检查点被最新替代
+    expect(revisions.has('v4')).toBe(true); // 当日最新检查点保留
+  });
+
   test('auto 条目：detail 与版本表均带 auto 标记', async () => {
     const name = `auto-flag-${Date.now()}`;
     const created = (await (

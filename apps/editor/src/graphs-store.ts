@@ -281,16 +281,18 @@ export async function saveGraph(
     );
   }
 
-  // 自动版本保留策略：全部 manual + 最近 AUTO_VERSIONS_KEEP 条 auto，超限删最旧
+  // 自动版本保留策略：全部 manual 保留；auto 按 滚动条数 ∪ 按天检查点 治理（auto-version-retention.ts）
   await pruneAutoVersions(targetRoot, sanitizeGraphId(id));
 
   return { id, revision: nextRevision };
 }
 
-/** 自动版本保留条数（manual 版本不受治理） */
-export const AUTO_VERSIONS_KEEP = 20;
+/** 自动版本保留策略（滚动条数 ∪ 按天检查点）：纯逻辑见 auto-version-retention.ts，
+ *  常量在此转发导出保持既有公共面（docs/03 第五十二批"导出可测"）。 */
+export { AUTO_VERSIONS_DAILY_KEEP, AUTO_VERSIONS_KEEP, pickAutoVersionsToPrune } from './auto-version-retention.js';
+import { pickAutoVersionsToPrune } from './auto-version-retention.js';
 
-/** 超出保留策略的最旧 auto 版本文件删除 */
+/** 超出保留策略（滚动条数 ∪ 按天检查点）的 auto 版本文件删除 */
 async function pruneAutoVersions(dir: string, safeId: string): Promise<void> {
   let entries: import('fs').Dirent[];
   try {
@@ -298,7 +300,7 @@ async function pruneAutoVersions(dir: string, safeId: string): Promise<void> {
   } catch {
     return;
   }
-  const autos: Array<{ n: number; file: string }> = [];
+  const autos: Array<{ n: number; file: string; updatedAt?: string }> = [];
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     // 捕获组只取数字段（不含 v 前缀）——Number("v22") 为 NaN 会让排序失效，
@@ -307,14 +309,14 @@ async function pruneAutoVersions(dir: string, safeId: string): Promise<void> {
     if (!match) continue;
     const graph = await readHeadFile(join(dir, entry.name));
     if (!graph?.auto) continue;
-    autos.push({ n: Number(match[1]), file: join(dir, entry.name) });
+    autos.push({ n: Number(match[1]), file: join(dir, entry.name), updatedAt: graph.updatedAt });
   }
-  autos.sort((a, b) => a.n - b.n);
-  const excess = autos.length - AUTO_VERSIONS_KEEP;
-  for (let i = 0; i < excess; i++) {
+  const toPrune = pickAutoVersionsToPrune(autos);
+  for (const entry of autos) {
+    if (!toPrune.has(entry.n)) continue;
     try {
-      await unlink(autos[i].file);
-      console.log(`[graphs] pruned auto version ${path.basename(autos[i].file)}`);
+      await unlink(entry.file);
+      console.log(`[graphs] pruned auto version ${path.basename(entry.file)}`);
     } catch (error) {
       console.warn(`[graphs] auto-version prune failed:`, error);
     }

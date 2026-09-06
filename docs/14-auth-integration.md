@@ -73,3 +73,36 @@ simulate/decision 的 evaluate 全程包在 `runWithExecContext(ctx, ...)` 中�
 3. **http_request 出站不携带用户凭证**——如需第三方调用凭据,走服务端凭据库引用(未实现,设计先行)
 4. **404 而非 403**:不可见资源与不存在资源返回一致,防枚举探测
 5. **ExecCtx 无 actor = 管理员视角**,该路径仅供引擎直调/CLI 内部使用,不得暴露为 HTTP 行为
+
+---
+
+## 五、认证演进备案（第五十八批起）
+
+> 本节记录编辑器后端自身认证的"初期实现 → 上线期升级"路线。编辑器仍是**无登录状态的
+> 组件**（见卷首），本节所述仅针对其内建 Hono 后端（apps/editor）的图/名单数据归属安全。
+
+### 5.1 初期：签名 cookie 匿名身份（方案 B，已实施）
+
+- 实现：`apps/editor/src/auth.ts`（HMAC-SHA256 签名 cookie `gid`，`<userId>.<mac>`）
+- 门控：`AUTH_SECRET` 未设 → 历史行为不变（`TRUST_PROXY_HEADERS` / `mock-user-1` 回退）；
+  设置后 `/api/*` 中间件验证签名 cookie，缺失/篡改即签发新匿名身份
+  （HttpOnly / SameSite=Lax / 一年），**`x-user-id` header 不再被信任**（封堵伪造越权）
+- 身份模型：每浏览器一个稳定匿名身份；图数据归属随 cookie 走，浏览器清 cookie 即
+  "换用户"。API 客户端（curl 等）需自持 cookie（或部署在网关后改走 TRUST_PROXY_HEADERS）
+- 环境变量：`AUTH_SECRET`（`openssl rand -hex 32` 生成）；`PORT` / `CORS_ORIGINS` /
+  `GRAPHS_DIR` 不变
+
+### 5.2 上线期：better-auth 账号体系（备案方向，未实施）
+
+依赖已在仓（`better-auth ^1.6.25`，本批前未接线）。升级触发条件（满足其一）：
+
+1. 需要真实账号体系（注册/登录/找回）而非匿名身份
+2. 多设备/多端同步同一身份（cookie 匿名身份随浏览器走，无法跨设备）
+3. 需要第三方登录（OAuth：GitHub / Google / 企业 IdP）
+4. 数据归属需要长期稳定性（匿名身份 cookie 丢失即"丢"数据视图）
+
+迁移路径：better-auth 接管 `/api/auth/*`（其内建 session cookie 与 `gid` 独立）→
+`resolveExecContext` 的身份源从签名 cookie 切换为 better-auth session（`auth.api.getSession()`）
+→ 存量图数据按旧匿名 userId → 账号 userId 的映射脚本迁移（一次性，graphs 目录按
+`users/{owner}` 分域，搬目录即可）。前端 `AuthAdapter`（本文件第一节）接
+`useSession()`，编辑器组件层零改动。

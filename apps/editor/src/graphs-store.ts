@@ -111,8 +111,12 @@ async function readDirHeads(dir: string): Promise<StoredGraph[]> {
   return graphs;
 }
 
-/** 列出当前用户可见的图(自有 + 共享)，按 updatedAt 降序 */
-export async function listGraphs(actor: string | undefined, query?: { q?: string }): Promise<StoredGraphMeta[]> {
+/** 列出当前用户可见的图(自有 + 共享)，按 updatedAt 降序；
+ *  兼容式分页：缺省全量，提供 page 后切片（pageSize 缺省 50） */
+export async function listGraphs(
+  actor: string | undefined,
+  query?: { q?: string; page?: number; pageSize?: number },
+): Promise<StoredGraphMeta[]> {
   const q = query?.q?.trim().toLowerCase();
   const results: StoredGraph[] = [];
   if (actor) {
@@ -126,7 +130,10 @@ export async function listGraphs(actor: string | undefined, query?: { q?: string
   }
   const list = [...dedup.values()].filter((g) => (q ? g.name.toLowerCase().includes(q) : true));
   list.sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
-  return list.map(
+  const paged = query?.page
+    ? list.slice(((query.page - 1) * (query.pageSize ?? 50)) | 0, (query.page * (query.pageSize ?? 50)) | 0)
+    : list;
+  return paged.map(
     (g): StoredGraphMeta => ({
       id: g.id,
       name: g.name,
@@ -139,6 +146,18 @@ export async function listGraphs(actor: string | undefined, query?: { q?: string
       updatedAt: g.updatedAt,
     }),
   );
+}
+
+/** 存储可写探测（healthz）：在 GRAPHS_DIR 根写入并删除探针文件 */
+export async function probeGraphsWritable(): Promise<boolean> {
+  try {
+    const probe = join(GRAPHS_DIR, `.healthz-${Date.now()}`);
+    await writeFile(probe, 'ok', 'utf-8');
+    await unlink(probe);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

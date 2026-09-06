@@ -13,6 +13,7 @@ import {
   ZenRule,
 } from 'zen-rule';
 import { cors } from 'hono/cors';
+import { getCookie, setCookie } from 'hono/cookie';
 import type { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
@@ -25,10 +26,12 @@ import {
   GraphPersistenceError,
   listGraphs,
   listGraphVersions,
+  probeGraphsWritable,
   updateGraphVersionMeta,
   loadGraph,
   saveGraph,
 } from './graphs-store';
+import { AUTH_COOKIE, createSignedIdentity, verifySignedIdentity } from './auth';
 
 // 环境配置：PORT 监听端口、CORS_ORIGINS 跨域白名单(逗号分隔，未设则全放行)、ROSTERS_DIR 名单落盘目录
 const PORT = Number(process.env.PORT ?? 3000);
@@ -43,9 +46,15 @@ const SHARED_ROSTERS_DIR = join(ROSTERS_DIR, 'shared');
 const USERS_ROSTERS_DIR = join(ROSTERS_DIR, 'users');
 const MOCK_USER_ID = 'mock-user-1';
 
+// ── 认证（第五十八批，方案 B：签名 cookie 身份）────────────────────────
+// AUTH_SECRET 未设 → 行为与历史完全一致（TRUST_PROXY_HEADERS / MOCK 回退）。
+// 设置后：/api/* 中间件验证签名 cookie（缺失/篡改重签发），x-user-id 不再信任。
+const authSecret = (): string => process.env.AUTH_SECRET ?? '';
+
+type HeaderGetter = (name: string) => string | undefined;
+
 // 执行上下文解析：TRUST_PROXY_HEADERS=true 时信任网关头(X-User-Id/X-Request-Id)，
 // 否则回退到 Mock 开发用户(与 /api/auth/get-session 一致)。UDF 经 getExecContext() 读取。
-type HeaderGetter = (name: string) => string | undefined;
 export const resolveExecContext = (getHeader: HeaderGetter): ExecContext => {
   const requestId = getHeader('x-request-id') ?? crypto.randomUUID();
   if (process.env.TRUST_PROXY_HEADERS === 'true') {
@@ -55,6 +64,22 @@ export const resolveExecContext = (getHeader: HeaderGetter): ExecContext => {
     }
   }
   return { userId: MOCK_USER_ID, requestId };
+};
+
+type IdentityCarrier = { get: (key: 'identityUserId') => string | undefined; req: { header: HeaderGetter } };
+
+/** 图/名单路由统一入口：部署态（AUTH_SECRET）以中间件验证的签名身份为准（header 失效）；
+ *  开发态回落 resolveExecContext 历史语义。 */
+export const execContextOf = (c: IdentityCarrier): ExecContext => {
+  const requestId = c.req.header('x-request-id') ?? crypto.randomUUID();
+  if (authSecret()) {
+    const userId = c.get('identityUserId');
+    if (userId) {
+      return { userId, requestId };
+    }
+  }
+  // 注意必须以箭头包裹（c.req.header 直接传引用会丢失 this 绑定）
+  return resolveExecContext((name) => c.req.header(name));
 };
 
 const staticConfig = {
@@ -534,21 +559,46 @@ const GraphVersionSchema = z
     revision: z.string(),
     versionName: z.string().optional(),
     updatedAt: z.string(),
+    auto: z.boolean().optional(),
   })
   .openapi('GraphVersion');
+
+const GraphsQuerySchema = RosterQuerySchema.extend({
+  // 兼容式分页：缺省全量；提供 page 后按 updatedAt 降序切片
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(200).optional(),
+});
 
 const graphsRoute = createRoute({
   method: 'get',
   path: '/api/graphs',
   request: {
-    query: RosterQuerySchema,
+    query: GraphsQuerySchema,
   },
   responses: {
     200: {
       content: {
         'application/json': { schema: z.array(GraphMetaSchema) },
       },
-      description: '当前用户可见图的 head 元数据列表(不含 content)',
+      description: '当前用户可见图的 head 元数据列表(不含 content；支持 page/pageSize 兼容式分页)',
+    },
+  },
+});
+
+const healthzRoute = createRoute({
+  method: 'get',
+  path: '/healthz',
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            ok: z.boolean(),
+            graphsDirWritable: z.boolean(),
+          }),
+        },
+      },
+      description: '存活探测（匿名可达，供容器/反代健康检查）',
     },
   },
 });
@@ -729,9 +779,31 @@ const graphVersionUpdateRoute = createRoute({
   },
 });
 
-const app = new OpenAPIHono();
+const app = new OpenAPIHono<{ Variables: { identityUserId?: string } }>();
 
 app.use(requestLogger);
+
+// 部署态身份中间件（AUTH_SECRET）：验证/签发签名 cookie，身份存 context 供
+// execContextOf 消费；/healthz 不在 /api/* 下，天然匿名可达（编排探针）。
+app.use('/api/*', async (c: Context, next: Next) => {
+  const secret = authSecret();
+  if (secret) {
+    const verified = verifySignedIdentity(getCookie(c, AUTH_COOKIE), secret);
+    if (verified) {
+      c.set('identityUserId', verified.userId);
+    } else {
+      const identity = createSignedIdentity(secret);
+      c.set('identityUserId', identity.userId);
+      setCookie(c, AUTH_COOKIE, identity.value, {
+        httpOnly: true,
+        sameSite: 'Lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    }
+  }
+  await next();
+});
 
 // 跨域：未设 CORS_ORIGINS 时全放行(本地/镜像开发)；设置后仅白名单内 origin 反射放行(带凭证)
 if (CORS_ORIGINS.length > 0) {
@@ -769,10 +841,7 @@ app.openapi(simulateRoute, async (c) => {
   // 动态加载规则文件(含自定义节点执行：ZenRule.graphAddons + customHandlerFunc)；执行失败由 onError 统一返回 {error} 500
   const body = c.req.valid('json');
   const decision = zenRuleEngine.createDecision(body.content);
-  const result = await runWithExecContext(
-    resolveExecContext((name) => c.req.header(name)),
-    () => decision.evaluate(body.context, { trace: true }),
-  );
+  const result = await runWithExecContext(execContextOf(c), () => decision.evaluate(body.context, { trace: true }));
   return c.json(result);
 });
 
@@ -804,10 +873,7 @@ app.openapi(decisionRoute, async (c) => {
     debug('创建临时decision对象(不缓存)');
     decision = zr.createDecision(body.content);
   }
-  const result = await runWithExecContext(
-    resolveExecContext((name) => c.req.header(name)),
-    () => decision.evaluate(body.context, { trace: false }),
-  );
+  const result = await runWithExecContext(execContextOf(c), () => decision.evaluate(body.context, { trace: false }));
   return c.json(result);
 });
 
@@ -844,7 +910,7 @@ app.openapi(customNodesSchemaRoute, (c) => {
 // 名单名称列表下发(查询名单节点下拉数据源)；按会话用户过滤: 自有私有 + 共享
 app.openapi(rostersRoute, (c) => {
   const q = c.req.query('q');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const rosters = listRosters(q, execCtx.userId).map((roster) => ({
     name: roster.name,
     description: roster.description,
@@ -856,7 +922,7 @@ app.openapi(rostersRoute, (c) => {
 // 名单详情；他人私有一律 404(防名字探测)
 app.openapi(rosterDetailRoute, (c) => {
   const { name } = c.req.valid('param');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const roster = getRoster(name, execCtx.userId);
   if (!roster) {
     throw new HTTPException(404, { message: `roster '${name}' not found` });
@@ -867,7 +933,7 @@ app.openapi(rosterDetailRoute, (c) => {
 // 名单保存(upsert)：owner 由服务端注入为会话用户(新建默认私有)，客户端传入的归属字段被 schema 剥离
 app.openapi(rosterCreateRoute, async (c) => {
   const body = c.req.valid('json');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const roster: PersistableRoster = {
     name: body.name.trim(),
     description: body.description?.trim() || undefined,
@@ -890,7 +956,7 @@ app.openapi(rosterCreateRoute, async (c) => {
 app.openapi(rosterUpdateRoute, async (c) => {
   const { name } = c.req.valid('param');
   const body = c.req.valid('json');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const existing = getRoster(name, execCtx.userId);
   if (!existing) {
     throw new HTTPException(404, { message: `roster '${name}' not found` });
@@ -913,7 +979,7 @@ app.openapi(rosterUpdateRoute, async (c) => {
 // 名单删除：内存存储 + 对应 JSON 文件一并移除；他人私有一律 404
 app.openapi(rosterDeleteRoute, async (c) => {
   const { name } = c.req.valid('param');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const roster = getRoster(name, execCtx.userId);
   if (!roster || !deleteRoster(name, execCtx.userId)) {
     throw new HTTPException(404, { message: `roster '${name}' not found` });
@@ -946,17 +1012,23 @@ await loadRosters();
 
 // 图列表：返回当前用户可见的 head 元数据(自有 + 共享)，不含 content；按 updatedAt 降序
 app.openapi(graphsRoute, async (c) => {
-  const q = c.req.query('q');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
-  const graphs = await listGraphs(execCtx.userId, { q });
+  const { q, page, pageSize } = c.req.valid('query');
+  const execCtx = execContextOf(c);
+  const graphs = await listGraphs(execCtx.userId, { q, page, pageSize });
   return c.json(graphs);
+});
+
+// 存活探测：进程 + GRAPHS_DIR 可写（匿名，供容器/反代健康检查）
+app.openapi(healthzRoute, async (c) => {
+  const graphsDirWritable = await probeGraphsWritable();
+  return c.json({ ok: true, graphsDirWritable }, 200);
 });
 
 // 图明细；他人私有一律 404(防探测)；?revision=vN 加载历史版本
 app.openapi(graphDetailRoute, async (c) => {
   const { id } = c.req.valid('param');
   const { revision } = c.req.valid('query');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const graph = await loadGraph(id, execCtx.userId, { revision });
   if (!graph) {
     throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
@@ -968,7 +1040,7 @@ app.openapi(graphDetailRoute, async (c) => {
 // 图新建：owner 由服务端注入(默认私有)，revision 初始为 v1
 app.openapi(graphCreateRoute, async (c) => {
   const body = c.req.valid('json');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const id = crypto.randomUUID();
   try {
     const result = await saveGraph(
@@ -994,7 +1066,7 @@ app.openapi(graphCreateRoute, async (c) => {
 app.openapi(graphUpdateRoute, async (c) => {
   const { id } = c.req.valid('param');
   const body = c.req.valid('json');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   try {
     const result = await saveGraph(
       {
@@ -1028,7 +1100,7 @@ app.openapi(graphUpdateRoute, async (c) => {
 // 图删除：删除 head 与全部历史版本文件；不可见或不存在返回 false → 404
 app.openapi(graphDeleteRoute, async (c) => {
   const { id } = c.req.valid('param');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const deleted = await deleteGraph(id, execCtx.userId);
   if (!deleted) {
     throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
@@ -1039,7 +1111,7 @@ app.openapi(graphDeleteRoute, async (c) => {
 // 历史版本列表(不含 head)
 app.openapi(graphVersionsRoute, async (c) => {
   const { id } = c.req.valid('param');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const head = await loadGraph(id, execCtx.userId);
   if (!head) {
     throw new HTTPException(404, { message: `graph '${id}' not found or not visible` });
@@ -1052,7 +1124,7 @@ app.openapi(graphVersionsRoute, async (c) => {
 app.openapi(graphVersionUpdateRoute, async (c) => {
   const { id, revision } = c.req.valid('param');
   const body = c.req.valid('json');
-  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const execCtx = execContextOf(c);
   const updated = await updateGraphVersionMeta(id, execCtx.userId, revision, body);
   if (!updated) {
     throw new HTTPException(404, { message: `version '${revision}' of graph '${id}' not found or not visible` });

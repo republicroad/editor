@@ -227,6 +227,17 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
+**最新变更(2026-09-06，第五十八批：签名 cookie 身份认证（方案 B）+ healthz + 兼容式分页)：**
+
+- **认证落地（封堵 x-user-id 伪造越权）**：新增 `apps/editor/src/auth.ts`——HMAC-SHA256 签名 cookie `gid`（`<userId>.<mac>`，timingSafeEqual 比对 + userId 形态兜底）。`AUTH_SECRET` 未设 → 历史行为零变化（TRUST_PROXY_HEADERS/mock 回退，既有测试全兼容）；设置后 `/api/*` 中间件验证签名 cookie，缺失/篡改即签发新匿名身份（HttpOnly/SameSite=Lax/一年），**x-user-id header 不再被信任**；身份经 hono context 变量 `identityUserId` 传递，14 处路由统一改走 `execContextOf(c)`
+- **两处实现陷阱存档**：① `resolveExecContext(c.req.header)` 直接传方法引用丢失 `this` 绑定（`this.raw` undefined 全线 500）——必须箭头包裹；② hono 的 `c.req.cookie()` 在本组合下 undefined——cookie 读写统一走 `hono/cookie` 的 `getCookie/setCookie`
+- **`/healthz`**：`probeGraphsWritable()`（GRAPHS_DIR 探针文件写删）+ `{ok, graphsDirWritable}`；不在 /api/\* 下，天然匿名可达（容器/反代探针）
+- **兼容式分页**：`listGraphs` 支持 `page/pageSize`（updatedAt 降序切片，缺省全量）；`GraphsQuerySchema = RosterQuerySchema.extend`（z.coerce.number）；HTTP adapter 契约不动
+- **OpenAPI 清债**：`GraphVersionSchema` 补 `auto` 字段
+- **docs/14「五、认证演进备案」**：方案 B 实施记录 + better-auth 升级方向（触发条件四条 + 迁移路径：session 接管身份源 + userId 映射脚本 + AuthAdapter 接 useSession，编辑器组件层零改动）
+- 测试 +4（healthz 匿名探测 / 分页缺省+切片+排序一致 / 部署态三段式：Set-Cookie 签发→cookie 身份可见→伪造 header 不可见→篡改重签发）；测试教训：test 内 POST 显式带 `content-type: application/json`（无头时 body 解析 undefined 的环境差异）
+- 门禁：typecheck/lint 0-0/root 96/组件 46/apps 80
+
 **最新变更(2026-09-06，第五十七批：自动保存增强（idle 检测 + dirty 门控）+ 版本钉住服务端 + libsuggest 扩容)：**
 
 - **自动保存重设计（宿主 decision-simple）**：第五十二批的固定 30s 防抖存在两处缺陷——①保存推进 remoteSource.revision 后 effect 重新布防，无编辑也每 30s 空转保存（版本表被无变化 auto 版本刷屏）；②"dirty 签名比对"注释与实现不符（从未比对）。第五十七批重写为 **dirty 门控 + idle 检测**：`dirtySinceSaveRef` 仅编辑器 onChange 置位（加载/恢复/模板路径不置位，防加载后空保存），persistToRemote 成功即清位；布防后 tick 轮询——用户停止交互满 10s（pointerdown/keydown/wheel 三事件采样，不监听 move）即保存，持续无停顿由 90s max-wait 兜底；面板打开暂停不变

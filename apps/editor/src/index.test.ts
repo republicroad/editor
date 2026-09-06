@@ -731,3 +731,107 @@ describe('graph persistence routes', () => {
     expect(remaining).toHaveLength(0);
   });
 });
+
+describe('GET /healthz', () => {
+  test('存活与存储可写探测（匿名可达）', async () => {
+    const res = await app.request('/healthz');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; graphsDirWritable: boolean };
+    expect(body.ok).toBe(true);
+    expect(body.graphsDirWritable).toBe(true);
+  });
+});
+
+describe('GET /api/graphs 分页', () => {
+  const asUser = (userId: string): Record<string, string> => ({ 'x-user-id': userId });
+  const graphBody = (name: string) => ({
+    name,
+    content: {
+      contentType: 'application/vnd.gorules.decision',
+      nodes: [{ id: 'in', type: 'inputNode', name: 'Input' }],
+      edges: [],
+    },
+  });
+
+  test('缺省全量；page/pageSize 切片与全量排序一致', async () => {
+    const asUserJson = (userId: string): Record<string, string> => ({
+      'x-user-id': userId,
+      'content-type': 'application/json',
+    });
+    for (const n of ['pg-a', 'pg-b', 'pg-c']) {
+      const res = await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUserJson('user-a'),
+        body: JSON.stringify(graphBody(`${n}-${Date.now()}`)),
+      });
+      expect(res.status).toBe(200);
+    }
+    const all = (await (await app.request('/api/graphs', { headers: asUser('user-a') })).json()) as Array<{
+      id: string;
+    }>;
+    expect(Array.isArray(all)).toBe(true);
+
+    const page1 = (await (
+      await app.request('/api/graphs?page=1&pageSize=2', { headers: asUser('user-a') })
+    ).json()) as Array<{ id: string }>;
+    expect(page1).toHaveLength(2);
+    expect(page1.map((g) => g.id)).toEqual(all.slice(0, 2).map((g) => g.id));
+
+    const page2 = (await (
+      await app.request('/api/graphs?page=2&pageSize=2', { headers: asUser('user-a') })
+    ).json()) as Array<{ id: string }>;
+    expect(page2.map((g) => g.id)).toEqual(all.slice(2, 4).map((g) => g.id));
+  });
+});
+
+describe('部署态身份（AUTH_SECRET，方案 B）', () => {
+  const SECRET = 'unit-test-secret-key';
+  // asUser/graphBody 定义在 graphs describe 内，此处用本地 helper
+  const asForgedUser = (userId: string): Record<string, string> => ({ 'x-user-id': userId });
+  const graphBody = (name: string) => ({
+    name,
+    content: {
+      contentType: 'application/vnd.gorules.decision',
+      nodes: [{ id: 'in', type: 'inputNode', name: 'Input' }],
+      edges: [],
+    },
+  });
+
+  test('签名 cookie 身份生效；伪造 x-user-id 失效；篡改 cookie 重签发', async () => {
+    process.env.AUTH_SECRET = SECRET;
+    try {
+      // 第一发：无 cookie → Set-Cookie 签发；伪造 header 不被信任（图归新匿名身份）
+      const r1 = await app.request('/api/graphs', {
+        method: 'POST',
+        headers: { ...asForgedUser('attacker'), 'Content-Type': 'application/json' },
+        body: JSON.stringify(graphBody(`authn-${Date.now()}`)),
+      });
+      expect(r1.status).toBe(200);
+      const created = (await r1.json()) as { id: string };
+      const setCookie = r1.headers.get('set-cookie') ?? '';
+      expect(setCookie).toContain('gid=');
+      const cookie = setCookie.split(';')[0];
+
+      // 带 cookie（身份 A）：可见自己创建的图
+      const r2 = await app.request('/api/graphs', { headers: { cookie } });
+      const visible = (await r2.json()) as Array<{ id: string }>;
+      expect(visible.some((g) => g.id === created.id)).toBe(true);
+
+      // 不带 cookie（新身份 B）+ 伪造 header：不可见 A 的私有图
+      const r3 = await app.request('/api/graphs', { headers: asForgedUser('attacker') });
+      expect(r3.headers.get('set-cookie')).toContain('gid=');
+      const invisible = (await r3.json()) as Array<{ id: string }>;
+      expect(invisible.some((g) => g.id === created.id)).toBe(false);
+
+      // 篡改 cookie → 验证失败 → 重签发新 cookie
+      const r4 = await app.request('/api/graphs', { headers: { cookie: `${cookie}xx` } });
+      expect(r4.headers.get('set-cookie')).toContain('gid=');
+
+      // 形态非法 cookie → 重签发
+      const r5 = await app.request('/api/graphs', { headers: { cookie: 'not-a-signed-cookie' } });
+      expect(r5.headers.get('set-cookie')).toContain('gid=');
+    } finally {
+      delete process.env.AUTH_SECRET;
+    }
+  });
+});

@@ -10,10 +10,13 @@ const rostersDir = await mkdtemp(path.join(tmpdir(), 'editor-rosters-'));
 process.env.ROSTERS_DIR = rostersDir;
 const graphsDir = await mkdtemp(path.join(tmpdir(), 'editor-graphs-'));
 process.env.GRAPHS_DIR = graphsDir;
+const logsDir = await mkdtemp(path.join(tmpdir(), 'editor-logs-'));
+process.env.LOGS_DIR = logsDir;
 
 afterAll(async () => {
   await rm(rostersDir, { recursive: true, force: true });
   await rm(graphsDir, { recursive: true, force: true });
+  await rm(logsDir, { recursive: true, force: true });
 });
 
 const { app, resolveExecContext } = await import('./index.js');
@@ -890,5 +893,79 @@ describe('部署态身份（AUTH_SECRET，方案 B）', () => {
     } finally {
       delete process.env.AUTH_SECRET;
     }
+  });
+});
+
+describe('决策请求日志（LOGS_DIR，第六十二批）', () => {
+  test('simulate 完成后落盘 JSONL：字段齐全', async () => {
+    const res = await app.request('/api/simulate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(simulateBody),
+    });
+    expect(res.status).toBe(200);
+    const { flushDecisionLog } = await import('./decision-request-log.js');
+    await flushDecisionLog();
+
+    const files = (await readdir(logsDir)).filter((name) => name.startsWith('decision-requests-'));
+    expect(files).toEqual([`decision-requests-${new Date().toISOString().slice(0, 10)}.jsonl`]);
+    const lines = (await readFile(path.join(logsDir, files[0]), 'utf-8'))
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    const record = lines.at(-1)!;
+    expect(record.route).toBe('/api/simulate');
+    expect(record.method).toBe('POST');
+    expect(record.status).toBe(200);
+    expect(record.ok).toBe(true);
+    expect(record.userId).toBe('mock-user-1'); // 无 TRUST_PROXY_HEADERS/AUTH_SECRET → mock 用户
+    expect(Number(record.durationMs)).toBeGreaterThanOrEqual(0);
+    expect(typeof record.requestId).toBe('string');
+    expect(new Date(record.ts as string).toString()).not.toBe('Invalid Date');
+  });
+
+  test('校验失败(400)同样落盘且 ok=false；非决策路由不落盘', async () => {
+    const logFile = path.join(logsDir, `decision-requests-${new Date().toISOString().slice(0, 10)}.jsonl`);
+    const linesBefore = (await readFile(logFile, 'utf-8')).trim().split('\n').length;
+
+    await app.request('/api/simulate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ context: {} }),
+    });
+    const { flushDecisionLog } = await import('./decision-request-log.js');
+    await flushDecisionLog();
+    const lines = (await readFile(logFile, 'utf-8')).trim().split('\n');
+    expect(lines.length).toBe(linesBefore + 1); // 决策路由 +1
+    const last = JSON.parse(lines.at(-1)!) as Record<string, unknown>;
+    expect(last.status).toBe(400);
+    expect(last.ok).toBe(false);
+
+    // 非 simulate/decision 路由不产生日志
+    await app.request('/api/rosters');
+    await flushDecisionLog();
+    expect((await readFile(logFile, 'utf-8')).trim().split('\n').length).toBe(lines.length);
+  });
+
+  test('pruneDecisionLogs：保留今天+最近 keepDays，更早文件删除', async () => {
+    const { pruneDecisionLogs } = await import('./decision-request-log.js');
+    const keepDir = await mkdtemp(path.join(tmpdir(), 'editor-logkeep-'));
+    for (const day of ['2025-12-31', '2026-01-01', '2026-01-02', '2026-01-08', '2026-01-09']) {
+      await writeFile(path.join(keepDir, `decision-requests-${day}.jsonl`), '{}\n', 'utf-8');
+    }
+    await writeFile(path.join(keepDir, 'unrelated.txt'), 'x', 'utf-8');
+    const removed = await pruneDecisionLogs({
+      dir: keepDir,
+      now: new Date('2026-01-09T12:00:00.000Z'),
+      keepDays: 7,
+    });
+    expect(removed).toBe(2); // 12-31(9天前)/01-01(8天前) 超出窗口；恰好 7 天前的 01-02 属保留窗口
+    expect((await readdir(keepDir)).sort()).toEqual([
+      'decision-requests-2026-01-02.jsonl',
+      'decision-requests-2026-01-08.jsonl',
+      'decision-requests-2026-01-09.jsonl',
+      'unrelated.txt',
+    ]);
+    await rm(keepDir, { recursive: true, force: true });
   });
 });

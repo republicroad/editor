@@ -1,0 +1,56 @@
+# Vector 采集配置（第六十二批示例）：tail 编辑器决策请求日志 → 对象存储归档。
+# 数据源：apps/editor 的 LOGS_DIR 内 decision-requests-YYYY-MM-DD.jsonl（每请求一行 JSON，
+# 字段见 apps/editor/src/decision-request-log.ts 的 DecisionRequestLogRecord）。
+# 凭据经环境变量注入（compose environment 引用宿主 shell/.env），不要写死在本文件。
+# 说明：本文件为可运行起点，OSS 侧签名兼容性建议先用测试 bucket 实机验证（见 README）。
+
+data_dir = "/var/lib/vector"
+
+# Vector 内部 API（compose healthcheck 探测 /health 用）
+[api]
+enabled = true
+address = "127.0.0.1:8686"
+
+# ── 采集源：tail 决策请求 JSONL（按 UTC 日滚动，glob 自动跟随新文件）─────────
+[sources.editor_decision_logs]
+type = "file"
+include = ["/var/log/editor/decision-requests-*.jsonl"]
+read_from = "beginning"
+# 日频滚动产生新文件：以设备号+inode 做指纹（默认 checksum 对滚动新文件易误判重复）
+fingerprint.strategy = "device_and_inode"
+# 首次启动最多回读 1 天，防止吞入本应早已归档的历史文件（按需调整/删除）
+ignore_older_secs = 86400
+
+# ── 解析：JSONL → 结构化事件（拍平 ts/route/status/... 字段），附加主机名 ─────
+[transforms.parse]
+type = "remap"
+source = '''
+parsed, err = parse_json(.message)
+if err == null {
+  . = merge(., parsed)
+}
+.host = hostname()
+'''
+
+# ── 归档：S3 兼容对象存储（阿里云 OSS / AWS S3 / MinIO 通用）──────────────────
+[sinks.oss_archive]
+type = "s3"
+inputs = ["parse"]
+endpoint = "${OSS_ENDPOINT:-https://oss-cn-hangzhou.aliyuncs.com}"
+region = "${OSS_REGION:-cn-hangzhou}"
+bucket = "${OSS_BUCKET:?OSS_BUCKET is required}"
+access_key_id = "${OSS_ACCESS_KEY_ID:?OSS_ACCESS_KEY_ID is required}"
+secret_access_key = "${OSS_SECRET_ACCESS_KEY:?OSS_SECRET_ACCESS_KEY is required}"
+# 对象键按日期分区（%F = YYYY-MM-DD，取事件时间），便于下游按天消费与生命周期管理
+key_prefix = "editor/decision-requests/dt=%F/"
+compression = "gzip"
+content_type = "application/json"
+
+[sinks.oss_archive.batch]
+max_bytes = 10_000_000
+timeout_secs = 60
+
+[sinks.oss_archive.buffer]
+# 落盘缓冲：对象存储不可达时日志先落本地盘，恢复后续传（上限 256 MiB）
+type = "disk"
+max_size = 268_435_488

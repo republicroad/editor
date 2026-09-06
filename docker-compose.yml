@@ -19,9 +19,12 @@ services:
       AUTH_SECRET: '${AUTH_SECRET:-change-me-local-only}'
       # 跨域白名单（逗号分隔）；未设则全放行（本地开发语义）
       CORS_ORIGINS: '${CORS_ORIGINS:-}'
+      # 决策请求日志目录（第六十二批）；保留天数默认 14，可用 DECISION_LOG_KEEP_DAYS 覆盖
+      # LOGS_DIR 已由镜像固定到 /data/logs；采集归档到对象存储见 deploy/vector-oss/
     volumes:
       - graphs-data:/data/graphs
       - rosters-data:/data/rosters
+      - logs-data:/data/logs
     # OCI 镜像格式会忽略 Dockerfile 的 HEALTHCHECK——compose 层兜底（docker format 构建时两者并存）
     healthcheck:
       test:
@@ -38,3 +41,4 @@ services:
 volumes:
   graphs-data:
   rosters-data:
+  logs-data:

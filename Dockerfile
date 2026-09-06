@@ -36,7 +36,9 @@ WORKDIR /app/apps/editor
 # 容器内 root 映射宿主当前用户，卷属主即宿主用户，无权限坑——取舍见 docs/16)
 ENV GRAPHS_DIR=/data/graphs
 ENV ROSTERS_DIR=/data/rosters
-VOLUME ["/data/graphs", "/data/rosters"]
+# 决策请求日志目录(第六十二批)：JSONL 按日滚动，采集归档示例见 deploy/vector-oss/
+ENV LOGS_DIR=/data/logs
+VOLUME ["/data/graphs", "/data/rosters", "/data/logs"]
 
 EXPOSE 3000
 

@@ -152,11 +152,23 @@ $ bun run typecheck:apps  # 类型检查 apps/*
 
 OpenAPI 交互文档: http://localhost:3000/openapi
 
+### 决策请求日志
+
+`/api/simulate` 与 `/api/decision` 的每次请求逐行落盘 JSONL（`$LOGS_DIR/decision-requests-YYYY-MM-DD.jsonl`，
+UTC 日频滚动，`DECISION_LOG_KEEP_DAYS` 默认保留 14 天），用于审计与采集归档：
+
+```bash
+$ LOGS_DIR=./logs bun run dev:api
+$ tail -f logs/decision-requests-$(date -u +%F).jsonl
+```
+
+对象存储归档（Vector → 阿里云 OSS / S3 / MinIO）编排示例见 `deploy/vector-oss/`。
+
 ### API 一览
 
 | 方法   | 路径                       | 说明                                                     |
 | ------ | -------------------------- | -------------------------------------------------------- |
-| POST   | `/api/simulate`            | 决策图仿真执行                                           |
+| POST   | `/api/simulate`            | 决策图仿真执行(逐行落盘决策请求日志，见上节)             |
 | GET    | `/api/custom-nodes/schema` | 自定义节点 schema(由 zen-rule udfManager 运行时生成)     |
 | GET    | `/api/rosters?q=`          | 名单列表(大小写不敏感过滤)                               |
 | GET    | `/api/rosters/{name}`      | 名单详情                                                 |

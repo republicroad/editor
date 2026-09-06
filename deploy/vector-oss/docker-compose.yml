@@ -1,0 +1,67 @@
+# 决策请求日志 → 对象存储归档栈（第六十二批示例：editor + Vector 双服务）
+#
+# 用法：
+#   1. 准备对象存储：阿里云 OSS bucket（或任意 S3 兼容存储），RAM 用户具备 PutObject 权限
+#      （最小授权策略见同目录 README.md）
+#   2. 注入 OSS 凭据（shell export 或同目录 .env）：
+#        OSS_ENDPOINT / OSS_REGION / OSS_BUCKET / OSS_ACCESS_KEY_ID / OSS_SECRET_ACCESS_KEY
+#   3. podman compose -f deploy/vector-oss/docker-compose.yml up -d
+#   4. 验证：编辑器发起一次仿真（POST /api/simulate）→ 默认 60s 批次窗口后，
+#      对象存储出现 editor/decision-requests/dt=YYYY-MM-DD/*.jsonl.gz
+#
+# 说明：editor 服务如需自建镜像，把 image: 换成 build: ../..（仓库根）。
+services:
+  editor:
+    image: ghcr.io/republicroad/editor:latest
+    container_name: jdm-editor
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      # podman-compose 插值要求环境值为字符串——数值必须加引号
+      PORT: '3000'
+      AUTH_SECRET: '${AUTH_SECRET:-change-me-local-only}'
+      CORS_ORIGINS: '${CORS_ORIGINS:-}'
+      # 日志目录已由镜像 ENV 固定到 /data/logs；磁盘保留天数（0 = 永久保留，默认 14）
+      DECISION_LOG_KEEP_DAYS: '${DECISION_LOG_KEEP_DAYS:-14}'
+    volumes:
+      - editor-logs:/data/logs
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bun -e "fetch(''http://127.0.0.1:3000/healthz'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  vector:
+    image: timberio/vector:0.44.0-alpine
+    container_name: jdm-editor-log-vector
+    command: ['--config', '/etc/vector/vector.toml']
+    environment:
+      OSS_ENDPOINT: '${OSS_ENDPOINT:-https://oss-cn-hangzhou.aliyuncs.com}'
+      OSS_REGION: '${OSS_REGION:-cn-hangzhou}'
+      OSS_BUCKET: '${OSS_BUCKET:?set OSS_BUCKET (or put it in deploy/vector-oss/.env)}'
+      OSS_ACCESS_KEY_ID: '${OSS_ACCESS_KEY_ID:?set OSS_ACCESS_KEY_ID}'
+      OSS_SECRET_ACCESS_KEY: '${OSS_SECRET_ACCESS_KEY:?set OSS_SECRET_ACCESS_KEY}'
+    volumes:
+      - ./vector.toml:/etc/vector/vector.toml:ro
+      - editor-logs:/var/log/editor:ro
+      - vector-data:/var/lib/vector
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:8686/health || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      editor:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  editor-logs:
+  vector-data:

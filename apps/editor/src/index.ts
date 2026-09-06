@@ -32,6 +32,7 @@ import {
   saveGraph,
 } from './graphs-store';
 import { AUTH_COOKIE, createSignedIdentity, verifySignedIdentity } from './auth';
+import { logDecisionRequest } from './decision-request-log';
 
 // 环境配置：PORT 监听端口、CORS_ORIGINS 跨域白名单(逗号分隔，未设则全放行)、ROSTERS_DIR 名单落盘目录
 const PORT = Number(process.env.PORT ?? 3000);
@@ -66,12 +67,16 @@ export const resolveExecContext = (getHeader: HeaderGetter): ExecContext => {
   return { userId: MOCK_USER_ID, requestId };
 };
 
-type IdentityCarrier = { get: (key: 'identityUserId') => string | undefined; req: { header: HeaderGetter } };
+type IdentityCarrier = {
+  get: (key: 'identityUserId' | 'identityRequestId') => string | undefined;
+  req: { header: HeaderGetter };
+};
 
 /** 图/名单路由统一入口：部署态（AUTH_SECRET）以中间件验证的签名身份为准（header 失效）；
  *  开发态回落 resolveExecContext 历史语义。 */
 export const execContextOf = (c: IdentityCarrier): ExecContext => {
-  const requestId = c.req.header('x-request-id') ?? crypto.randomUUID();
+  // requestId 优先取决策日志中间件统一生成的值（未命中决策路由时回退 header/现生成）
+  const requestId = c.get('identityRequestId') ?? c.req.header('x-request-id') ?? crypto.randomUUID();
   if (authSecret()) {
     const userId = c.get('identityUserId');
     if (userId) {
@@ -779,7 +784,7 @@ const graphVersionUpdateRoute = createRoute({
   },
 });
 
-const app = new OpenAPIHono<{ Variables: { identityUserId?: string } }>();
+const app = new OpenAPIHono<{ Variables: { identityUserId?: string; identityRequestId?: string } }>();
 
 app.use(requestLogger);
 
@@ -803,6 +808,42 @@ app.use('/api/*', async (c: Context, next: Next) => {
     }
   }
   await next();
+});
+
+// 决策请求日志（第六十二批）：simulate/decision 完成后逐行落盘 JSONL（decision-request-log.ts；
+// LOGS_DIR / DECISION_LOG_KEEP_DAYS 配置，采集归档示例见 deploy/vector-oss/）。
+// 日志失败不影响响应；requestId 统一生成存入 context，路由内 execContextOf 复用同一值。
+app.use('/api/*', async (c: Context, next: Next) => {
+  const route = c.req.path;
+  if (route !== '/api/simulate' && route !== '/api/decision') {
+    await next();
+    return;
+  }
+  const requestId = c.req.header('x-request-id') ?? crypto.randomUUID();
+  c.set('identityRequestId', requestId);
+  const startedAt = Date.now();
+  const report = (status: number, failure?: string) => {
+    logDecisionRequest({
+      ts: new Date().toISOString(),
+      requestId,
+      userId: execContextOf(c).userId,
+      route,
+      method: c.req.method,
+      status,
+      durationMs: Date.now() - startedAt,
+      ok: status < 400,
+      ...(failure ? { error: failure } : {}),
+    });
+  };
+  try {
+    await next();
+    report(c.res.status);
+  } catch (err) {
+    // 400 校验类由 zod-openapi short-circuit 生成响应、不抛错（走上方正常路径）；
+    // 这里兜的是路由内抛出的异常（HTTPException 带状态，其余 500）
+    report(err instanceof HTTPException ? err.status : 500, err instanceof Error ? err.message : String(err));
+    throw err;
+  }
 });
 
 // 跨域：未设 CORS_ORIGINS 时全放行(本地/镜像开发)；设置后仅白名单内 origin 反射放行(带凭证)

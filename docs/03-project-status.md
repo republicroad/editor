@@ -227,6 +227,13 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
+**最新变更(2026-09-06，第五十六批：libsuggest 建议队列建立——宿主→内核单向协作通道)：**
+
+- **新目录 docs/libsuggest/**：存放宿主对 jdm-\* 库的改动建议，内核会话周期读取；README 定义文档格式（S 编号/状态机 proposed→accepted→done/rejected）与分工边界（宿主只新增，内核改状态）
+- **初始队列 3 条**：S001 跨 react 主版本消费类型合规（dt-empty.tsx 全局 JSX.Element 整改 + dist 消费守卫 CI 立项——内核保持 react 19 决策下的 18 兼容自证方案）/ S002 zod 4.3.6 对齐（附第五十六批中断前的完整迁移证据：362/362 绿）/ S003 appshell stories 内核 pnpm 树 typecheck 断链（Meta/StoryObj 重导出链中断，疑 peer-hash 变体）
+- **背景**：内核侧 react/zod 对齐实验（第五十六批）经用户决策中止并完整还原（内核仓零残留）；'内核保持 19'为既定方向，兼容机制转为建议文档流转
+- docs/README 索引新增 libsuggest 节
+
 **最新变更(2026-09-06，第五十五批：仓内共享依赖 catalog 化——声明层分叉清零)：**
 
 - **catalog 建立**：根 package.json 顶层 `"catalog"` 四项——`typescript 5.9.3` / `zod 4.3.6` / `@gorules/zen-engine 0.51.5` / `bun-types 1.4.2`（全部**精确钉版**）；根与 apps/editor、apps/zen-rule 的对应声明改写为 `"catalog:"`

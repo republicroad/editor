@@ -30,6 +30,9 @@ jobs:
       - name: 'Install dependencies'
         run: bun install --frozen-lockfile
 
+      - name: 'Check single-instance deps (isolated store)'
+        run: bun run check:single-instance
+
       - name: 'Lint'
         run: bun run lint
 
@@ -69,6 +72,9 @@ jobs:
 
       - name: 'Install dependencies'
         run: bun install --frozen-lockfile
+
+      - name: 'Check single-instance deps (isolated store)'
+        run: bun run check:single-instance
 
       - name: 'Build (frontend)'
         run: bun run build

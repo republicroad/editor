@@ -153,13 +153,14 @@ hoisted 时代的 6 条压平补丁（react/jsx-runtime、`@lezer/common|lr`、m
 
 ## 7. 本仓实证对照
 
-| 行为                                       | 实证出处                            |
-| ------------------------------------------ | ----------------------------------- |
-| tsc paths 程序级 vs vite projects/bun 就近 | 第四十二批（`@/` 冲突仅 tsc 暴露）  |
-| bun 运行时执行 paths 解析                  | 第四十二批（monaco d.ts 崩溃）      |
-| npm pack 不应用 publishConfig 字段重写     | 第四十七批（appshell tarball 坏包） |
-| exports 封锁子路径 + paths 双写 src 笔误   | 第四十七批（双通道齐断诊断）        |
-| 包形态反转（main→dist 永久化）             | 第四十七批（零场景破坏验证）        |
-| 双布局多候选 paths                         | 第四十七批（appshell 迁入内核仓）   |
-| wasm 对 content 未知键 InvalidArg          | 第五十批（simulate/session 隔离）   |
-| mock.module 按解析路径绑定                 | 第四十二批（monaco d.ts 崩溃）      |
+| 行为                                       | 实证出处                                          |
+| ------------------------------------------ | ------------------------------------------------- |
+| tsc paths 程序级 vs vite projects/bun 就近 | 第四十二批（`@/` 冲突仅 tsc 暴露）                |
+| bun 运行时执行 paths 解析                  | 第四十二批（monaco d.ts 崩溃）                    |
+| npm pack 不应用 publishConfig 字段重写     | 第四十七批（appshell tarball 坏包）               |
+| exports 封锁子路径 + paths 双写 src 笔误   | 第四十七批（双通道齐断诊断）                      |
+| 包形态反转（main→dist 永久化）             | 第四十七批（零场景破坏验证）                      |
+| 双布局多候选 paths                         | 第四十七批（appshell 迁入内核仓；第五十四批退役） |
+| overrides 穿透成员（结论修正）             | 第五十四批（react 19.2.8→18.3.1，单实例收敛）     |
+| wasm 对 content 未知键 InvalidArg          | 第五十批（simulate/session 隔离）                 |
+| mock.module 按解析路径绑定                 | 第四十二批（monaco d.ts 崩溃）                    |

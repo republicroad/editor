@@ -24,7 +24,7 @@
    - `workspace:*` → 发布时改写为**精确版本**
    - `workspace:^` → 改写为 `^x.y.z`（保留兼容范围，**对外发布的内部包推荐**）
 3. 版本对齐优先用 catalog（bun 新版支持，语法以所用版本文档为准）；低版本用根
-   `overrides`（注意其作用域边界，见 §4）。
+   `overrides`（bun 1.4.2 实证穿透成员，作用域详见 §4）。
 4. **绝不混用包管理器**：一仓一锁。子模块自带另一套包管理器时（本仓内核 = pnpm
    - 自己的 lockfile），必须文档化"双树现实"——宿主树（bun）供 monorepo 消费，
      子模块树（pnpm）供其自治开发。
@@ -54,14 +54,19 @@
    vs 顶层 `@1.5.2`）→ 类型层 nominal 冲突（`Tree`/`ReactNode` 不可赋值）。
    **CI 全新安装与本地增量安装布局可能不同——本地绿 ≠ CI 绿**（实证：lezer
    冲突仅 CI 暴露；双 React 实例致内核 vitest 在宿主树结构性不可绿）。
-3. ✦ **`overrides` 只作用于非 workspace 依赖**：根 overrides 钉不住成员自己的
-   devDeps（实证：`@types/react@19` 在内核本地完好保留）。pnpm 的 overrides
-   是 workspace 全局——**这是 bun 与 pnpm 在收敛能力上的最大差距**。
+3. ✦ **`overrides` 穿透成员（第五十四批实证修正）**：根 overrides **能**钉住
+   成员自己的 devDeps——bun 1.4.2 + isolated 下 `"react": "^18.3.1"` 将内核
+   jdm-editor 本地 react 从 19.2.8 重链到 18.3.1（store 单实例）。第四十二批
+   "只作用于非 workspace 依赖"的结论**作废**（当时 hoisted + 旧版行为，现版
+   已穿透）。pnpm overrides 亦为 workspace 全局——bun 与 pnpm 在收敛能力上
+   **无差距**。
 4. 收敛手段按优先级：
-   1. **类型层 paths 钉单一实例**（tsconfig 层面，跨平台稳，实证 react/@lezer；
-      双布局下用**多候选数组**——见 §3.5）
-   2. 成员间 devDep 版本对齐
-   3. overrides（仅对第三方传递依赖有效）
+   1. **根 overrides 强制统一版本**（isolated 下首选：解析层单实例，全链生效，
+      第五十四批实证 react/@lezer）
+   2. 成员间 devDep 版本对齐（声明即文档，跨仓语义一致）
+   3. **单实例守卫脚本**（`bun run check:single-instance`，CI 在 install 后
+      断言 store 中关键依赖版本数 = 1——分叉在 PR 期暴露）
+   4. 类型层 paths 钉单一实例（hoisted 时代手段，isolated 下已退役）
 5. 运行时单实例照旧：vite `resolve.dedupe: ['react', 'react-dom']` + peer 声明完整。
 
 ### 3.5 布局模式：isolated（现状，第五十三批启用）vs hoisted（历史）
@@ -98,13 +103,13 @@ paths 解决；启用触发条件三条（幽灵依赖事故 / 双实例第二�
 
 ## 4. 别名机制的 Bun 语义差异（对照 pnpm/npm）
 
-| 维度                      | **Bun**                                          | pnpm                           | npm/yarn classic  |
-| ------------------------- | ------------------------------------------------ | ------------------------------ | ----------------- |
-| tsconfig paths 运行时生效 | ✅ 原生读取（别名即运行时事实）                  | ❌ 仅编译期/打包期             | ❌ 需 loader hook |
-| 读哪份 tsconfig           | **按导入文件就近取**（成员各自生效）             | 不适用                         | 不适用            |
-| node_modules 布局         | store + 提升硬链接（幽灵依赖敞开）               | 符号链接农场（幽灵依赖被阻断） | npm 全扁平        |
-| overrides 作用域          | 仅根                                             | workspace 全局                 | npm 不达成员      |
-| 内置测试器                | `bun test`（`mock.module` 按**解析后路径**绑定） | 无（vitest 自备 alias/dedupe） | 无                |
+| 维度                      | **Bun**                                                       | pnpm                           | npm/yarn classic  |
+| ------------------------- | ------------------------------------------------------------- | ------------------------------ | ----------------- |
+| tsconfig paths 运行时生效 | ✅ 原生读取（别名即运行时事实）                               | ❌ 仅编译期/打包期             | ❌ 需 loader hook |
+| 读哪份 tsconfig           | **按导入文件就近取**（成员各自生效）                          | 不适用                         | 不适用            |
+| node_modules 布局         | isolated store + 符号链接农场（第五十三批起；幽灵依赖被阻断） | 符号链接农场（幽灵依赖被阻断） | npm 全扁平        |
+| overrides 作用域          | 根声明、**穿透全 workspace**（1.4.2 实证，含成员 devDeps）    | workspace 全局                 | npm 不达成员      |
+| 内置测试器                | `bun test`（`mock.module` 按**解析后路径**绑定）              | 无（vitest 自备 alias/dedupe） | 无                |
 
 **四条后果**（全部实证）：
 
@@ -169,18 +174,19 @@ oven-sh/setup-bun（版本与 engines 一致；第五十三批起 CI=本地=1.4.
 
 ## 8. 本仓实证对照表
 
-| 实践                                  | 出处                                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------- |
-| 成员 devDep 变更 → lockfile 漂移      | 第四十六批 CI 首跑（rollup-plugin-visualizer）                            |
-| 成员 version bump 零漂移              | 第四十六批（内核 v0.3.0 bump，frozen 幂等）                               |
-| overrides 不穿透成员                  | 第四十二批（内核 @types/react 19 钉不住）                                 |
-| 类型层 paths 钉单实例                 | 第四十二批（react 18 压平）、第四十六批（@lezer/common/lr）               |
-| 双布局多候选 paths                    | 第四十七批（appshell 迁入内核仓，hoisted/pnpm 双布局对齐）                |
-| 就近 tsconfig / mock 绑定一致性       | 第四十二批（monaco d.ts 崩溃）                                            |
-| bun test 子串过滤                     | 第四十二批（`--path-ignore-patterns` 引入）                               |
-| 成员测试归位成员树                    | 第四十六批（内核 vitest 门禁归位内核仓 CI）                               |
-| lib mode manualChunks 限制            | 第四十五批（内核 B1 实验结论）                                            |
-| 分支即推 / CI 前置                    | 第四十六批（reui 首推连抓 4 项）                                          |
-| linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题）                    |
-| isolated 启用（bun 1.4.2）            | 第五十三批（三条触发条件全部兑现；幽灵导入 + lezer 钉版两笔连带修复）     |
-| bun script shell glob 展开陷阱        | 第五十三批（`--path-ignore-patterns '**'` 未加引号 → File name too long） |
+| 实践                                  | 出处                                                                                |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| 成员 devDep 变更 → lockfile 漂移      | 第四十六批 CI 首跑（rollup-plugin-visualizer）                                      |
+| 成员 version bump 零漂移              | 第四十六批（内核 v0.3.0 bump，frozen 幂等）                                         |
+| overrides 穿透成员（结论修正）        | 第五十四批（react overrides 内核本地 19.2.8→18.3.1 实证，推翻第四十二批）           |
+| isolated 单实例收敛（overrides+守卫） | 第五十四批（store react/@types/react/@lezer 全部 =1 + check:single-instance 进 CI） |
+| 类型层 paths 钉单实例                 | 第四十二批（react 18 压平）、第四十六批（@lezer/common/lr）                         |
+| 双布局多候选 paths                    | 第四十七批（appshell 迁入内核仓，hoisted/pnpm 双布局对齐）                          |
+| 就近 tsconfig / mock 绑定一致性       | 第四十二批（monaco d.ts 崩溃）                                                      |
+| bun test 子串过滤                     | 第四十二批（`--path-ignore-patterns` 引入）                                         |
+| 成员测试归位成员树                    | 第四十六批（内核 vitest 门禁归位内核仓 CI）                                         |
+| lib mode manualChunks 限制            | 第四十五批（内核 B1 实验结论）                                                      |
+| 分支即推 / CI 前置                    | 第四十六批（reui 首推连抓 4 项）                                                    |
+| linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题）                              |
+| isolated 启用（bun 1.4.2）            | 第五十三批（三条触发条件全部兑现；幽灵导入 + lezer 钉版两笔连带修复）               |
+| bun script shell glob 展开陷阱        | 第五十三批（`--path-ignore-patterns '**'` 未加引号 → File name too long）           |

@@ -227,7 +227,17 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
-**最新变更(2026-09-06，第五十三批：双仓安装语义统一——isolated linker 切换 + CI bun 版本对齐 1.4.2)：**
+**最新变更(2026-09-06，第五十四批：isolated 单实例收敛——overrides 穿透实证 + 单实例守卫进 CI)：**
+
+- **问题显性化**：isolated 切换后宿主 react 18.3.1 与内核 jdm-editor 钉版 devDep react 19.2.8 在 store 中并存两份（react/react-dom 各 2，@floating-ui/react-dom、@monaco-editor/react 等沿 peer 链各出 2 个 hash 变体）——hoisted 时代被"提升盖掉"的双实例显性化
+- **根 overrides 强制统一**：package.json overrides 补 `"react": "^18.3.1"` + `"react-dom": "^18.3.1"`（与既有 @types/react×2 并列）→ 内核成员本地 react 从 19.2.8 **重链到 18.3.1**；全量重装后 store 四关键依赖全部 =1（react/react-dom/@types/react/@lezer+common，孤儿条目一并清除）
+- **重要结论修正**：bun 1.4.2 下 overrides **穿透 workspace 成员**（含成员 devDeps）——第四十二批"不穿透"结论作废；bun 与 pnpm 收敛能力无差距；多候选 paths 与"类型层钉实例"手段随之彻底退役
+- **单实例守卫**：`scripts/check-single-instance.ts`（扫 store 断言 react/@types/react/@lezer×3/@codemirror×3 共 10 项版本数 =1）→ `bun run check:single-instance` → validate.yml 两 job 在 install 后各插一步；分叉在 PR 期暴露而非运行期
+- **原理沉淀**：isolated 下单实例 = lockfile 解析到同一版本 → 同一 store 条目双方 symlink；隔离不制造双实例，声明分叉才制造
+- 门禁全绿：typecheck（root+apps）/lint 0-0/主仓 92/组件 46/apps 76/build/storybook/守卫脚本 ✓
+- 文档：bun-workspaces §1.3/§3.4 重写（收敛阶梯换序）、§4 表两行修正、§8 +2 行；link-runtime §8 +2 行；docs/03 本批全录
+
+**变更(2026-09-06，第五十三批：双仓安装语义统一——isolated linker 切换 + CI bun 版本对齐 1.4.2)：**
 
 - **isolated linker 启用**：bunfig.toml `[install] linker = "isolated"`（bun 1.4.2）——与内核仓 pnpm 安装语义对齐；重装后 appshell 成员本地 junction 实装全部声明依赖（react/@types/react/vitest/fake-indexeddb），根 react 仍 18.3.1 物理唯一；锁文件重装零漂移（linker 只改布局不改解析）
 - **CI bun 版本对齐**：validate.yml 两处 1.3.14 → 1.4.2（本地与 CI 漂移清零；用户已升级本地 bun）

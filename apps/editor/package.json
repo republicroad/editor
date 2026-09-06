@@ -6,15 +6,15 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
-    "@gorules/zen-engine": "^0.51.5",
+    "@gorules/zen-engine": "catalog:",
     "@hono/zod-openapi": "^1.5.1",
     "@scalar/hono-api-reference": "^0.11.12",
     "hono": "^4.12.33",
-    "zod": "^4.4.3",
+    "zod": "catalog:",
     "zen-rule": "workspace:*"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "catalog:"
   },
   "module": "src/index.js"
 }

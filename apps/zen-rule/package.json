@@ -9,11 +9,11 @@
     "main": "bun run main.ts"
   },
   "dependencies": {
-    "@gorules/zen-engine": "^0.51.5",
+    "@gorules/zen-engine": "catalog:",
     "jsonpath-plus": "^10.4.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "bun-types": "latest"
+    "typescript": "catalog:",
+    "bun-types": "catalog:"
   }
 }

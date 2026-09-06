@@ -4,6 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
+  "catalog": {
+    "@gorules/zen-engine": "0.51.5",
+    "bun-types": "1.4.2",
+    "typescript": "5.9.3",
+    "zod": "4.3.6"
+  },
   "workspaces": [
     "apps/*",
     "jdm-editor/packages/*"
@@ -68,7 +74,7 @@
     "tailwind-merge": "^3.6.0",
     "ts-pattern": "^5.9.0",
     "vite-plugin-wasm": "^3.5.0",
-    "zod": "^4.3.6"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.2",
@@ -102,7 +108,7 @@
     "storybook": "8.6.12",
     "storybook-dark-mode": "4.0.2",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3",
+    "typescript": "5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-static-copy": "4.1.1",
     "vite-tsconfig-paths": "^6.1.1"

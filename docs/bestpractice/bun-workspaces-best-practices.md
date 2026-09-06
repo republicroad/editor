@@ -23,8 +23,20 @@
 2. 跨包依赖只走 `workspace:` 协议：
    - `workspace:*` → 发布时改写为**精确版本**
    - `workspace:^` → 改写为 `^x.y.z`（保留兼容范围，**对外发布的内部包推荐**）
-3. 版本对齐优先用 catalog（bun 新版支持，语法以所用版本文档为准）；低版本用根
-   `overrides`（bun 1.4.2 实证穿透成员，作用域详见 §4）。
+3. **版本统一双工具：catalog（声明层）与 overrides（解析层）**——分工见下表：
+
+   | 工具          | 作用层 | 机制                                                                                           | 适用场景                                                                                                                      |
+   | ------------- | ------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+   | **catalog**   | 声明层 | 根 package.json 顶层 `"catalog": { "zod": "4.3.6" }` 定义一次，成员写 `"zod": "catalog:"` 引用 | ✅ 单 workspace 内 ≥2 成员共享同一依赖（声明即不分叉，bump 只改一处）；❌ 跨 workspace 无效（editor↔内核各是独立 workspace） |
+   | **overrides** | 解析层 | 根 package.json `"overrides"` 强改全树解析（含第三方传递依赖）                                 | ✅ 跨仓分叉兜底（内核钉版 react 19 vs 宿主 18）、无法改声明时；穿透成员 devDeps（第五十四批实证）                             |
+
+   **经验法则**：catalog 治未病（写的时候就一致），overrides 治已病（已分叉后强制）。
+   **catalog 必须精确钉版**——范围（`^4.3.6`）仍允许成员解析到更高版本，统一落空
+   （第五十五批实证：zod `^4.3.6` 下 apps/editor 保留 4.4.3；改精确 `4.3.6` 才收敛）。
+   第三方嵌套副本（api-extractor 内嵌 typescript 5.8.2、@types/bun 内嵌
+   bun-types 1.4.0、内核自声明 zod 3.x）与 workspace 声明无关，无需（也无法）用
+   catalog 消除。
+
 4. **绝不混用包管理器**：一仓一锁。子模块自带另一套包管理器时（本仓内核 = pnpm
    - 自己的 lockfile），必须文档化"双树现实"——宿主树（bun）供 monorepo 消费，
      子模块树（pnpm）供其自治开发。
@@ -190,3 +202,5 @@ oven-sh/setup-bun（版本与 engines 一致；第五十三批起 CI=本地=1.4.
 | linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题）                              |
 | isolated 启用（bun 1.4.2）            | 第五十三批（三条触发条件全部兑现；幽灵导入 + lezer 钉版两笔连带修复）               |
 | bun script shell glob 展开陷阱        | 第五十三批（`--path-ignore-patterns '**'` 未加引号 → File name too long）           |
+| catalog 精确钉版才收敛                | 第五十五批（范围 `^4.3.6` 不收敛 zod 4.4.3；改精确版本后单解析）                    |
+| 仓内共享依赖 catalog 化               | 第五十五批（typescript/zod/bun-types/zen-engine 四项统一，声明分叉清零）            |

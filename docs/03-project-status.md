@@ -227,7 +227,16 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
-**最新变更(2026-09-06，第五十四批：isolated 单实例收敛——overrides 穿透实证 + 单实例守卫进 CI)：**
+**最新变更(2026-09-06，第五十五批：仓内共享依赖 catalog 化——声明层分叉清零)：**
+
+- **catalog 建立**：根 package.json 顶层 `"catalog"` 四项——`typescript 5.9.3` / `zod 4.3.6` / `@gorules/zen-engine 0.51.5` / `bun-types 1.4.2`（全部**精确钉版**）；根与 apps/editor、apps/zen-rule 的对应声明改写为 `"catalog:"`
+- **消除的声明分叉**（catalog 前的范围现状）：typescript 根 ^5.9.3 vs apps/zen-rule ^5.7.0；zod 根 ^4.3.6 vs apps/editor ^4.4.3；bun-types 双 app `latest`（非确定性，解析出 1.4.0/1.4.2 双份）；zen-engine 双 app 重复声明
+- **关键实证：catalog 范围不收敛**——`^4.3.6` 仍允许 apps/editor 保留已解析的 4.4.3（范围内合法，bun 不动）；改精确 `4.3.6` 后才强制重解析为单版本。**catalog 条目必须精确钉版**已写入最佳实践
+- **第三方嵌套副本辨析**（非 workspace 分叉，无需消除）：typescript 5.8.2 = @microsoft/api-extractor 内嵌；bun-types 1.4.0 = @types/bun 内嵌；zod 3.25.71 = **内核 jdm-editor 自声明 zod 3.x**（宿主 4.x）——跨仓分叉记录在案，内核侧声明对齐待批准（与 react 对齐同批处理）
+- 门禁全绿：typecheck（root+apps）/lint 0-0/主仓 92/组件 46/apps 76/build/storybook/单实例守卫（apps/editor zod 4.4.3→4.3.6 降级无破坏）
+- 文档：bun-workspaces §1.3 重写（catalog/overrides 双工具分工表 + 精确钉版守则）、§8 +2 行；docs/03 本批全录
+
+**变更(2026-09-06，第五十四批：isolated 单实例收敛——overrides 穿透实证 + 单实例守卫进 CI)：**
 
 - **问题显性化**：isolated 切换后宿主 react 18.3.1 与内核 jdm-editor 钉版 devDep react 19.2.8 在 store 中并存两份（react/react-dom 各 2，@floating-ui/react-dom、@monaco-editor/react 等沿 peer 链各出 2 个 hash 变体）——hoisted 时代被"提升盖掉"的双实例显性化
 - **根 overrides 强制统一**：package.json overrides 补 `"react": "^18.3.1"` + `"react-dom": "^18.3.1"`（与既有 @types/react×2 并列）→ 内核成员本地 react 从 19.2.8 **重链到 18.3.1**；全量重装后 store 四关键依赖全部 =1（react/react-dom/@types/react/@lezer+common，孤儿条目一并清除）

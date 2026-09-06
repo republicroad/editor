@@ -381,4 +381,48 @@ export async function listGraphVersions(
   return versions;
 }
 
+/** 更新指定版本元数据（升格 auto→manual / 命名）；不动 content。
+ *  head 与归档版本均可；返回更新后的条目，null = 图不可见或版本不存在。 */
+export async function updateGraphVersionMeta(
+  id: string,
+  owner: string | undefined,
+  revision: string,
+  patch: { auto?: boolean; versionName?: string },
+): Promise<{ revision: string; versionName?: string; updatedAt: string; auto?: boolean } | null> {
+  const headFile = await findHeadFile(id, owner);
+  if (!headFile) return null;
+  const head = await readHeadFile(headFile);
+  if (!head) return null;
+  if (head.owner && head.owner !== owner) return null;
+
+  const dir = path.dirname(headFile);
+  const safeId = sanitizeGraphId(id);
+  // revision 严格形态校验（v\d+ 或 head），防路径穿越
+  const isHead = revision === head.revision;
+  if (!isHead && !/^v\d+$/.test(revision)) return null;
+  const filePath = isHead ? headFile : join(dir, `${safeId}.${revision}.json`);
+
+  let raw: { meta: StoredGraphMeta; content: unknown };
+  try {
+    raw = JSON.parse(await readFile(filePath, 'utf-8')) as { meta: StoredGraphMeta; content: unknown };
+  } catch {
+    return null;
+  }
+  if (!raw?.meta) return null;
+  if (patch.auto !== undefined) raw.meta.auto = patch.auto;
+  if (patch.versionName !== undefined) raw.meta.versionName = patch.versionName || undefined;
+  try {
+    await writeFile(filePath, `${JSON.stringify(raw, null, 2)}\n`, 'utf-8');
+  } catch (error) {
+    console.warn(`[graphs] version meta update failed for ${revision}:`, error);
+    return null;
+  }
+  return {
+    revision: raw.meta.revision,
+    versionName: raw.meta.versionName,
+    updatedAt: raw.meta.updatedAt,
+    auto: raw.meta.auto,
+  };
+}
+
 export { GRAPHS_DIR };

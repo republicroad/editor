@@ -227,6 +227,15 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
+**最新变更(2026-09-06，第五十七批：自动保存增强（idle 检测 + dirty 门控）+ 版本钉住服务端 + libsuggest 扩容)：**
+
+- **自动保存重设计（宿主 decision-simple）**：第五十二批的固定 30s 防抖存在两处缺陷——①保存推进 remoteSource.revision 后 effect 重新布防，无编辑也每 30s 空转保存（版本表被无变化 auto 版本刷屏）；②"dirty 签名比对"注释与实现不符（从未比对）。第五十七批重写为 **dirty 门控 + idle 检测**：`dirtySinceSaveRef` 仅编辑器 onChange 置位（加载/恢复/模板路径不置位，防加载后空保存），persistToRemote 成功即清位；布防后 tick 轮询——用户停止交互满 10s（pointerdown/keydown/wheel 三事件采样，不监听 move）即保存，持续无停顿由 90s max-wait 兜底；面板打开暂停不变
+- **版本钉住服务端（apps/editor）**：`updateGraphVersionMeta(id, owner, revision, {auto?, versionName?})`——head 与归档版本均可升格/命名，content 不动，revision 严格 `v\d+` 形态校验防穿越；路由 `PATCH /api/graphs/{id}/versions/{revision}` + CORS allowMethods 补 PATCH；测试 +1（归档升格+命名 / head 升格 / 版本表复核 / content 无损 / 未知 404 / 穿越尝试 404）
+- **升格 UI 缺口 → S006**：VersionHistoryPanel 无 per-version 操作槽、adapter 契约无 updateVersionMeta——面板按钮 + adapter 扩展 + 宿主接线以 libsuggest S006 移交内核会话（服务端契约已定并上线）
+- **libsuggest 扩容**：S004 版本历史 diff 视图（computeGraphDiff 纯函数 + 面板对比——宿主不做避免双 diff 语义）、S005 换肤布局槽位（SkinDefinition.layout：工具栏/面板/头部注入，需求级）、S006 版本钉住接线；README 队列更新至 6 条
+- **双树所有权互斥（重大运维教训）**：本批在子模块跑 `corepack pnpm install`（S002 验证 + 还原）把编辑器树内成员 node_modules 改指向内核 .pnpm store（react 19 类型回归，宿主 typecheck 全面 JSX 失配）；`bun install` 重跑即收回（零包变更、只修 junction）。规则已写入 bun-workspaces §1.4：任一树跑过对方 installer 后必须重跑自家 installer
+- 门禁全绿：typecheck（root+apps）/lint 0-0/主仓 93(+1 钉住)/组件 46/apps 77(+1)/build/storybook/sync:schema:check/单实例守卫
+
 **最新变更(2026-09-06，第五十六批：libsuggest 建议队列建立——宿主→内核单向协作通道)：**
 
 - **新目录 docs/libsuggest/**：存放宿主对 jdm-\* 库的改动建议，内核会话周期读取；README 定义文档格式（S 编号/状态机 proposed→accepted→done/rejected）与分工边界（宿主只新增，内核改状态）

@@ -224,6 +224,8 @@ const DecisionSimpleInner: React.FC = () => {
       }
       // 乐观锁基线推进：auto 保存后手动保存才能命中新 head（否则必 CONFLICT 误报）
       setRemoteSource({ id: result.id, revision: result.revision });
+      // 保存成功即清 dirty 位（手动/自动共用）——自动保存据此停止布防
+      dirtySinceSaveRef.current = false;
       return { ok: true, id: result.id, revision: result.revision };
     } catch (e) {
       displayError(e);
@@ -271,29 +273,56 @@ const DecisionSimpleInner: React.FC = () => {
     }
   };
 
-  // ── 自动保存（第五十二批）──────────────────────────────────────────
-  // dirty 签名比对（对齐内核 auto-sync 模式）：图内容变化后 30s 防抖触发，
-  // 失败静默；成功推进 remoteSource 乐观锁基线；面板打开时暂停（不干扰查看）。
-  const AUTO_SAVE_DEBOUNCE_MS = 30_000;
+  // ── 自动保存（第五十二批引入，第五十七批重设计）──────────────────────
+  // dirty 门控 + idle 检测：仅"用户编辑过且尚未保存"时布防；图内容变化后，
+  // 用户停止交互满 AUTO_SAVE_IDLE_MS 即保存（阅读停顿不漏存、连续编辑不打断），
+  // 持续无停顿由 AUTO_SAVE_MAX_WAIT_MS 兜底。面板打开时暂停；失败静默；
+  // 成功推进 remoteSource 乐观锁基线并清除 dirty 位（杜绝旧实现的
+  // "revision 变化重新布防 → 每 30s 空转保存"缺陷）。
+  const AUTO_SAVE_IDLE_MS = 10_000;
+  const AUTO_SAVE_MAX_WAIT_MS = 90_000;
+  const AUTO_SAVE_TICK_MS = 1_000;
   const graphSignature = useMemo(() => JSON.stringify(graph), [graph]);
+  /** 用户自上次成功保存后是否编辑过（加载/恢复/模板不置位，防止加载后空保存） */
+  const dirtySinceSaveRef = useRef(false);
+  const lastActivityRef = useRef(Date.now());
   const [autoSaving, setAutoSaving] = useState(false);
   const autoSavingRef = useRef(false);
   autoSavingRef.current = autoSaving;
 
+  // 用户活动监听：pointerdown/keydown/wheel 三事件轻量采样（不监听 move，防抖动）
   useEffect(() => {
-    if (!persistence || !remoteSource || historyOpen || autoSavingRef.current) {
-      return;
-    }
-    const timer = window.setTimeout(async () => {
+    const markActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+    const events = ['pointerdown', 'keydown', 'wheel'] as const;
+    events.forEach((event) => window.addEventListener(event, markActivity, { passive: true }));
+    return () => events.forEach((event) => window.removeEventListener(event, markActivity));
+  }, []);
+
+  useEffect(() => {
+    if (!persistence || !remoteSource || historyOpen) return;
+    if (!dirtySinceSaveRef.current) return;
+    const armedAt = Date.now();
+    const timer = window.setInterval(() => {
       if (autoSavingRef.current) return;
+      const idleFor = Date.now() - lastActivityRef.current;
+      const waitedFor = Date.now() - armedAt;
+      if (idleFor < AUTO_SAVE_IDLE_MS && waitedFor < AUTO_SAVE_MAX_WAIT_MS) return;
       setAutoSaving(true);
-      try {
-        await persistToRemote({ auto: true });
-      } finally {
-        setAutoSaving(false);
-      }
-    }, AUTO_SAVE_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
+      void (async () => {
+        try {
+          const result = await persistToRemote({ auto: true });
+          if (result.ok) {
+            dirtySinceSaveRef.current = false;
+            lastActivityRef.current = Date.now();
+          }
+        } finally {
+          setAutoSaving(false);
+        }
+      })();
+    }, AUTO_SAVE_TICK_MS);
+    return () => window.clearInterval(timer);
   }, [graphSignature, persistence, remoteSource?.id, remoteSource?.revision, historyOpen]);
 
   const saveFile = async () => {
@@ -646,7 +675,11 @@ const DecisionSimpleInner: React.FC = () => {
               customFunctions={schema ?? undefined}
               ref={graphRef}
               value={graph}
-              onChange={(value) => setGraph(value)}
+              onChange={(value) => {
+                // 编辑器内用户改动才标记 dirty——加载/恢复/模板等直接 setGraph 的路径不经过这里
+                dirtySinceSaveRef.current = true;
+                setGraph(value);
+              }}
               reactFlowProOptions={{ hideAttribution: true }}
               simulate={graphTrace}
               userResolver={userResolver}

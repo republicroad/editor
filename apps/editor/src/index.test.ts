@@ -580,6 +580,76 @@ describe('graph persistence routes', () => {
     expect(versions[1].revision).toBe('v2');
   });
 
+  test('PATCH 版本元数据：归档 auto 升格 manual + head 升格 + 未知版本 404', async () => {
+    const name = `auto-pin-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    // v2(auto 归档) + v3(head auto)
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('pin-upd'), baseRevision: 'v1', auto: true }),
+    });
+    await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody('pin-upd-2'), baseRevision: 'v2', auto: true }),
+    });
+
+    // 升格归档 v2 + 命名
+    const pinArchived = await app.request(`/api/graphs/${created.id}/versions/v2`, {
+      method: 'PATCH',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ auto: false, versionName: 'release-candidate' }),
+    });
+    expect(pinArchived.status).toBe(200);
+    const pinned = (await pinArchived.json()) as { revision: string; auto?: boolean; versionName?: string };
+    expect(pinned.revision).toBe('v2');
+    expect(pinned.auto).toBe(false);
+    expect(pinned.versionName).toBe('release-candidate');
+
+    // 升格 head v3
+    const pinHead = await app.request(`/api/graphs/${created.id}/versions/v3`, {
+      method: 'PATCH',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ auto: false }),
+    });
+    expect(pinHead.status).toBe(200);
+
+    // 版本表复核：v2/v3 已无 auto 标记；content 不受影响
+    const versions = (await (
+      await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
+    ).json()) as Array<{ revision: string; auto?: boolean; versionName?: string }>;
+    const byRevision = new Map(versions.map((v) => [v.revision, v]));
+    expect(byRevision.get('v2')?.auto).toBeFalsy();
+    expect(byRevision.get('v2')?.versionName).toBe('release-candidate');
+    expect(byRevision.get('v3')?.auto).toBeFalsy();
+    const detail = (await (await app.request(`/api/graphs/${created.id}`, { headers: asUser('user-a') })).json()) as {
+      content: { nodes: unknown[] };
+    };
+    expect(Array.isArray(detail.content.nodes)).toBe(true);
+
+    // 未知 revision 404（含形态非法的穿越尝试）
+    const missing = await app.request(`/api/graphs/${created.id}/versions/v999`, {
+      method: 'PATCH',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ auto: false }),
+    });
+    expect(missing.status).toBe(404);
+    const evil = await app.request(`/api/graphs/${created.id}/versions/..%2F..%2Fetc`, {
+      method: 'PATCH',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ auto: false }),
+    });
+    expect(evil.status).toBe(404);
+  });
+
   test('baseRevision 不匹配 head 返回 409 CONFLICT', async () => {
     const created = (await (
       await app.request('/api/graphs', {

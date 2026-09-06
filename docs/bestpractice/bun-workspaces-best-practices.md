@@ -40,6 +40,12 @@
 4. **绝不混用包管理器**：一仓一锁。子模块自带另一套包管理器时（本仓内核 = pnpm
    - 自己的 lockfile），必须文档化"双树现实"——宿主树（bun）供 monorepo 消费，
      子模块树（pnpm）供其自治开发。
+     ✦ **成员 node_modules 所有权互斥（第五十七批实证）**：宿主 bun isolated 与
+     内核 pnpm 管理的是**同一批目录**（`jdm-editor/packages/*/node_modules`）——
+     在子模块里跑一次 `pnpm install`，宿主树内的成员依赖就被改指向内核 `.pnpm`
+     store（react 19 类型回归，宿主 typecheck 全面报 JSX 失配）；反向亦然。
+     **规则：任一树内跑过对方的 installer 后，回到本树必须重跑自家 installer
+     收回所有权**（bun install 秒级完成，零包变更、只修 junction 指向）。
 
 ---
 

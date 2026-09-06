@@ -23,8 +23,9 @@ import {
   deleteGraph,
   GRAPHS_DIR,
   GraphPersistenceError,
-  listGraphVersions,
   listGraphs,
+  listGraphVersions,
+  updateGraphVersionMeta,
   loadGraph,
   saveGraph,
 } from './graphs-store';
@@ -686,6 +687,48 @@ const graphVersionsRoute = createRoute({
   },
 });
 
+// 版本元数据更新（钉住 auto→manual / 命名）：不动 content；head 与归档版本均可
+const graphVersionUpdateRoute = createRoute({
+  method: 'patch',
+  path: '/api/graphs/{id}/versions/{revision}',
+  request: {
+    params: z.object({ id: z.string(), revision: z.string() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z
+            .object({
+              auto: z.boolean().optional(),
+              versionName: z.string().optional(),
+            })
+            .openapi('GraphVersionMetaPatch'),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            revision: z.string(),
+            versionName: z.string().optional(),
+            updatedAt: z.string(),
+            auto: z.boolean().optional(),
+          }),
+        },
+      },
+      description: '已更新版本元数据',
+    },
+    404: {
+      content: {
+        'application/json': { schema: z.object({ error: z.string() }) },
+      },
+      description: '图或版本不存在/不可见',
+    },
+  },
+});
+
 const app = new OpenAPIHono();
 
 app.use(requestLogger);
@@ -696,7 +739,7 @@ if (CORS_ORIGINS.length > 0) {
     '*',
     cors({
       origin: (origin) => (CORS_ORIGINS.includes(origin) ? origin : undefined),
-      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       credentials: true,
     }),
   );
@@ -1003,6 +1046,19 @@ app.openapi(graphVersionsRoute, async (c) => {
   }
   const versions = await listGraphVersions(id, execCtx.userId);
   return c.json(versions, 200);
+});
+
+// 版本元数据更新（钉住 auto→manual / 命名）：图不可见或版本不存在 → 404
+app.openapi(graphVersionUpdateRoute, async (c) => {
+  const { id, revision } = c.req.valid('param');
+  const body = c.req.valid('json');
+  const execCtx = resolveExecContext((name) => c.req.header(name));
+  const updated = await updateGraphVersionMeta(id, execCtx.userId, revision, body);
+  if (!updated) {
+    throw new HTTPException(404, { message: `version '${revision}' of graph '${id}' not found or not visible` });
+  }
+  console.log(`[graphs] version ${id}@${revision} meta updated (auto=${String(updated.auto)})`);
+  return c.json(updated, 200);
 });
 
 export { app, ROSTERS_DIR, GRAPHS_DIR };

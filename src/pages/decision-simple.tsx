@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CirclePlay, Lightbulb, Palette } from 'lucide-react';
+import { CirclePlay, Lightbulb, Palette, Pin } from 'lucide-react';
 import { toast } from 'sonner';
 import { decisionTemplates } from '../assets/decision-templates';
 import { displayError, isUserAbort } from '../helpers/error-message.ts';
@@ -15,6 +15,7 @@ import {
 } from '@republicroad/jdm-editor';
 import {
   VersionHistoryPanel,
+  createGraphsHttpAdapter,
   createIndexedDbAdapter,
   EditorShellProvider,
   useEditorShell,
@@ -42,7 +43,15 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@republicroad/jdm-appshell/src/components/ui/dropdown-menu';
+import { ScrollArea } from '@republicroad/jdm-appshell/src/components/ui/scroll-area';
 import { Separator } from '@republicroad/jdm-appshell/src/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@republicroad/jdm-appshell/src/components/ui/sheet';
 import { DirectedGraph } from 'graphology';
 import { hasCycle } from 'graphology-dag';
 import { Stack } from '../components/stack.tsx';
@@ -118,12 +127,17 @@ const EditableTitle: React.FC<{ value: string; onChange: (value: string) => void
 };
 
 export const DecisionSimplePage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  // 持久化双模式：默认接入 apps/editor 内建 /api/graphs（HTTP 适配器，版本治理/钉住等
+  // 服务端能力齐全）；?storage=local 切换 IndexedDB 本地适配器（backend-less 演示，
+  // 本地保留策略同 AUTO_VERSIONS_KEEP）。宿主应用换成自己的适配器即可（见 docs/15）。
+  const storageMode = searchParams.get('storage') === 'local' ? 'local' : 'http';
+  const persistence = useMemo(
+    () => (storageMode === 'local' ? createIndexedDbAdapter() : createGraphsHttpAdapter()),
+    [storageMode],
+  );
   return (
-    <EditorShellProvider
-      // 参考宿主接线：演示页默认接入 apps/editor 内建的 /api/graphs 持久化。
-      // 宿主应用换成自己的适配器即可(见 docs/15)；不需要图库时传 persistence: undefined 回退本地文件。
-      options={{ persistence: createIndexedDbAdapter() }}
-    >
+    <EditorShellProvider options={{ persistence }}>
       <DecisionSimpleInner />
     </EditorShellProvider>
   );
@@ -137,14 +151,20 @@ const DecisionSimpleInner: React.FC = () => {
   const { customNodes, schema, userResolver, runSimulate, persistence } = useEditorShell();
 
   const [searchParams] = useSearchParams();
+  // 与 DecisionSimplePage 保持同一判定：仅 HTTP 模式提供版本钉住（PATCH 走服务端）
+  const storageMode = searchParams.get('storage') === 'local' ? 'local' : 'http';
   const [fileHandle, setFileHandle] = useState<FileSystemFileHandle>();
   const [graph, setGraph] = useState<DecisionGraphType>({ nodes: [], edges: [] });
   const [fileName, setFileName] = useState('Untitled Decision');
   // 当前打开来源：remote = 宿主存储(persistence)，local = 浏览器本地文件
   const [remoteSource, setRemoteSource] = useState<{ id: string; revision?: string }>();
   const [libraryGraphs, setLibraryGraphs] = useState<Array<{ id: string; name: string; updatedAt?: string }>>();
-  const [remoteVersions, setRemoteVersions] = useState<Array<{ revision: string; updatedAt?: string }>>([]);
+  const [remoteVersions, setRemoteVersions] = useState<
+    Array<{ revision: string; updatedAt?: string; versionName?: string; auto?: boolean }>
+  >([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
+  const [pinningRevision, setPinningRevision] = useState<string>();
   const [graphTrace, setGraphTrace] = useState<Simulation>();
   const [pendingConfirm, setPendingConfirm] = useState<{
     title: string;
@@ -423,6 +443,32 @@ const DecisionSimpleInner: React.FC = () => {
     }
   };
 
+  /** 钉住 auto 版本（升格 manual，免于 AUTO_VERSIONS_KEEP 滚动删除）。
+   *  HTTP 模式直连 PATCH（adapter.updateVersionMeta 待内核 S006 就绪后切换）。 */
+  const pinVersion = async (revision: string) => {
+    if (!remoteSource || storageMode !== 'http') return;
+    setPinningRevision(revision);
+    try {
+      const res = await fetch(
+        `/api/graphs/${encodeURIComponent(remoteSource.id)}/versions/${encodeURIComponent(revision)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auto: false }),
+        },
+      );
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      toast.success(`Version ${revision} pinned — exempt from auto-version cleanup`);
+      await refreshVersions(remoteSource.id);
+    } catch (e) {
+      displayError(e);
+    } finally {
+      setPinningRevision(undefined);
+    }
+  };
+
   const confirmOpenVersion = (id: string, revision: string) => {
     setPendingConfirm({
       title: 'Open historical version',
@@ -596,6 +642,25 @@ const DecisionSimpleInner: React.FC = () => {
                       Versions
                     </Button>
                   )}
+                  {persistence?.listVersions && remoteSource && storageMode === 'http' && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      title="Pin auto versions (exempt them from auto-version cleanup)"
+                      onClick={() => {
+                        void refreshVersions(remoteSource.id);
+                        setPinOpen(true);
+                      }}
+                    >
+                      <Pin size={14} />
+                      {remoteVersions.filter((v) => v.auto).length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {remoteVersions.filter((v) => v.auto).length}
+                        </span>
+                      )}
+                    </Button>
+                  )}
                   {(supportFSApi || persistence) && (
                     <Button type="button" onClick={saveFile} variant="ghost" size="sm">
                       Save
@@ -733,6 +798,65 @@ const DecisionSimpleInner: React.FC = () => {
           currentRevision={remoteSource.revision}
           onRestore={(revision) => confirmOpenVersion(remoteSource.id, revision)}
         />
+      )}
+      {remoteSource && storageMode === 'http' && (
+        <Sheet open={pinOpen} onOpenChange={setPinOpen}>
+          <SheetContent side="right" className="flex w-full flex-col gap-4 sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>Pin auto versions</SheetTitle>
+              <SheetDescription>
+                Pinned versions are marked manual and exempt from auto-version cleanup (server keeps all manual versions
+                plus the latest 20 auto ones).
+              </SheetDescription>
+            </SheetHeader>
+            <ScrollArea className="-mx-2 min-h-0 flex-1 px-2">
+              {(() => {
+                const autos = remoteVersions.filter((v) => v.auto);
+                if (autos.length === 0) {
+                  return (
+                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      No auto versions yet. They are created by idle autosave.
+                    </div>
+                  );
+                }
+                return (
+                  <ul className="flex flex-col gap-2 py-1">
+                    {autos.map((entry) => (
+                      <li
+                        key={entry.revision}
+                        className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            {entry.revision}
+                            {entry.versionName && (
+                              <span className="truncate text-xs text-muted-foreground">{entry.versionName}</span>
+                            )}
+                          </div>
+                          {entry.updatedAt && (
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(entry.updatedAt).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={pinningRevision === entry.revision}
+                          onClick={() => void pinVersion(entry.revision)}
+                        >
+                          <Pin size={13} />
+                          Pin
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
       )}
     </>
   );

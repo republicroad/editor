@@ -37,3 +37,51 @@
 ## 5. 开放项(推进部署后续还需要的)
 
 - 真实部署配置：镜像对外推送仓库名、生产 env(`TRUST_PROXY_HEADERS`/`X-User-Id` 网关、`PORT`)、卷挂载编排(docker-compose / k8s)。
+
+---
+
+## 6. 第五十九批：本地 Podman 部署落地（2026-09-06）
+
+> 决策：部署目标 = 本地 Podman（Windows + WSL2 machine，podman 6.1.1，`podman compose`
+> 委托 podman-compose.exe）；域名/反代上线期再议。认证 = 方案 B 签名 cookie（docs/14 §5.1），
+> better-auth 为上线期升级方向。
+
+### 6.1 交付物
+
+| 文件                                 | 内容                                                                                                                                                                                                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Dockerfile`                         | bun 1.4.2（对齐 CI/本地）；**补 appshell 成员清单 COPY**（appshell 迁入后旧文件缺失该项，frozen-lockfile 必炸）；`bunfig.toml` 提前 COPY（镜像内 isolated linker 生效）；数据目录固定 `/data/{graphs,rosters}` + `VOLUME`；`HEALTHCHECK /healthz`（bun fetch 探针） |
+| `.github/workflows/build-docker.yml` | 全面改造（原为上游遗产：master + chore(release) 触发、gorules/editor 镜像名）：reui push / workflow_dispatch 触发 → `ghcr.io/republicroad/editor`（latest + sha tag）→ GHCR 用 GITHUB_TOKEN（packages:write）→ gha 构建缓存                                         |
+| `docker-compose.yml`                 | 单服务 `editor`：宿主端口 `${PORT:-3000}` 映射容器 3000；env `AUTH_SECRET`/`CORS_ORIGINS`（默认值仅限本地）；named volumes `graphs-data`/`rosters-data`；compose 级 healthcheck 兜底                                                                                |
+
+### 6.2 运行手册（本地 Podman）
+
+```bash
+podman compose up -d --build          # 构建 + 启动（podman compose 委托 podman-compose）
+curl http://localhost:3000/healthz    # {"ok":true,"graphsDirWritable":true}
+podman ps                             # jdm-editor  Up (healthy)
+```
+
+- 数据持久化：named volumes `graphs-data`/`rosters-data`；**备份** = `podman volume export`
+  （或 `podman exec jdm-editor tar cz - /data/graphs`）；**升级** = `podman compose up -d --build`
+  （卷不动数据在）；**回滚** = checkout 旧 commit 重建镜像（卷数据跨版本兼容——JSON 文件格式稳定）
+- 容器内 root 说明：rootless Podman 下容器 root 映射宿主当前用户，卷属主即宿主用户，
+  无权限坑；如需硬化为 USER bun，需同步处理卷属主（未来项）
+- 浏览器访问 `http://localhost:3000` 即完整应用（前端产物由 Hono serveStatic 托管）；
+  首个请求自动签发身份 cookie（AUTH_SECRET 模式）
+
+### 6.3 实机验证记录（全部通过）
+
+podman compose build → up → `(healthy)`；healthz 200；**签名 cookie 身份**（POST 捕获
+Set-Cookie → 会话内建图/保存/版本表齐全）；auto 保存 v2/v3 → PATCH 钉住 v2
+（`versionName=smoke-pinned, auto=false`）→ **容器重启后版本表与钉住标记完整保留**
+（卷持久化证据）；healthz 复验通过。
+
+### 6.4 部署陷阱存档
+
+1. **podman-compose 插值要求字符串**：`environment` 中数值必须加引号（`PORT: '3000'`）——
+   YAML 整数进插值字典后 `interpolate_str` 报 `expected str instance, int found`
+2. **OCI 镜像格式忽略 HEALTHCHECK**：podman 默认 OCI format——compose 级 healthcheck 兜底
+   （docker format 构建时两者并存）
+3. **会话即身份**：AUTH_SECRET 态下 curl/脚本不带 cookie = 每请求新匿名身份——API 客户端
+   必须自持 cookie jar（`-c/-b`），或部署在网关后改走 `TRUST_PROXY_HEADERS`

@@ -1,0 +1,40 @@
+# 本地 Podman 部署（第五十九批）
+# 用法：
+#   podman compose up -d --build     # 或 podman-compose up -d --build
+#   curl http://localhost:3000/healthz
+# 数据持久化在 named volumes（graphs-data / rosters-data），备份/导出见 docs/16。
+# 生产上线时再设真实 AUTH_SECRET / CORS_ORIGINS 与域名反代（见 docs/14 §5 better-auth 备案）。
+services:
+  editor:
+    build: .
+    image: ghcr.io/republicroad/editor:local
+    container_name: jdm-editor
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      # 容器内监听端口固定 3000（与 EXPOSE/HEALTHCHECK 一致）；宿主侧端口用 PORT 映射
+      # 注意：podman-compose 插值要求环境值为字符串——数值必须加引号
+      PORT: '3000'
+      # 部署态身份开关：设置后启用签名 cookie 身份（见 docs/14 §5.1）；本地随意改掉默认值
+      AUTH_SECRET: '${AUTH_SECRET:-change-me-local-only}'
+      # 跨域白名单（逗号分隔）；未设则全放行（本地开发语义）
+      CORS_ORIGINS: '${CORS_ORIGINS:-}'
+    volumes:
+      - graphs-data:/data/graphs
+      - rosters-data:/data/rosters
+    # OCI 镜像格式会忽略 Dockerfile 的 HEALTHCHECK——compose 层兜底（docker format 构建时两者并存）
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bun -e "fetch(''http://127.0.0.1:3000/healthz'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  graphs-data:
+  rosters-data:

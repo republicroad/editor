@@ -227,6 +227,17 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
+**最新变更(2026-09-06，第五十九批：本地 Podman 部署落地——镜像/编排/实机验证全链)：**
+
+- **Dockerfile 硬化**：bun 1.4.2 对齐；**补 appshell 成员清单 COPY**（appshell 迁入内核仓后旧文件缺失该项，镜像内 frozen-lockfile 必炸——上游遗产陈旧缺陷）；`bunfig.toml` 提前 COPY（isolated linker 镜像内生效）；数据目录 `/data/{graphs,rosters}` + VOLUME + HEALTHCHECK（bun fetch 探 /healthz）
+- **build-docker.yml 全面改造**（原为上游遗产 master+chore(release)+gorules/editor）：reui push / workflow_dispatch → `ghcr.io/republicroad/editor`（latest+sha）→ GHCR GITHUB_TOKEN → gha 缓存
+- **docker-compose.yml**：单服务（宿主 `${PORT:-3000}`→容器 3000；AUTH_SECRET/CORS_ORIGINS env；named volumes graphs-data/rosters-data；compose 级 healthcheck 兜底 OCI 格式忽略 Dockerfile HEALTHCHECK 的问题）
+- **实机验证全链通过**：podman compose build → up（healthy）→ healthz `{ok,graphsDirWritable:true}` → 签名 cookie 身份建图 → auto 保存 v2/v3 → PATCH 钉住 v2（versionName=smoke-pinned）→ **容器重启后版本表与钉住标记完整保留**（卷持久化证据）
+- **部署陷阱存档**：① podman-compose 环境值必须字符串（YAML 整数进插值字典报 expected str instance, int found）；② OCI 镜像格式忽略 Dockerfile HEALTHCHECK；③ AUTH_SECRET 态 API 客户端必须自持 cookie（会话即身份）
+- 冒烟脚本教训：跨工具调用丢失 PowerShell 会话变量（$jar/WebSession）——依赖登录态的验证链必须单次调用完成
+- docs/16 §6 运行手册（构建/启动/备份/升级回滚/容器 root 取舍说明）
+- 用户决策：compose 形态 = podman-compose（`podman compose` 委托）；域名/反代上线期再议；better-auth 备案 docs/14 §5.2
+
 **最新变更(2026-09-06，第五十八批：签名 cookie 身份认证（方案 B）+ healthz + 兼容式分页)：**
 
 - **认证落地（封堵 x-user-id 伪造越权）**：新增 `apps/editor/src/auth.ts`——HMAC-SHA256 签名 cookie `gid`（`<userId>.<mac>`，timingSafeEqual 比对 + userId 形态兜底）。`AUTH_SECRET` 未设 → 历史行为零变化（TRUST_PROXY_HEADERS/mock 回退，既有测试全兼容）；设置后 `/api/*` 中间件验证签名 cookie，缺失/篡改即签发新匿名身份（HttpOnly/SameSite=Lax/一年），**x-user-id header 不再被信任**；身份经 hono context 变量 `identityUserId` 传递，14 处路由统一改走 `execContextOf(c)`

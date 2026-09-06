@@ -1,37 +1,52 @@
 name: 'Build Docker'
 
+# 第五十九批改造（原为上游遗产：master + chore(release) 触发、gorules/editor 镜像名）：
+# reui push 即构建并推送 ghcr.io/republicroad/editor（latest + sha tag）；支持手动触发。
+# 本地 Podman 部署不依赖本 workflow（compose build 直接用源码），镜像仅为分发备用。
 on:
   push:
     branches:
-      - master
+      - reui
+  workflow_dispatch:
 
 permissions:
   contents: read
+  packages: write
 
 env:
-  IMAGE_NAME: gorules/editor
+  IMAGE_NAME: ghcr.io/republicroad/editor
 
 jobs:
-  docker_sass:
-    name: 'Build Docker'
-    if: "startsWith(github.event.head_commit.message, 'chore(release)')"
+  docker:
+    name: 'Build & Push image'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Get Package version
-        id: version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          # workspace 含 jdm-editor/packages/* 子模块源码，构建必需
+          submodules: recursive
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -39,4 +54,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{steps.version.outputs.current-version}}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

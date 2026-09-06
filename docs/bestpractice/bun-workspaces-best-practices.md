@@ -64,36 +64,35 @@
    3. overrides（仅对第三方传递依赖有效）
 5. 运行时单实例照旧：vite `resolve.dedupe: ['react', 'react-dom']` + peer 声明完整。
 
-### 3.5 布局模式：hoisted（现状）vs isolated——未来研发分支方向（备案）
+### 3.5 布局模式：isolated（现状，第五十三批启用）vs hoisted（历史）
 
 bun 安装器支持两种布局模式（**全局设置**，作用于整仓，bunfig.toml 配置或单次
-`bun install --linker isolated`；bun 1.2+ 支持，本仓 1.3.14 可用）：
+`bun install --linker isolated`；bun 1.2+ 支持）。**本仓已于第五十三批切换为
+isolated**（bunfig.toml `[install] linker = "isolated"`，bun 1.4.2）：
 
-| 维度                        | **hoisted**（现状，默认）                                                       | **isolated**（pnpm 式，备案方向）                                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 布局                        | store + 提升硬链接；成员本地 node_modules **仅版本冲突时嵌套**                  | 每成员 node_modules **实装其声明过的全部依赖**（symlink 到 store）                                                     |
-| 成员 devDeps 实装           | ❌ 提升到根（✦ appshell 的 `./node_modules/@types/react` 候选在 editor 树落空） | ✅（✦ 内核 pnpm 树天然如此）                                                                                           |
-| 幽灵依赖（未声明就 import） | ✅ 能跑（靠 eslint boundaries/CI 补位）                                         | ❌ 结构性阻断（声明真实性强制成立）                                                                                    |
-| 跨成员双实例                | 可能（嵌套副本 vs 提升副本，✦ lezer/双 React 实证）                             | 结构性隔离（各成员只 symlink 自己声明的版本）                                                                          |
-| paths 写法                  | **多候选数组**（覆盖两布局的 18 副本位置，✦ 第四十七批）                        | 单候选 `./node_modules/...` 即可（可简化）                                                                             |
-| 迁移成本                    | —                                                                               | 整仓布局切换：删 node_modules 重装 + monaco 静态拷贝 glob 复验（提升假设）+ `.vite` 预构建缓存 + storybook/CI 缓存路径 |
+| 维度                        | **hoisted**（历史默认）                                        | **isolated**（现状，pnpm 式）                                                                                                                                    |
+| --------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 布局                        | store + 提升硬链接；成员本地 node_modules **仅版本冲突时嵌套** | 每成员 node_modules **实装其声明过的全部依赖**（symlink/junction 到 `node_modules/.bun` store）                                                                  |
+| 成员 devDeps 实装           | ❌ 提升到根                                                    | ✅（appshell `react/@types/react/vitest/fake-indexeddb` 全部落位；内核 pnpm 树语义对齐）                                                                         |
+| 幽灵依赖（未声明就 import） | ✅ 能跑                                                        | ❌ 结构性阻断（声明真实性强制成立）                                                                                                                              |
+| 跨成员双实例                | 可能（嵌套副本 vs 提升副本，✦ lezer/双 React 实证）            | 结构性隔离（各成员只 symlink 自己声明的版本）                                                                                                                    |
+| paths 写法                  | **多候选数组**（覆盖两布局的副本位置）                         | 单候选即可——**本仓 paths 已收敛为 4 条源码直通映射**（`@/*` + 3 条 `@republicroad/*`），hoisted 时代的 6 条压平补丁（react/jsx-runtime/@lezer×2/monaco×2）已删除 |
 
-**决策状态（第四十七批落档）**：备案未启用。当下问题（appshell 双布局类型对齐）
-已由多候选 paths 解决且版本安全（候选不含内核 19 副本）；isolated 的真正收益是
-**pnpm 级依赖纪律**（幽灵依赖阻断 + 双实例结构性消除）——值得单独立项评估，
-不作为 paths 问题的补丁顺手做。
+**切换实证（第五十三批）**：
 
-**启用触发条件**（满足其一再启动）：
+1. **锁文件**：`bun install` 重装后 bun.lock **零漂移**（linker 只影响布局不影响解析）——后两处有意变更例外（见下）
+2. **两笔连带修复**（isolated 把历史暗债暴露为编译错误，属预期收益）：
+   - `@gorules/zen-engine-wasm` 在 `src/main.tsx` 被**幽灵导入**——补根 package.json 显式声明（lockfile +1 条目）
+   - `@lezer/common` 双实例（store 并存 1.2.3/1.5.2，内核成员直连 1.5.2 而 `@lezer/lr`/`@gorules/lezer-zen` 被陈旧锁文件嵌套钉版在 1.2.3）——`bun update @lezer/common` 刷新钉版统一 1.5.2（与内核 pnpm-lock 一致）
+3. **Windows 细节**：成员本地依赖以 **junction**（非 symlink）落位；`vite-plugin-static-copy` 的 monaco 拷贝（103 项）穿 junction 正常
+4. **bun script shell 陷阱**：package.json scripts 由 bun 自带 shell 执行，**未加引号的 `**` glob 会被展开**（`--path-ignore-patterns '**/jdm-editor/**'` 必须带引号，否则 Windows 下展开为超长文件列表报 "File name too long"）
+5. **门禁全绿**：typecheck（root+apps）/ lint / 测试 92+46+76 / build / storybook / dev 冒烟（API+VITE+monaco 静态资源 200）
 
-1. 幽灵依赖事故实际发生（未声明导入在布局变化后断裂）
-2. 双实例类问题第二次出现（类型/运行时多实例修复成本超过迁移成本）
-3. 需要与内核 pnpm 树的解析语义完全对齐（跨树联调排查成本显著上升时）
+**回滚**：删 bunfig.toml `[install]` 段 + 重装即回 hoisted（lockfile 无需回滚）。
 
-**启用清单**（半天量）：bunfig.toml 加 `[install] linker = "isolated"` → 删
-node_modules 重装 → 确认成员本地 symlink 存在 → 全门禁 + dev/build/storybook
-冒烟 → monaco 静态拷贝完整性复核（根提升假设变化）→ CI 缓存路径确认
-（bun.lock 与 linker 无关，无需变更）→ 文档更新（本篇 §3/§4 + alias-mechanisms
-解析矩阵）。
+**历史决策记录**（第四十七批落档，供追溯）：当时备案未启用，paths 问题由多候选
+paths 解决；启用触发条件三条（幽灵依赖事故 / 双实例第二次 / 跨树语义对齐需求）在
+第五十三批前全部实际发生，故立项切换。
 
 ---
 
@@ -154,8 +153,8 @@ node_modules 重装 → 确认成员本地 symlink 存在 → 全门禁 + dev/bu
 ## 7. CI
 
 ```
-oven-sh/setup-bun（版本与 engines 一致）
-  → bun install --frozen-lockfile
+oven-sh/setup-bun（版本与 engines 一致；第五十三批起 CI=本地=1.4.2，漂移清零）
+  → bun install --frozen-lockfile（bunfig.toml 的 linker=isolated 自动生效）
   → 分层 typecheck（根 / apps / 各包）
   → lint
   → 分层测试（各树各跑；子包测试在其自己的仓 CI）
@@ -170,16 +169,18 @@ oven-sh/setup-bun（版本与 engines 一致）
 
 ## 8. 本仓实证对照表
 
-| 实践                                  | 出处                                                        |
-| ------------------------------------- | ----------------------------------------------------------- |
-| 成员 devDep 变更 → lockfile 漂移      | 第四十六批 CI 首跑（rollup-plugin-visualizer）              |
-| 成员 version bump 零漂移              | 第四十六批（内核 v0.3.0 bump，frozen 幂等）                 |
-| overrides 不穿透成员                  | 第四十二批（内核 @types/react 19 钉不住）                   |
-| 类型层 paths 钉单实例                 | 第四十二批（react 18 压平）、第四十六批（@lezer/common/lr） |
-| 双布局多候选 paths                    | 第四十七批（appshell 迁入内核仓，hoisted/pnpm 双布局对齐）  |
-| 就近 tsconfig / mock 绑定一致性       | 第四十二批（monaco d.ts 崩溃）                              |
-| bun test 子串过滤                     | 第四十二批（`--path-ignore-patterns` 引入）                 |
-| 成员测试归位成员树                    | 第四十六批（内核 vitest 门禁归位内核仓 CI）                 |
-| lib mode manualChunks 限制            | 第四十五批（内核 B1 实验结论）                              |
-| 分支即推 / CI 前置                    | 第四十六批（reui 首推连抓 4 项）                            |
-| linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题）      |
+| 实践                                  | 出处                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| 成员 devDep 变更 → lockfile 漂移      | 第四十六批 CI 首跑（rollup-plugin-visualizer）                            |
+| 成员 version bump 零漂移              | 第四十六批（内核 v0.3.0 bump，frozen 幂等）                               |
+| overrides 不穿透成员                  | 第四十二批（内核 @types/react 19 钉不住）                                 |
+| 类型层 paths 钉单实例                 | 第四十二批（react 18 压平）、第四十六批（@lezer/common/lr）               |
+| 双布局多候选 paths                    | 第四十七批（appshell 迁入内核仓，hoisted/pnpm 双布局对齐）                |
+| 就近 tsconfig / mock 绑定一致性       | 第四十二批（monaco d.ts 崩溃）                                            |
+| bun test 子串过滤                     | 第四十二批（`--path-ignore-patterns` 引入）                               |
+| 成员测试归位成员树                    | 第四十六批（内核 vitest 门禁归位内核仓 CI）                               |
+| lib mode manualChunks 限制            | 第四十五批（内核 B1 实验结论）                                            |
+| 分支即推 / CI 前置                    | 第四十六批（reui 首推连抓 4 项）                                          |
+| linker 双模式备案（hoisted→isolated） | 第四十七批（appshell 迁移暴露成员 devDeps 不实装问题）                    |
+| isolated 启用（bun 1.4.2）            | 第五十三批（三条触发条件全部兑现；幽灵导入 + lezer 钉版两笔连带修复）     |
+| bun script shell glob 展开陷阱        | 第五十三批（`--path-ignore-patterns '**'` 未加引号 → File name too long） |

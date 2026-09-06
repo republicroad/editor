@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit",
     "typecheck:apps": "tsc -p apps/editor --noEmit && tsc -p apps/zen-rule --noEmit",
     "test:zen-rule": "bun run --cwd apps/zen-rule main",
-    "test": "bun test src --path-ignore-patterns **/jdm-editor/**",
+    "test": "bun test src --path-ignore-patterns '**/jdm-editor/**'",
     "sync:schema": "bun scripts/sync-custom-node-schema.ts",
     "preview": "vite preview --host",
     "test:components": "bun test component-tests",
@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@gorules/zen-engine-wasm": "^0.23.1",
     "@republicroad/jdm-editor": "workspace:*",
     "@monaco-editor/react": "4.7.0",
     "@radix-ui/react-alert-dialog": "^1.1.23",

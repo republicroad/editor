@@ -227,7 +227,18 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
-**最新变更(2026-09-04，第五十二批：自动保存 + 版本治理——快照历史闭环（方案 A）：**
+**最新变更(2026-09-06，第五十三批：双仓安装语义统一——isolated linker 切换 + CI bun 版本对齐 1.4.2)：**
+
+- **isolated linker 启用**：bunfig.toml `[install] linker = "isolated"`（bun 1.4.2）——与内核仓 pnpm 安装语义对齐；重装后 appshell 成员本地 junction 实装全部声明依赖（react/@types/react/vitest/fake-indexeddb），根 react 仍 18.3.1 物理唯一；锁文件重装零漂移（linker 只改布局不改解析）
+- **CI bun 版本对齐**：validate.yml 两处 1.3.14 → 1.4.2（本地与 CI 漂移清零；用户已升级本地 bun）
+- **两笔连带修复**（isolated 将历史暗债暴露为显性错误——恰为切换的收益验证）：① `src/main.tsx` 幽灵导入 `@gorules/zen-engine-wasm` → 补根 deps 显式声明 ^0.23.1（store 已有同版本，锁文件 +1 条目）；② `@lezer/common` 双实例（store 并存 1.2.3/1.5.2——内核直连 1.5.2 而 `@lezer/lr`/`@gorules/lezer-zen` 被陈旧锁文件嵌套钉版 1.2.3，类型不兼容 5 处报错）→ `bun update @lezer/common` 刷新统一 1.5.2（与内核 pnpm-lock 一致）
+- **paths 补丁退役**：根 tsconfig 删除 hoisted 时代 6 条压平映射（react/jsx-runtime、@lezer/common|lr、monaco×2——均为悬空路径），保留 4 条源码直通映射（`@/*` + 3 条 `@republicroad/*`）；多候选 paths 数组时代结束
+- **bun script shell 陷阱（新坑存档）**：package.json scripts 由 bun 自带 shell 执行，未加引号的 `**` 会被 glob 展开——`test` script 的 `--path-ignore-patterns '**/jdm-editor/**'` 补引号（否则 Windows 下 "File name too long"）
+- **门禁全绿**：typecheck（root+apps）/lint 0-0/主仓 92/组件 46/apps 76/build/storybook/dev 冒烟（API 200 + VITE 200 + monaco 静态资源 200 + vite-plugin-static-copy 103 项穿 junction 正常）
+- **文档**：bun-workspaces §3.5 备案→启用（实证表 + 回滚预案）、§7 CI 段更新、§8 +2 行；ts-compile-link-runtime §4 布局表更新 + 两笔连带修复记录
+- 冒烟进程教训：`Start-Job` 后台作业绑定当次 pwsh 进程，调用结束即被回收（dev server 随之死亡）——跨调用存活须用 `Start-Process` 分离式启动 + 文件日志重定向
+
+**变更(2026-09-04，第五十二批：自动保存 + 版本治理——快照历史闭环（方案 A）)：**
 
 - **自动保存（宿主 decision-simple）**：dirty 签名比对（`JSON.stringify(graph)` 缓存）+ **30s 防抖**触发 `persistToRemote({auto:true})`——手动/自动保存共用持久化纯函数；auto 失败静默、成功推进 `remoteSource.revision` 乐观锁基线（关键细节：不推进则手动保存必 CONFLICT 误报）；面板打开（historyOpen）时暂停不干扰查看
 - **版本标记契约**：appshell `GraphRecordMeta.auto?: boolean` + adapter（HttpGraphMeta/toMeta/listVersions）三处透传；服务端 `StoredGraphMeta.auto`、`GraphSaveSchema.auto`、`GraphVersionSchema.auto`、`GraphMetaSchema.auto` 全链放行

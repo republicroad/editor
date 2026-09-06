@@ -102,14 +102,25 @@ main/exports（dist）——**两个世界由包形态隔离，互不越界**。
 
 ## 4. 链接行为：三种布局的语义差（详解见 Bun Workspaces §3.5）
 
-| 布局                                         | 成员本地 node_modules                               | 幽灵依赖 | 双实例                   |
-| -------------------------------------------- | --------------------------------------------------- | -------- | ------------------------ |
-| bun hoisted（默认）                          | 仅版本冲突时嵌套（✦ appshell paths 候选落空的根源） | ✅ 能跑  | 可能（嵌套 vs 提升副本） |
-| bun isolated（`[install] linker`，备案方向） | ✅ symlink 实装声明过的 deps                        | ❌ 阻断  | 结构性隔离               |
-| pnpm（内核仓）                               | ✅ 符号链接农场                                     | ❌ 阻断  | 结构性隔离               |
+| 布局                                    | 成员本地 node_modules                               | 幽灵依赖 | 双实例                   |
+| --------------------------------------- | --------------------------------------------------- | -------- | ------------------------ |
+| bun hoisted（历史默认）                 | 仅版本冲突时嵌套（✦ appshell paths 候选落空的根源） | ✅ 能跑  | 可能（嵌套 vs 提升副本） |
+| bun isolated（✦ 第五十三批启用，1.4.2） | ✅ junction 实装声明过的 deps                       | ❌ 阻断  | 结构性隔离               |
+| pnpm（内核仓）                          | ✅ 符号链接农场                                     | ❌ 阻断  | 结构性隔离               |
 
-**双布局适配**：tsconfig paths 用**多候选数组**按序探测（✦ appshell react/`@lezer`
-映射——候选清单绝不能包含冲突版本副本，如内核的 @types/react@19）。
+**双布局适配（已退役）**：hoisted 时代 paths 用**多候选数组**按序探测（✦
+appshell react/`@lezer` 映射）。isolated 启用后与 pnpm 语义对齐，多候选补丁
+整体退役——根 paths 收敛为 4 条源码直通映射（`@/*` + 3 条 `@republicroad/*`），
+hoisted 时代的 6 条压平补丁（react/jsx-runtime、`@lezer/common|lr`、monaco×2）
+已删除，依赖解析回归标准 node_modules 语义。
+
+**isolated 切换的两笔连带修复**（第五十三批实证，暗债变显性错误的典型）：
+
+1. 幽灵导入显性化：`src/main.tsx` 的 `@gorules/zen-engine-wasm` 未声明 →
+   isolated 下解析失败 → 补根 deps 显式声明。
+2. 锁文件陈旧钉版显性化：bun.lock 嵌套解析把 `@lezer/lr`/`@gorules/lezer-zen`
+   的内部 `@lezer/common` 钉在 1.2.3，成员直连 1.5.2 → 两份物理副本类型不兼容
+   → `bun update @lezer/common` 统一 1.5.2（对齐内核 pnpm-lock）。
 
 ---
 

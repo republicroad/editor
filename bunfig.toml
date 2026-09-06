@@ -2,3 +2,9 @@
 # - 内核(jdm-editor reui 分支)测试为 vitest 规格，由其自有 runner 执行（CI 单列步骤）；
 #   `bun test src` 通过 --path-ignore-patterns 排除子模块路径，避免按路径子串误捞。
 [test]
+
+# isolated linker（pnpm 语义）：成员依赖装入成员本地 node_modules（symlink 至 .bun store），
+# 与内核仓 pnpm 安装语义对齐，杜绝 hoisting 造成的跨成员依赖泄漏与双实例风险。
+# 见 docs/bestpractice/bun-workspaces-best-practices.md §3.5。
+[install]
+linker = "isolated"

@@ -9,7 +9,7 @@ const repoRoot = join(currentDir, '..');
 
 const config: StorybookConfig = {
   stories: ['../src/stories/**/*.stories.@(ts|tsx)'],
-  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions', 'storybook-dark-mode'],
+  addons: ['@storybook/addon-docs', 'storybook-dark-mode'],
   framework: {
     name: '@storybook/react-vite',
     options: {},

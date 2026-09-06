@@ -24,6 +24,7 @@
 | [09-shadcn+ReUI 取代 antd 评估](./09-shadcn-reui-replacing-antd.md)   | antd 替换可行性评估(结论：antd 核心 + ReUI 增量)   |
 | [10-从零重写评估与路线图](./10-rewrite-roadmap.md)                    | 从零重写 jdm-editor 的评估与 P1–P8 路线图(存档)    |
 | [11-antd vs shadcn+ReUI 对比](./11-antd-vs-shadcn-reui-comparison.md) | antd 与 shadcn+ReUI 组件能力对照                   |
+| [17-开发任务规划](./17-development-plan.md)                           | 三轨道任务规划(宿主自主/内核依赖/上线期)与执行状态 |
 
 ---
 

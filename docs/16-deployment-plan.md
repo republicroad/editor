@@ -37,6 +37,7 @@
 ## 5. 开放项(推进部署后续还需要的)
 
 - 真实部署配置：镜像对外推送仓库名、生产 env(`TRUST_PROXY_HEADERS`/`X-User-Id` 网关、`PORT`)、卷挂载编排(docker-compose / k8s)。
+- 日志采集归档：决策请求日志 JSONL 落盘已上线(第六十二批，`LOGS_DIR`)；Vector→对象存储编排示例见 `deploy/vector-oss/`（可运行起点，OSS 侧未实机联调）。
 
 ---
 

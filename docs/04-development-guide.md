@@ -238,10 +238,11 @@ podman compose logs -f editor
 
 - 前端产物由 Hono serveStatic 托管——单容器即完整应用，浏览器访问
   `http://localhost:3000`
-- 数据持久化在 named volumes（`graphs-data` / `rosters-data`）；备份 =
+- 数据持久化在 named volumes（`graphs-data` / `rosters-data` / `logs-data`）；备份 =
   `podman volume export`，升级 = `podman compose up -d --build`（卷数据保留）
 - 环境旋钮（`docker-compose.yml`）：`PORT`（宿主端口）、`AUTH_SECRET`（身份签名
   密钥）、`CORS_ORIGINS`（跨域白名单）；默认值仅限本地
+- 决策请求日志落盘 `/data/logs`（第六十二批）：对象存储归档编排见 `deploy/vector-oss/`
 - CI 每次 reui push 同步推送 `ghcr.io/republicroad/editor`（latest + sha）
 
 ### 6.5 认证环境变量（第五十八批起）
@@ -253,6 +254,8 @@ podman compose logs -f editor
 | `PORT`                       | 后端监听端口（默认 3000）                                                                                                                                             |
 | `CORS_ORIGINS`               | 逗号分隔白名单；未设全放行（本地开发语义）                                                                                                                            |
 | `GRAPHS_DIR` / `ROSTERS_DIR` | 数据落盘目录（容器内固定 `/data/{graphs,rosters}`）                                                                                                                   |
+| `LOGS_DIR`                   | 决策请求日志目录（第六十二批；容器内固定 `/data/logs`，JSONL 按日滚动）                                                                                               |
+| `DECISION_LOG_KEEP_DAYS`     | 决策请求日志磁盘保留天数（默认 14；`0` = 永久保留）                                                                                                                   |
 
 认证体系全貌与 better-auth 升级路线见 `docs/14-auth-integration.md` §5。
 

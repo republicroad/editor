@@ -152,6 +152,9 @@
 
 ### 6.2 待办事项
 
+- [x] 第六十一批(页面拆分 + 版本按天保留)：decision-simple 863→372 行(hooks/工具条组件抽取 + lib 纯函数)；顺带修复 `listRemoteVersions` 剥 `auto`/`versionName` 字段缺陷(Pin 面板此前恒空态)；auto 版本保留策略升级为 滚动 20 条 ∪ 按天检查点(`AUTO_VERSIONS_DAILY_KEEP`，纯逻辑 `auto-version-retention.ts`)——见 7.3 第六十一批
+- [x] 第六十二批(决策请求日志落盘)：simulate/decision 逐行 JSONL 落盘(日频滚动 + `DECISION_LOG_KEEP_DAYS` 清理)；Dockerfile/compose 增 logs 卷；`deploy/vector-oss/` Vector→对象存储归档示例——见 7.3 第六十二批
+- [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
 - [x] lezer-zen 源码移除并迁移为外部 npm 依赖(子模块 `e21bd87`)
@@ -226,6 +229,24 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+
+**最新变更(2026-09-07，第六十二批：决策请求日志落盘 + Vector→OSS 归档示例)：**
+
+- **决策请求日志(apps/editor)**：新增 `decision-request-log.ts`——`/api/simulate` 与 `/api/decision` 每次请求完成后逐行落盘 JSONL(`$LOGS_DIR/decision-requests-YYYY-MM-DD.jsonl`，UTC 日频滚动)；记录 `{ts, requestId, userId, route, method, status, durationMs, ok[, error]}`。写入经串行队列保证行序、失败仅 console.warn 绝不影响 API；跨日顺带执行滚动清理(`DECISION_LOG_KEEP_DAYS` 默认 14 天，0 = 永久保留)
+- **中间件接线**：日志中间件挂在身份中间件之后，仅命中两条决策路由；requestId 由中间件统一生成存入 context(`identityRequestId`)，路由内 `execContextOf` 复用同一值——日志行与请求链路可关联。400 校验类(short-circuit 不抛错)照常落盘 `ok:false`；异常路径捕获后重抛、状态取 HTTPException.status
+- **测试 +3(apps 88→91)**：simulate 200 落盘字段齐全(mock 用户/耗时/时间戳)；400 落盘 ok=false + 非决策路由不落盘；`pruneDecisionLogs` 注入式清理(恰好 7 天边界属保留窗口)。陷阱：`bun test` 单进程模块缓存——`LOGS_DIR` 与 GRAPHS_DIR 同款必须在顶层动态 import 之前就绪
+- **部署**：Dockerfile 增 `ENV LOGS_DIR=/data/logs` + VOLUME；根 docker-compose.yml 增 `logs-data` 卷；新增 `deploy/vector-oss/`(vector.toml：file source(device_and_inode 指纹/防回读) + remap 拍平 + s3 sink(按日分区 key_prefix/gzip/256MiB 落盘缓冲) + compose 双服务编排 + README 含 OSS 最小授权 RAM 策略与 MinIO 联调指引)
+- **诚实标注**：Vector→OSS 配置为可运行起点，本批未实机联调 OSS(签名兼容性需测试 bucket 验证一次，README 兼容性提示已写明)
+- 门禁：typecheck(root+apps)/lint 0-0/主仓 105/组件 46/apps 91 全绿
+
+**最新变更(2026-09-07，第六十一批：decision-simple 页面拆分 + auto 版本按天保留策略)：**
+
+- **A1 页面拆分(主)**：`src/pages/decision-simple.tsx`(863 行)→ 目录模块 `src/pages/decision-simple/`——页面壳 `index.tsx`(372 行) + `use-remote-graph`(宿主存储分支：persist/open/library/versions/pin) + `use-autosave`(idle 门控整体迁入，触发判定抽 `src/lib/autosave.ts` 纯函数) + `use-local-file`(浏览器文件 IO) + `use-confirm-dialog` + `page-toolbar`(顶栏工具条纯展示) + `pin-versions-sheet`(钉住面板) + `editable-title`；图环检测抽 `src/lib/graph-cycle.ts`(`assertAcyclic`)。行为零变化原则，`git mv` 保留文件历史
+- **顺带修复真实缺陷**：`listRemoteVersions`(src/lib/graph-persistence.ts)此前 map 只挑 `revision/updatedAt`，把 adapter 契约的 `auto`/`versionName` 剥掉——页面 Pin 面板 `v.auto` 过滤恒空、版本面板 auto 徽标永不显示(第五十二批引入 Pin 数据链时的集成缺口，第五十九批冒烟走 API 未暴露)。修复为全量透传 + 透传用例
+- **React 编译期 lint 适配**：`react-hooks/refs` 不识别经 hook 返回对象中转的 ref(file input 回通道改页面自建传入)；`react-hooks` 新规禁 effect 内同步 setState——模板直开(`?template=`)由 mount effect 改惰性 `useState` 初始化器(行为等价)
+- **A2 按天保留(辅)**：保留策略升级为 **滚动条数 ∪ 按天检查点**——纯逻辑独立成 `apps/editor/src/auto-version-retention.ts`(`pickAutoVersionsToPrune`：保留最近 `AUTO_VERSIONS_KEEP`=20 条 + 此前每个 UTC 日最新一条，检查点窗口 `AUTO_VERSIONS_DAILY_KEEP` 默认 30 天，0 关闭；今天的 auto 不参与折叠)。独立模块的原因：graphs-store 模块加载期捕获 GRAPHS_DIR，bun test 单进程内被其他测试文件先加载会污染路由级测试的存储路径(实证后抽离，零环境依赖任何加载顺序安全)；graphs-store 转发导出保持公共面
+- **测试**：主仓 96→105(+graph-cycle 4/autosave 4/listRemoteVersions 透传 1)；apps 80→91(+保留策略纯函数 7/按天折叠路由级集成 1)。集成测试实证 union 语义：滚动窗口内(≤20 条)不折叠，溢出后检查点救回跨日条目、同日以最新替代——初版测试场景(4 条 auto 期待同日折叠)即栽在未过滚动窗口，探针驱动 store 层定位后重写
+- 门禁：typecheck(root+apps)/lint 0-0/主仓 105/组件 46/apps 91/build/storybook/sync:schema:check/单实例守卫 全绿；文档：docs/17 规划落档
 
 **最新变更(2026-09-06，第六十批：内核 6 提交跟进——pnpm catalog 跨工具对齐 + gitlink bump)：**
 

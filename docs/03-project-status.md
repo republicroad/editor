@@ -227,6 +227,17 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 
 ### 7.3 zrule/reui 分支变更摘要
 
+**最新变更(2026-09-06，第六十批：内核 6 提交跟进——pnpm catalog 跨工具对齐 + gitlink bump)：**
+
+- **内核会话恢复**（reui +6 提交：8db9920）：S003 修复（appshell 补 @storybook/react-vite devDep——根因是前次 OOM 崩溃会话丢失声明）；**pnpm catalog 13 项共享依赖**（pnpm-workspace.yaml 定义，成员改 `catalog:` 声明）；consumer-smoke 修复；docs-site wasm；prettier 对齐
+- **跨工具 catalog 对齐（本批核心）**：bun 的 catalog 读根 package.json、pnpm 读 pnpm-workspace.yaml——内核成员 `catalog:` 声明在 bun 树直接报错 `is not in the catalog`。解法：根 catalog 补齐 13 项（与 pnpm 数值逐字一致）；根 deps 中 7 项同范围依赖（react-virtual/cva/clsx/lucide/sonner/tailwind-merge/ts-pattern）+ vite 一并切 `catalog:`（声明层统一）；**例外**：根 `@storybook/react-vite` 保持 8.6.12 字面量（根 storybook 是 v8 世代，内核 catalog 钉 10.5.10——双世代跨树并存，不可互切）
+- **版本收敛**：vite catalog 切换后 bun 对根重解析出 7.3.1（与内核成员 7.3.6 双份）——`bun update vite` 收敛至单解析 7.3.6；全量重装清 store 孤儿目录（vite/react/@lezer 全部 =1）
+- **陷阱存档**：PowerShell `.Replace()` 做"声明切 catalog:"时把 catalog **定义本身**也替换（定义与 deps 字符串完全相同）→ catalog 自指涉报错——批量字符串替换必须避开定义区
+- 门禁全绿：typecheck（root+apps）/lint 0-0/root 96/组件 46/apps 80/build/storybook/sync:schema:check/单实例守卫；gitlink bump（78dcca2 → 8db9920）
+- docs/04 §6 重写：podman compose 工作流 + 认证环境变量表（AUTH_SECRET/TRUST_PROXY_HEADERS/CORS_ORIGINS）+ GHCR 镜像说明；gorules/editor 上游镜像标注退役
+
+### 7.3 zrule/reui 分支变更摘要
+
 **最新变更(2026-09-06，第五十九批补丁：保留策略 Linux 删除随机版本 bug——CI 首次暴露)**
 
 - **真 bug（第五十二批引入，本地+CI 一直潜伏）**：`pruneAutoVersions` 正则组 `(v\d+)` 捕获带 `v` 前缀 → `Number("v22")` = **NaN** → 升序比较器失效 → 退化为 readdir 顺序删"第一个"。Windows NTFS 目录名字母序返回（v2 恰在首）掩盖；Linux ext4 顺序任意 → **随机删除最新 auto 版本**（本次 CI 实删 v22）。保留策略在 Linux 生产环境从未正确工作过

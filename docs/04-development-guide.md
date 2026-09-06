@@ -222,20 +222,44 @@ bun run --cwd apps/editor dev
 bun run --cwd apps/editor start
 ```
 
-### 6.4 Docker 构建
+### 6.4 本地容器部署（Podman，第五十九批起推荐）
 
 ```bash
-# 构建镜像
-docker build -t editor .
+# 构建 + 启动（podman compose 委托 podman-compose；Docker 语义兼容）
+podman compose up -d --build
 
-# 运行容器
-docker run -p 3000:3000 editor
+# 存活探测（进程 + 数据目录可写）
+curl http://localhost:3000/healthz
+
+# 停止 / 查看日志
+podman compose down
+podman compose logs -f editor
 ```
 
-### 6.5 Docker Hub
+- 前端产物由 Hono serveStatic 托管——单容器即完整应用，浏览器访问
+  `http://localhost:3000`
+- 数据持久化在 named volumes（`graphs-data` / `rosters-data`）；备份 =
+  `podman volume export`，升级 = `podman compose up -d --build`（卷数据保留）
+- 环境旋钮（`docker-compose.yml`）：`PORT`（宿主端口）、`AUTH_SECRET`（身份签名
+  密钥）、`CORS_ORIGINS`（跨域白名单）；默认值仅限本地
+- CI 每次 reui push 同步推送 `ghcr.io/republicroad/editor`（latest + sha）
+
+### 6.5 认证环境变量（第五十八批起）
+
+| 变量                         | 语义                                                                                                                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_SECRET`                | 设置后启用签名 cookie 身份（`/api/*` 验证 `gid` cookie；缺失/篡改自动签发；`x-user-id` header 不再被信任）。未设则保持开发态行为（`TRUST_PROXY_HEADERS` / mock 回退） |
+| `TRUST_PROXY_HEADERS`        | `true` 时信任网关注入的 `X-User-Id`（网关部署模式；与 `AUTH_SECRET` 互斥使用）                                                                                        |
+| `PORT`                       | 后端监听端口（默认 3000）                                                                                                                                             |
+| `CORS_ORIGINS`               | 逗号分隔白名单；未设全放行（本地开发语义）                                                                                                                            |
+| `GRAPHS_DIR` / `ROSTERS_DIR` | 数据落盘目录（容器内固定 `/data/{graphs,rosters}`）                                                                                                                   |
+
+认证体系全貌与 better-auth 升级路线见 `docs/14-auth-integration.md` §5。
+
+### 6.6 镜像（历史）
 
 ```bash
-# 拉取官方镜像
+# 上游镜像（已退役，仅历史参考）
 docker run -p 3000:3000 --platform=linux/amd64 gorules/editor
 ```
 

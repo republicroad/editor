@@ -1,12 +1,24 @@
 // 持久化分支的纯逻辑(不依赖 React/页面环境)，供 decision-simple 复用并可单测。
 // 有 GraphPersistenceAdapter → 走宿主存储；否则页面回退浏览器本地文件。
+// 后端不可达（网络错误，非 4xx 业务语义错误）时自动回退 IndexedDB 本地多版本适配器。
 import type { TabSnapshot } from '@republicroad/jdm-editor';
 import {
   GraphPersistenceError,
   type GraphPersistenceAdapter,
   type GraphRecord,
 } from '@republicroad/jdm-appshell/src/shell/persistence';
+import { createIndexedDbAdapter } from '@republicroad/jdm-appshell/src/shell/indexed-db-adapter';
 
+/** 后端不可达后的本地回退适配器（模块级惰性单例） */
+let localFallback: GraphPersistenceAdapter | undefined;
+const getLocalFallback = (): GraphPersistenceAdapter => {
+  localFallback ??= createIndexedDbAdapter();
+  return localFallback;
+};
+
+/** 网络层失败（后端不可达）判定：与 4xx/5xx 业务语义错误区分 */
+const isNetworkFailure = (e: unknown): boolean =>
+  e instanceof Error && /ECONNREFUSED|ENOTFOUND|ERR_NETWORK|Network Error|network/i.test(e.message);
 export interface GraphLike {
   nodes: ReadonlyArray<{ id: string } & Record<string, unknown>>;
   edges?: ReadonlyArray<Record<string, unknown>>;
@@ -55,6 +67,12 @@ export const saveToRemote = async (
     const { id, revision } = await adapter.save(record, opts.id ? { baseRevision: opts.baseRevision } : undefined);
     return { kind: 'saved', id, revision };
   } catch (e) {
+    // 后端不可达（网络层失败）→ 回退 IndexedDB 本地多版本；业务语义错误（CONFLICT 等）原样上抛
+    if (isNetworkFailure(e)) {
+      const local = getLocalFallback();
+      const { id: localId, revision: localRevision } = await local.save(record);
+      return { kind: 'saved', id: localId, revision: localRevision };
+    }
     if (e instanceof GraphPersistenceError && e.code === 'CONFLICT') {
       return { kind: 'conflict' };
     }

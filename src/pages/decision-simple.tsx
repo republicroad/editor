@@ -13,7 +13,12 @@ import {
   JdmUiMode,
   Simulation,
 } from '@republicroad/jdm-editor';
-import { VersionHistoryPanel } from '@republicroad/jdm-appshell';
+import {
+  VersionHistoryPanel,
+  createIndexedDbAdapter,
+  EditorShellProvider,
+  useEditorShell,
+} from '@republicroad/jdm-appshell';
 import { PageHeader } from '../components/page-header.tsx';
 import {
   AlertDialog,
@@ -46,7 +51,6 @@ import { match, P } from 'ts-pattern';
 import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '@republicroad/jdm-appshell';
 import { loadFromRemote, listRemoteVersions, saveToRemote, type GraphLike } from '../lib/graph-persistence.ts';
-import { createGraphsHttpAdapter, EditorShellProvider, useEditorShell } from '@republicroad/jdm-appshell';
 
 enum DocumentFileTypes {
   Decision = 'application/vnd.gorules.decision',
@@ -118,7 +122,7 @@ export const DecisionSimplePage: React.FC = () => {
     <EditorShellProvider
       // 参考宿主接线：演示页默认接入 apps/editor 内建的 /api/graphs 持久化。
       // 宿主应用换成自己的适配器即可(见 docs/15)；不需要图库时传 persistence: undefined 回退本地文件。
-      options={{ persistence: createGraphsHttpAdapter('/api/graphs') }}
+      options={{ persistence: createIndexedDbAdapter() }}
     >
       <DecisionSimpleInner />
     </EditorShellProvider>

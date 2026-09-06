@@ -1,0 +1,372 @@
+import React, { useMemo, useRef, useState } from 'react';
+import { CirclePlay, Lightbulb, Palette } from 'lucide-react';
+import { toast } from 'sonner';
+import { decisionTemplates } from '../../assets/decision-templates';
+import { useSearchParams } from 'react-router-dom';
+import {
+  DecisionGraph,
+  DecisionGraphRef,
+  DecisionGraphType,
+  GraphSimulator,
+  JdmUiMode,
+  Simulation,
+} from '@republicroad/jdm-editor';
+import {
+  VersionHistoryPanel,
+  createGraphsHttpAdapter,
+  createIndexedDbAdapter,
+  EditorShellProvider,
+  useEditorShell,
+} from '@republicroad/jdm-appshell';
+import { PageHeader } from '../../components/page-header.tsx';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@republicroad/jdm-appshell/src/components/ui/alert-dialog';
+import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@republicroad/jdm-appshell/src/components/ui/dropdown-menu';
+import { match, P } from 'ts-pattern';
+
+import classes from './decision-simple.module.css';
+import { ThemePreference, useTheme } from '@republicroad/jdm-appshell';
+import { PinVersionsSheet } from './pin-versions-sheet.tsx';
+import { PageToolbar } from './page-toolbar.tsx';
+import { useAutosave } from './use-autosave.ts';
+import { useConfirmDialog } from './use-confirm-dialog.ts';
+import { isFileSystemApiSupported, useLocalFile } from './use-local-file.ts';
+import { useRemoteGraph } from './use-remote-graph.ts';
+
+const THEME_LABELS: Record<ThemePreference, string> = {
+  [ThemePreference.Automatic]: 'Automatic',
+  [ThemePreference.Dark]: 'Dark',
+  [ThemePreference.Light]: 'Light',
+};
+
+export const DecisionSimplePage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  // 持久化双模式：默认接入 apps/editor 内建 /api/graphs（HTTP 适配器，版本治理/钉住等
+  // 服务端能力齐全）；?storage=local 切换 IndexedDB 本地适配器（backend-less 演示，
+  // 本地保留策略同 AUTO_VERSIONS_KEEP）。宿主应用换成自己的适配器即可（见 docs/15）。
+  const storageMode = searchParams.get('storage') === 'local' ? 'local' : 'http';
+  const persistence = useMemo(
+    () => (storageMode === 'local' ? createIndexedDbAdapter() : createGraphsHttpAdapter()),
+    [storageMode],
+  );
+  return (
+    <EditorShellProvider options={{ persistence }}>
+      <DecisionSimpleInner storageMode={storageMode} />
+    </EditorShellProvider>
+  );
+};
+
+interface DecisionSimpleInnerProps {
+  storageMode: 'local' | 'http';
+}
+
+const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }) => {
+  const graphRef = React.useRef<DecisionGraphRef>(null);
+  // 隐藏 <input type=file>：无 File System Access API 的浏览器回退打开通道
+  const fileInput = useRef<HTMLInputElement>(null);
+  const { themePreference, setThemePreference, skins, skinId, setSkinId, activeSkin } = useTheme();
+
+  const { customNodes, schema, userResolver, runSimulate, persistence } = useEditorShell();
+
+  const [searchParams] = useSearchParams();
+  const [fileName, setFileName] = useState('Untitled Decision');
+  const [graphTrace, setGraphTrace] = useState<Simulation>();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
+  const [mode, setMode] = useState<JdmUiMode>('business');
+  const { pendingConfirm, confirm, close } = useConfirmDialog();
+
+  const supportFSApi = isFileSystemApiSupported();
+
+  const getTemplateGraph = (template: string): DecisionGraphType | undefined =>
+    match(template)
+      .with(P.string, (key) => decisionTemplates?.[key])
+      .otherwise(() => undefined);
+
+  // 模板直开（?template=key）：初始化即应用（原为 mount effect 内 setGraph，
+  // 第六十一批改惰性 useState——行为等价且符合 react-hooks 编译期规则）
+  const [graph, setGraph] = useState<DecisionGraphType>(() => {
+    const templateParam = searchParams.get('template');
+    const templateGraph = templateParam ? getTemplateGraph(templateParam) : undefined;
+    return templateGraph ?? { nodes: [], edges: [] };
+  });
+
+  const localFile = useLocalFile({ fileInput, graph, setGraph, fileName, setFileName });
+  const {
+    remoteSource,
+    libraryGraphs,
+    remoteVersions,
+    pinningRevision,
+    persistToRemote,
+    refreshLibrary,
+    openRemoteGraph,
+    refreshVersions,
+    pinVersion,
+    resetSource,
+  } = useRemoteGraph({ persistence, storageMode, graph, fileName, graphRef, setGraph, setFileName });
+
+  // 自动保存布防：仅宿主存储 + 已打开图 + 版本面板未开时；persist 成功返回 true 由 hook 清 dirty 位
+  const graphSignature = useMemo(() => JSON.stringify(graph), [graph]);
+  const autosave = useAutosave({
+    armed: Boolean(persistence && remoteSource && !historyOpen),
+    sourceKey: `${remoteSource?.id ?? ''}:${remoteSource?.revision ?? ''}`,
+    graphSignature,
+    persist: () => persistToRemote({ auto: true }).then((result) => result.ok),
+  });
+
+  const saveFileAs = async () => {
+    if (persistence) {
+      const result = await persistToRemote({ auto: false });
+      if (result.ok) {
+        // 保存成功即清 dirty 位（手动/自动共用语义；自动路径在 use-autosave 内清）
+        autosave.clearDirty();
+        setFileName(`${result.id}.json`);
+        toast.success('Saved to graph library');
+      } else if (result.reason === 'conflict') {
+        toast.error('This graph was modified by someone else. Refresh before saving to avoid overwriting.');
+      }
+      return;
+    }
+
+    await localFile.saveFileAsLocal();
+  };
+
+  const saveFile = async () => {
+    if (persistence) {
+      return saveFileAs();
+    }
+
+    if (!supportFSApi) {
+      toast.error('Unsupported file system API');
+      return;
+    }
+
+    await localFile.saveFileLocal();
+  };
+
+  const handleNew = async () => {
+    confirm({
+      title: 'New decision',
+      description: 'Are you sure you want to create new blank decision, your current work might be lost?',
+      onConfirm: () => {
+        setGraph({
+          nodes: [],
+          edges: [],
+        });
+        resetSource();
+        setFileName('Untitled Decision');
+      },
+    });
+  };
+
+  const confirmTemplate = (key: string) => {
+    confirm({
+      title: 'Open example',
+      description: 'Are you sure you want to open example decision, your current work might be lost?',
+      onConfirm: () => {
+        const templateGraph = getTemplateGraph(key);
+        if (templateGraph) {
+          setGraph(templateGraph);
+        }
+      },
+    });
+  };
+
+  const confirmOpenVersion = (id: string, revision: string) => {
+    confirm({
+      title: 'Open historical version',
+      description: `Load version ${revision} of this graph? Current unsaved changes will be replaced.`,
+      onConfirm: () => void openRemoteGraph(id, revision),
+    });
+  };
+
+  const handleOpenTemplate = (key: string) => {
+    if (Object.hasOwn(decisionTemplates, key)) {
+      confirmTemplate(key);
+    }
+  };
+
+  return (
+    <>
+      <input
+        hidden
+        accept="application/json"
+        type="file"
+        ref={fileInput}
+        onChange={(event) => void localFile.handleUploadInput(event)}
+        onClick={(event) => {
+          if ('value' in event.target) {
+            event.target.value = null;
+          }
+        }}
+      />
+      <div className={classes.page}>
+        <PageHeader
+          className="border-b bg-muted/50 p-2"
+          title={
+            <PageToolbar
+              fileName={fileName}
+              onRenameFile={(value) => setFileName(value.trim())}
+              onNew={() => void handleNew()}
+              hasLibrary={Boolean(persistence?.list)}
+              libraryGraphs={libraryGraphs}
+              onRefreshLibrary={() => void refreshLibrary()}
+              onOpenLibraryGraph={(id) => void openRemoteGraph(id)}
+              onOpenFromFileSystem={() => void localFile.openFile()}
+              onOpenTemplate={handleOpenTemplate}
+              hasVersions={Boolean(persistence?.listVersions && remoteSource)}
+              onOpenVersions={() => {
+                if (!remoteSource) return;
+                void refreshVersions(remoteSource.id);
+                setHistoryOpen(true);
+              }}
+              showPin={Boolean(persistence?.listVersions && remoteSource && storageMode === 'http')}
+              autoVersionCount={remoteVersions.filter((v) => v.auto).length}
+              onOpenPin={() => {
+                if (!remoteSource) return;
+                void refreshVersions(remoteSource.id);
+                setPinOpen(true);
+              }}
+              showSave={Boolean(supportFSApi || persistence)}
+              onSave={() => void saveFile()}
+              onSaveAs={() => void saveFileAs()}
+              mode={mode}
+              onModeChange={setMode}
+            />
+          }
+          ghost={false}
+          extra={[
+            skins.length > 0 && (
+              <DropdownMenu key="skin-switcher">
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="ghost" size="sm" className="gap-1.5" aria-label="切换皮肤">
+                    <Palette className="size-4" />
+                    {activeSkin?.label ?? '皮肤'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[180px]">
+                  {skins.map((skin) => (
+                    <DropdownMenuCheckboxItem
+                      key={skin.id}
+                      checked={skin.id === skinId}
+                      onCheckedChange={() => setSkinId(skin.id)}
+                    >
+                      {skin.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+            <DropdownMenu key="theme-preference">
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="size-8" aria-label="切换主题">
+                  <Lightbulb />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[150px]">
+                {(Object.values(ThemePreference) as ThemePreference[]).map((preference) => (
+                  <DropdownMenuCheckboxItem
+                    key={preference}
+                    checked={themePreference === preference}
+                    onCheckedChange={() => setThemePreference(preference)}
+                  >
+                    {THEME_LABELS[preference]}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>,
+          ]}
+        />
+        <div className={classes.contentWrapper}>
+          <div className={classes.content}>
+            <DecisionGraph
+              mode={mode}
+              customNodes={customNodes}
+              customFunctions={schema ?? undefined}
+              ref={graphRef}
+              value={graph}
+              onChange={(value) => {
+                // 编辑器内用户改动才标记 dirty——加载/恢复/模板等直接 setGraph 的路径不经过这里
+                autosave.markDirty();
+                setGraph(value);
+              }}
+              reactFlowProOptions={{ hideAttribution: true }}
+              simulate={graphTrace}
+              userResolver={userResolver}
+              panels={[
+                {
+                  id: 'simulator',
+                  title: 'Simulator',
+                  icon: <CirclePlay />,
+                  renderPanel: () => (
+                    <GraphSimulator
+                      onClear={() => setGraphTrace(undefined)}
+                      onRun={async ({ graph, context }) => {
+                        const { simulation, errorMessage } = await runSimulate(graph, context);
+                        if (errorMessage) {
+                          toast.error(errorMessage);
+                        }
+                        setGraphTrace(simulation);
+                      }}
+                    />
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+      <AlertDialog open={pendingConfirm !== null} onOpenChange={(open) => (!open ? close() : null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{pendingConfirm?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{pendingConfirm?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                pendingConfirm?.onConfirm();
+                close();
+              }}
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {remoteSource && (
+        <VersionHistoryPanel
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          versions={remoteVersions}
+          currentRevision={remoteSource.revision}
+          onRestore={(revision) => confirmOpenVersion(remoteSource.id, revision)}
+        />
+      )}
+      {remoteSource && storageMode === 'http' && (
+        <PinVersionsSheet
+          open={pinOpen}
+          onOpenChange={setPinOpen}
+          versions={remoteVersions}
+          pinningRevision={pinningRevision}
+          onPin={(revision) => void pinVersion(revision)}
+        />
+      )}
+    </>
+  );
+};

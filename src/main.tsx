@@ -23,7 +23,7 @@ import 'ace-builds/src-noconflict/theme-chrome';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ThemeContextProvider, type SkinDefinition } from '@republicroad/jdm-appshell';
 import { OceanCurrentDateNode } from './components/skins/ocean-current-date-node';
-import { DecisionSimplePage } from './pages/decision-simple.tsx';
+import { DecisionSimplePage } from './pages/decision-simple/index.tsx';
 import { NotFoundPage } from './pages/not-found';
 
 // 皮肤目录 = 宿主关注点：seeds 换配色，nodeOverrides 劫持节点 UI（一键换UI/换肤）

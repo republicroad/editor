@@ -153,4 +153,19 @@ describe('listRemoteVersions', () => {
     };
     expect(await listRemoteVersions(adapter, 'g1')).toEqual([]);
   });
+
+  test('auto/versionName 字段透传（钉住面板与版本徽标数据源，第六十一批修复）', async () => {
+    const adapter: GraphPersistenceAdapter = {
+      load: async () => null,
+      save: async () => ({ id: 'x', revision: 'v1' }),
+      listVersions: async () => [
+        { revision: 'v1', updatedAt: '2026-01-01', auto: true },
+        { revision: 'v2', updatedAt: '2026-01-02', versionName: 'release' },
+      ],
+    };
+    expect(await listRemoteVersions(adapter, 'g1')).toEqual([
+      { revision: 'v1', updatedAt: '2026-01-01', auto: true },
+      { revision: 'v2', updatedAt: '2026-01-02', versionName: 'release' },
+    ]);
+  });
 });

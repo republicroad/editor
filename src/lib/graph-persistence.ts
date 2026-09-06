@@ -92,12 +92,13 @@ export const loadFromRemote = async (
   return { graph, ...(session ? { session } : {}) };
 };
 
-/** 列出指定图的历史版本；适配器未实现时返回空列表 */
+/** 列出指定图的历史版本；适配器未实现时返回空列表。
+ *  auto/versionName 透传（版本面板徽标与钉住面板的数据源——第六十一批修复：
+ *  此前 map 只挑 revision/updatedAt，把这两个字段剥掉导致 Pin 面板恒为空态）。 */
 export const listRemoteVersions = async (
   adapter: GraphPersistenceAdapter,
   id: string,
-): Promise<Array<{ revision: string; updatedAt?: string }>> => {
+): Promise<Array<{ revision: string; updatedAt?: string; versionName?: string; auto?: boolean }>> => {
   if (!adapter.listVersions) return [];
-  const versions = await adapter.listVersions(id);
-  return (versions ?? []).map(({ revision, updatedAt }) => ({ revision, updatedAt }));
+  return (await adapter.listVersions(id)) ?? [];
 };

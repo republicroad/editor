@@ -154,6 +154,7 @@
 
 - [x] 第六十一批(页面拆分 + 版本按天保留)：decision-simple 863→372 行(hooks/工具条组件抽取 + lib 纯函数)；顺带修复 `listRemoteVersions` 剥 `auto`/`versionName` 字段缺陷(Pin 面板此前恒空态)；auto 版本保留策略升级为 滚动 20 条 ∪ 按天检查点(`AUTO_VERSIONS_DAILY_KEEP`，纯逻辑 `auto-version-retention.ts`)——见 7.3 第六十一批
 - [x] 第六十二批(决策请求日志落盘)：simulate/decision 逐行 JSONL 落盘(日频滚动 + `DECISION_LOG_KEEP_DAYS` 清理)；Dockerfile/compose 增 logs 卷；`deploy/vector-oss/` Vector→对象存储归档示例——见 7.3 第六十二批
+- [x] 第六十三批(工具链升级)：vite 7→8(Rolldown 默认打包器)+ typescript 5.9→6.0(TS 7 过渡版)+ storybook 家族 10.6.0 + react-swc 4.3.3 + wasm 插件 3.6.0；TS 6 `types` 显式化(根/node 工程)——见 7.3 第六十三批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -229,6 +230,17 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+
+**最新变更(2026-09-07，第六十三批：工具链升级——Vite 7→8(Rolldown) + TypeScript 5.9→6.0)：**
+
+- **升级清单**：`vite ^7.3.1→^8.2.2`(Rolldown 成默认打包器，替代 esbuild+Rollup 双引擎，插件 API 兼容旧 rollupOptions 自动转换)；`typescript 5.9.3→6.0.2`(TS 7 原生编译器铺路的过渡版)；`@vitejs/plugin-react-swc ^4.2.3→^4.3.3`(peer 声明 vite 8)；`vite-plugin-wasm ^3.5.0→^3.6.0`(3.5.0 peer 不含 vite 8，3.6.0 起 ^2–^8 全放行)；storybook 家族 `10.5.10→10.6.0`(5 处：storybook/@storybook/react/@storybook/react-vite/@storybook/addon-docs，10.6 起明确 peer vite ^8)；`@typescript-eslint/* ^8.55.0→^8.69.0`(peer `>=4.8.4 <6.1.0`，官方支持 TS 6，issue #12123 闭环)
+- **TS 6 适配(仅 2 处)**：根 `tsconfig.json` 补显式 `types: ["bun", "wicg-file-system-access"]`、`tsconfig.node.json` 补 `types: ["node"]`——TS 6 将 `types` 默认从自动枚举 @types 改为 `[]`，凡依赖全局类型注入(如 bun:test 模块声明、FileSystemAccess API、node:fs)的工程必须显式声明；apps 子工程本就有 `types: ["bun-types"]` 未受影响。宿主 `tsconfig.base` 本就符合 TS 6 方向(ES2022/ESNext/bundler/strict/esModuleInterop)，无 baseUrl/`module Foo`/`asserts {}` 弃用语法命中
+- **免升级确认(前置核实)**：vitest 4.1.11 peer 已含 `^6.0||^7||^8`(主仓测试走 bun test，vitest 仅子模块树使用)；`vite-plugin-static-copy 4.1.1`/`vite-plugin-dts ^5`/`vite-tsconfig-paths 6.1.1`/`@tailwindcss/vite 4.3.3` peer 均放行 vite 8
+- **Vite 8 迁移提示(后续项，暂不动)**：vite.config.ts `__dirname` 在 `configLoader: 'native'`(未来默认)下不受支持，届时改 `import.meta.dirname`(Vite 8 本身要求 Node ≥20.19，无版本顾虑)；`vite-tsconfig-paths` 可被内置 `resolve.tsconfigPaths` 替代，但宿主双 tsconfig 项目(根+内核)逐 importer 解析语义需先验证，暂保留插件
+- **分支说明**：规划分支名 `reui/vite8` 因 git 引用前缀冲突(已有 `reui` 分支占用 `refs/heads/reui`)不可创建，实际分支 **`reui-vite8`**
+- **冒烟**：vite preview + 浏览器实测——编辑器完整渲染(工具栏/画布控制面板/组件面板含全部自定义节点)，Rolldown 产物无运行时异常；构建 4.25s，chunk 体积告警为 monaco 大包固有(与升级无关)
+- **范围边界**：子模块自有 pnpm 树版本未动(内核工具链对齐属内核会话)；在途子模块指针变更(kernel 0.3.3/appshell 0.1.1，npm 已发布)单独先行提交，不混入本批
+- 门禁：typecheck(root+apps)/lint 0-0/主仓 116/组件 46/apps 91/build/storybook/sync:schema:check/单实例守卫 全绿
 
 **最新变更(2026-09-07，第六十二批：决策请求日志落盘 + Vector→OSS 归档示例)：**
 

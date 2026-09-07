@@ -6,6 +6,7 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "noImplicitAny": true,
+    "types": ["bun", "wicg-file-system-access"],
     "paths": {
       "@/*": ["./src/*"],
       "@republicroad/jdm-editor": ["./jdm-editor/packages/jdm-editor/src/index.ts"],

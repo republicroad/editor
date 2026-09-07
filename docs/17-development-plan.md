@@ -54,7 +54,16 @@
   （`deploy/vector-oss/`）——为线上审计/分析铺路，后续可加 Grafana/Loki 或
   OSS 生命周期策略。
 
+### 工具链（第六十三批新增）
+
+- Vite 7→8（Rolldown 默认打包器）+ TypeScript 5.9→6.0 + storybook 10.6 家族——全门禁绿。
+  后续跟踪：vite.config.ts `__dirname` → `import.meta.dirname`（等 configLoader native 转默认时）、
+  `resolve.tsconfigPaths` 内置替代 vite-tsconfig-paths（需先验证双 tsconfig 项目语义）、
+  TS 7 原生编译器观察（6.0 为过渡版）。
+
 ## 3. 执行记录
 
 - **第六十一批（2026-09-06/07）**：A1 + A2 完成，全门禁绿，详见 docs/03 §7.3。
 - **第六十二批（2026-09-07）**：决策请求日志落盘 + Vector→OSS 示例完成，详见 docs/03 §7.3。
+- **第六十三批（2026-09-07）**：工具链升级（Vite 8 + TS 6，用户插队项）于 `reui-vite8` 分支完成；
+  A3 + A4 顺延为下一批候选，详见 docs/03 §7.3。

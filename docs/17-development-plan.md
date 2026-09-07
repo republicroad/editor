@@ -58,8 +58,12 @@
 
 - Vite 7→8（Rolldown 默认打包器）+ TypeScript 5.9→6.0 + storybook 10.6 家族——全门禁绿。
   后续跟踪：vite.config.ts `__dirname` → `import.meta.dirname`（等 configLoader native 转默认时）、
-  `resolve.tsconfigPaths` 内置替代 vite-tsconfig-paths（需先验证双 tsconfig 项目语义）、
-  TS 7 原生编译器观察（6.0 为过渡版）。
+  `resolve.tsconfigPaths` 内置替代 vite-tsconfig-paths（需先验证双 tsconfig 项目语义）。
+- **TS 7 评估（2026-09-07，暂缓）**：typescript@7.0.2 已是 npm latest（Go 原生编译器，2026-08 GA）；
+  本仓实测 `tsc --noEmit` 在 7.0.2 下零改动通过（tsconfig 无 7 的移除项命中）。唯一阻塞：
+  typescript-eslint 8.69 稳定版 peer 封顶 `<6.1.0`，TS 7 支持由其 issue #10940 追踪、
+  支持 TS 7 API 的 major 尚未发布——lint 门禁不可绕过，双 TS 版本共存方案（eslint 留 6、
+  tsc 用 7）需 alias hack，违背单一实例纪律，不采纳。待其发版后升级，预期成本仅改版本号。
 
 ## 3. 执行记录
 

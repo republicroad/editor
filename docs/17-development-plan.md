@@ -10,8 +10,8 @@
 
 - **版本线**：editor 0.1.0（应用，不发 npm）/ 内核 @republicroad/jdm-editor 0.3.3 /
   外壳 @republicroad/jdm-appshell 0.2.0（均独立 0.x 硬分叉线）；开发主线 `reui` 分支。
-  宿主 gitlink 指向 0020247，内核工作树已在 reui@91e8e8f（appshell 0.2.0 命名版本、
-  kernel computeGraphDiff P1、0.3.2 在途草稿快照）——gitlink 推进属第六十四批前置。
+  宿主 gitlink 已推进 reui@91e8e8f（appshell 0.2.0 命名版本、kernel computeGraphDiff P1、
+  0.3.2 在途草稿快照）——第六十四批前置完成（2026-09-07，随 catalog 对齐一并落地）。
 - **架构**：前端 SPA（根仓 src/，React 18 + Vite 7 + shadcn/ReUI）+ 内核/外壳子模块
   （jdm-editor 仓，pnpm 树）+ Bun/Hono 后端（apps/editor）+ zen-engine UDF 库（apps/zen-rule）。
 - **门禁基线（第六十三批）**：typecheck（root+apps）/ lint 0-0 / 主仓 116 测 / 组件 46 /
@@ -49,9 +49,12 @@
 
 ### 批次排期（2026-09-07 重新规划）
 
-- **第六十四批（下一批）：内核消费接线批**——gitlink 推进 `0020247→91e8e8f`（appshell 0.2.0）；
-  B1a 命名版本接线（含保留策略豁免缺口修复 + 单测）；B2 diff 消费；B4 快照验证登记；
-  libsuggest S007 提案交付。
+- **第六十四批（进行中）：内核消费接线批**——前置已完成（2026-09-07）：gitlink 推进
+  `0020247→91e8e8f` + catalog 跨树重对齐（宿主补 `unplugin-dts ^1.1.0`——内核成员已改直依声明，
+  缺失即 `bun install` 报 not-in-catalog 实证复现；删 `vite-plugin-dts ^5.0.3` 残留；
+  内核 catalog 已自对齐宿主 vite `^8.2.2` / storybook `10.6.0` 同款数值；全门禁复验绿）。
+  剩余：B1a 命名版本接线（含保留策略豁免缺口修复 + 单测）；B2 diff 消费；B4 快照验证登记
+  （S007 提案已于规划更新时交付）。
 - **第六十五批：A3 + A4 部署硬化**（容器 USER 硬化 + 冒烟脚本固化，纯宿主可闭环）。
 - **第六十六批候选：D1 旧图 kind 迁移工具 → A5 lexicon**（默认序，产品需求到位可对调；
   D1 = 历史 stub 域旧图唯一恢复路径，映射表已验证未实现，具数据恢复属性，见 docs/13 §8.3）。

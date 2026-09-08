@@ -81,8 +81,11 @@
 
 - Vite 7→8（Rolldown 默认打包器）+ TypeScript 5.9→6.0 + storybook 10.6 家族——全门禁绿。
   `__dirname` → `import.meta.dirname` 迁移已完成（2026-09-07，configLoader native 就绪，
-  `engines.node` 同步升至 ≥20.19 与 Vite 8 门槛一致，preview 告警消除）；剩余跟踪：
-  `resolve.tsconfigPaths` 内置替代 vite-tsconfig-paths（需先验证双 tsconfig 项目语义）。
+  `engines.node` 同步升至 ≥20.19 与 Vite 8 门槛一致，preview 告警消除）。
+  `resolve.tsconfigPaths` 内置替代已实证**不可切换**（2026-09-07）：选项仅 boolean 无细化配置，
+  内核 tsconfig 的 `monaco-editor → editor.api.d.ts` 类型 shim 映射（内核 pnpm 树 typecheck 用）
+  会被内置解析器应用于运行时，rolldown 解析 .d.ts 直接报错（19 errors）；插件的双项目过滤语义
+  在本仓是必要的——vite-tsconfig-paths 保留， informational 告警可忽略。
 - **TS 7 评估（2026-09-07，暂缓）**：typescript@7.0.2 已是 npm latest（Go 原生编译器，2026-08 GA）；
   本仓实测 `tsc --noEmit` 在 7.0.2 下零改动通过（tsconfig 无 7 的移除项命中）。唯一阻塞：
   typescript-eslint 8.69 稳定版 peer 封顶 `<6.1.0`，TS 7 支持由其 issue #10940 追踪、

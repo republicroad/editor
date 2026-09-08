@@ -33,11 +33,16 @@ COPY --from=builder /app/static ./apps/editor/public
 WORKDIR /app/apps/editor
 
 # 数据目录固定到 /data(生产以 named volume 挂载；本地 Podman rootless 下
-# 容器内 root 映射宿主当前用户，卷属主即宿主用户，无权限坑——取舍见 docs/16)
+# 容器内 uid 1000(bun) 映射宿主普通用户，属主语义保持——取舍见 docs/16 §6.2)
 ENV GRAPHS_DIR=/data/graphs
 ENV ROSTERS_DIR=/data/rosters
 # 决策请求日志目录(第六十二批)：JSONL 按日滚动，采集归档示例见 deploy/vector-oss/
 ENV LOGS_DIR=/data/logs
+
+# A3 容器 USER 硬化(第六十六批)：预建数据目录并预置属主为 bun(uid 1000)——
+# named volume 首次挂载时 Docker/Podman 会把镜像内该目录内容(含属主)拷入卷，
+# 此后非 root 进程即可读写；不再依赖"容器内 root 映射宿主用户"的偶然语义
+RUN mkdir -p /data/graphs /data/rosters /data/logs && chown -R bun:bun /data
 VOLUME ["/data/graphs", "/data/rosters", "/data/logs"]
 
 EXPOSE 3000
@@ -45,5 +50,8 @@ EXPOSE 3000
 # 存活探针：/healthz 匿名可达（进程 + 数据目录可写）
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD bun -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+# 以非 root 运行：/app 构建产物 root 只读即可，进程仅需 /data 写权限(HEALTHCHECK 同随 USER)
+USER bun
 
 CMD ["bun", "src/index.ts"]

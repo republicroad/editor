@@ -157,6 +157,7 @@
 - [x] 第六十三批(工具链升级)：vite 7→8(Rolldown 默认打包器)+ typescript 5.9→6.0(TS 7 过渡版)+ storybook 家族 10.6.0 + react-swc 4.3.3 + wasm 插件 3.6.0；TS 6 `types` 显式化(根/node 工程)——见 7.3 第六十三批
 - [x] 第六十四批(内核消费接线批)：前置(gitlink 推进 91e8e8f + catalog 对齐：补 unplugin-dts ^1.1.0/删 vite-plugin-dts 残留)；命名版本接线(面板 onRename→adapter renameVersion→既有 PATCH，本地模式同享；修复 pruneAutoVersions 未豁免「auto+命名」版本缺口+路由级集成测试)；S004 diff 消费(computeGraphDiff 逐版基线喂 diffs prop)；B4 在途编辑快照验证归档(链路闭合，宿主零改动)——见 7.3 第六十四批
 - [x] 第六十五批(S008 消费收尾)：gitlink 推进 91e8e8f→98d79d3(内核消费 S008：删 monaco 类型映射 + MarkerSeverity 字面量化，随批 6 个 UI 回归修复)；vite.config/.storybook 切原生 resolve.tsconfigPaths + 卸载 vite-tsconfig-paths——见 7.3 第六十五批
+- [~] 第六十六批(部署硬化)：A3 容器 USER 硬化(/data 预置 bun 属主 + USER bun)与 A4 冒烟链固化(scripts/smoke-deploy.ts，复刻 59 批全链+非零退出码)代码就绪；容器实机验证待环境恢复(VM 出站 TCP 死亡，见 7.3 诚实标注)——恢复后 `bun run smoke:deploy` 一条命令补验
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -242,6 +243,28 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-08，第六十六批：部署硬化——容器 USER 硬化 + 冒烟链固化)：**
+
+- **A3 容器 USER 硬化(Dockerfile)**：runner 阶段预建 `/data/{graphs,rosters,logs}` 并 `chown bun:bun`
+  ——named volume 首次挂载时 Podman/Docker 会把镜像内目录内容(含属主)拷入卷，非 root 进程
+  直接可读写，不再依赖「rootless 下容器 root 恰好映射宿主用户」的偶然语义（docs/16 §6.2
+  未来项落定）；`USER bun` 置于 CMD 前（HEALTHCHECK 同随 USER 执行）；`/app` 构建产物保持
+  root 只读，进程仅需 /data 写权限
+- **A4 冒烟链固化(`scripts/smoke-deploy.ts` + `bun run smoke:deploy`)**：完整复刻第五十九批
+  手工链——compose up -d --build → 轮询 healthz(ok+graphsDirWritable，120s 超时) → 签名 cookie
+  建图(bun `getSetCookie` 捕获 gid 会话复用) → auto 保存 v2/v3 → PATCH 钉住 v2
+  (versionName=smoke-pinned, auto=false) → compose restart → 版本表/钉住标记/head 内容持久化
+  复核；任一步失败非零退出。环境变量：SMOKE_COMPOSE/SMOKE_PORT/SMOKE_KEEP(留栈供 UI 验证)/
+  SMOKE_CLEAN(down -v 连卷删)
+- **诚实标注：容器实机验证被环境阻塞**——podman machine(WSL2) 硬中断恢复后 VM 出站 TCP
+  完全死亡（DNS/默认路由正常、TCP 1.1.1.1:443 与 registry.npmjs.org 全断；宿主同刻到 npm
+  200/1.04s 正常）。已试并无效：定点 terminate+start、WSL 全量 shutdown、machine 干净重启、
+  HNS 服务重启(管理员)。疑似 VPN/安全软件劫持 WSL NAT 子网或需 Windows 重启（用户级动作）。
+  A3/A4 代码与 lint 全就绪；环境恢复后 `bun run smoke:deploy` 一条命令补验证（SMOKE_KEEP=1
+  留栈 + 浏览器走查即同时补第六十四批遗留的 rename/diff UI 实机验证）
+- 门禁：typecheck/lint(含新脚本)/主仓 117/组件 46/apps 92/build/storybook/schema/单实例 全绿
+  （65 批同基线，66 批改动不触前端构建面）；冒烟链未跑（见上）
 
 **最新变更(2026-09-08，第六十五批：S008 消费收尾——原生 tsconfigPaths 迁移)：**
 

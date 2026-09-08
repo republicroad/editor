@@ -63,8 +63,16 @@
   `scripts/smoke-deploy` 固化第五十九批手工链（非零退出码）。podman 网络恢复后实机全链
   PASS（exit 0，含卷属主自愈迁移），详见 docs/03 §7.3；rename/diff UI 浏览器走查顺延
   （数据链已容器实测，IAB webview 恢复后随任意部署走查）。
-- **第六十七批候选：D1 旧图 kind 迁移工具 → A5 lexicon**（默认序，产品需求到位可对调；
-  D1 = 历史 stub 域旧图唯一恢复路径，映射表已验证未实现，具数据恢复属性，见 docs/13 §8.3）。
+- **第六十七批（下一批）：D1 旧图 kind 迁移**——映射纯函数（`contrib.<fn>`→`<fn>` 限当前
+  schema 存在者；`roster.roster`/`risk.query_list`→`roster`；旧 http/legacy_http 容器节点
+  不迁移，维持「配置不符合规范」占位卡现状）+ 接线宿主导入/打开 normalize 层（幂等在线
+  自动恢复，;; 迁移同款先例）+ 可选批量脚本（`scripts/migrate-legacy-graphs.ts`）；
+  验收 = 撞库攻击防御.json（apps/zen-rule/graph/）加载/渲染/编辑恢复（仿真验收仍待 D2）；
+  映射表单测。数据恢复属性：平台重设计后历史 stub 域旧图的唯一恢复路径（docs/13 §8.3）。
+- **第六十八批候选：D2 函数域重建 ↔ A5 lexicon 词表域**（默认序 D2 先——`custom_list_query`
+  复用 queryRoster 最先，与 67 批构成「旧图恢复→仿真恢复」闭环，撞库仿真验收随之恢复；
+  A5 aho-corasick 随产品需求可对调；rate_1h/group_distinct_1h 内存窗口、ip_location 需
+  geo 数据集殿后）。
 - **待定/跟踪（不排批）**：D2 函数域重建（custom_list_query / rate_1h / group_distinct_1h / ip_location，
   恢复「撞库攻击防御.json」仿真验收）、D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；轨道 C 上线期

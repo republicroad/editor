@@ -15,8 +15,12 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 //    裸名可解析但 'esm/...' 子路径会被改写。故按序尝试裸名 / ESM 入口。
 //  - 拿到包内真实文件后，自入口向上逐级找最近的 package.json。
 //    刻意不依赖 node:module.findPackageJSON(需 Node ≥22.14.0，且 bun 1.x 的 node:module 未实现)，
-//    因此最低兼容 Node ≥18(与 package.json engines.node 一致)，bun 亦可用。
+//    bun 亦可用；config 层 import.meta.dirname 需 Node ≥20.11(低于 Vite 8 自身的 ≥20.19 门槛，不构成约束)。
 const require = createRequire(import.meta.url);
+
+// Vite 8 的 configLoader:'native'(未来默认)不支持 __dirname——统一改用 import.meta.dirname
+// (package.json type:module，config 以 ESM 加载)
+const rootDir = import.meta.dirname;
 
 function resolveMonacoEntry(): string {
   for (const specifier of ['monaco-editor', 'monaco-editor/esm/vs/editor/editor.main.js']) {
@@ -48,8 +52,8 @@ const MONACO_VS_BASE = `/monaco-editor@${(JSON.parse(readFileSync(findMonacoPack
 // 内核 barrel(@republicroad/jdm-editor) 由 resolve.alias 显式直通 src（优先级高于 paths，
 // 且绕开根 tsconfig paths 中面向 tsc 的 tmp/kernel-types 类型桥）。
 const tsconfigProjects = [
-  path.join(__dirname, 'tsconfig.json'),
-  path.join(__dirname, 'jdm-editor/packages/jdm-editor/tsconfig.json'),
+  path.join(rootDir, 'tsconfig.json'),
+  path.join(rootDir, 'jdm-editor/packages/jdm-editor/tsconfig.json'),
 ];
 
 // https://vitejs.dev/config/
@@ -74,14 +78,14 @@ export default defineConfig({
     }),
   ],
   build: {
-    outDir: path.join(__dirname, 'static'),
+    outDir: path.join(rootDir, 'static'),
     // 将编辑器的构建输出到 apps/editor/public 目录，方便和后端服务器集成部署.
     // outDir: path.join(__dirname, 'apps/editor/public'),
     target: 'esnext',
   },
   resolve: {
     alias: {
-      '@republicroad/jdm-editor': path.join(__dirname, 'jdm-editor/packages/jdm-editor/src/index.ts'),
+      '@republicroad/jdm-editor': path.join(rootDir, 'jdm-editor/packages/jdm-editor/src/index.ts'),
     },
     dedupe: ['react', 'react-dom'],
   },

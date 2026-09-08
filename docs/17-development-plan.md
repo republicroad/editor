@@ -54,7 +54,10 @@
   正文：B1a 命名版本接线（feature-detect `onRename`，本地模式同享）+ 保留策略豁免缺口修复
   （「auto+命名」版本不再被折叠，路由级集成测试）；B2 diff 消费（`computeGraphDiff` 逐版基线喂
   `diffs` prop）；B4 快照验证归档（链路闭合，宿主零改动）。S007 提案已交付。
-- **第六十五批（下一批）：A3 + A4 部署硬化**（容器 USER 硬化 + 冒烟脚本固化，纯宿主可闭环）。
+- **第六十五批（下一批）：A3 + A4 部署硬化**——A3 容器 USER 硬化（Dockerfile root→bun +
+  卷属主处理，前置确认 rootless podman 卷属主映射，docs/16 §6.2）；A4 `scripts/smoke-deploy`
+  固化第五十九批手工链（build→up→healthz→签名 cookie 建图→PATCH 钉住→重启验证持久化，
+  非零退出码语义）；部署冒烟**顺带补第六十四批遗留的 rename/diff UI 实机验证**。纯宿主可闭环。
 - **第六十六批候选：D1 旧图 kind 迁移工具 → A5 lexicon**（默认序，产品需求到位可对调；
   D1 = 历史 stub 域旧图唯一恢复路径，映射表已验证未实现，具数据恢复属性，见 docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D2 函数域重建（custom_list_query / rate_1h / group_distinct_1h / ip_location，
@@ -77,7 +80,8 @@
 ### 工具链（第六十三批新增）
 
 - Vite 7→8（Rolldown 默认打包器）+ TypeScript 5.9→6.0 + storybook 10.6 家族——全门禁绿。
-  后续跟踪：vite.config.ts `__dirname` → `import.meta.dirname`（等 configLoader native 转默认时）、
+  `__dirname` → `import.meta.dirname` 迁移已完成（2026-09-07，configLoader native 就绪，
+  `engines.node` 同步升至 ≥20.19 与 Vite 8 门槛一致，preview 告警消除）；剩余跟踪：
   `resolve.tsconfigPaths` 内置替代 vite-tsconfig-paths（需先验证双 tsconfig 项目语义）。
 - **TS 7 评估（2026-09-07，暂缓）**：typescript@7.0.2 已是 npm latest（Go 原生编译器，2026-08 GA）；
   本仓实测 `tsc --noEmit` 在 7.0.2 下零改动通过（tsconfig 无 7 的移除项命中）。唯一阻塞：

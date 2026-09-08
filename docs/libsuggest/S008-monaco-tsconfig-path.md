@@ -1,6 +1,6 @@
 # S008 monaco-editor 的 tsconfig paths 映射冗余且毒化 oxc 系打包器运行时解析
 
-- 状态: proposed
+- 状态: accepted — 内核侧已落地（jdm-editor `dabe8db3`，2026-09-08：paths 映射已删，且已按建议 2 将 function.tsx 的 MarkerSeverity 改为本地字面量，monaco 在内核内为纯类型依赖；内核门禁全绿）。宿主侧切换 `resolve.tsconfigPaths` 并卸载 vite-tsconfig-paths 仍待宿主批次执行。
 - 目标库: @republicroad/jdm-editor（内核 tsconfig）
 - 提出方: editor 会话（第六十四批后 / 2026-09-08）
 - 优先级: 低

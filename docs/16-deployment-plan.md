@@ -66,8 +66,11 @@ podman ps                             # jdm-editor  Up (healthy)
 - 数据持久化：named volumes `graphs-data`/`rosters-data`；**备份** = `podman volume export`
   （或 `podman exec jdm-editor tar cz - /data/graphs`）；**升级** = `podman compose up -d --build`
   （卷不动数据在）；**回滚** = checkout 旧 commit 重建镜像（卷数据跨版本兼容——JSON 文件格式稳定）
-- 容器内 root 说明：rootless Podman 下容器 root 映射宿主当前用户，卷属主即宿主用户，
-  无权限坑；如需硬化为 USER bun，需同步处理卷属主（未来项）
+- 容器内 root 说明：~~rootless Podman 下容器 root 映射宿主当前用户~~——**A3 硬化已落地
+  （第六十六批）**：镜像预建 `/data/*` 并 chown 为 `bun(1000)`，`USER bun` 运行（HEALTHCHECK
+  同随）。新卷首挂自动继承 bun 属主；**存量卷**（硬化前以容器 root 创建）需一次性迁移：
+  `podman run --rm --user 0 --volumes-from jdm-editor ghcr.io/republicroad/editor:local chown -R 1000:1000 /data`
+  ——`bun run smoke:deploy` 的 healthz 轮询检测到不可写时会自动执行同一操作
 - 浏览器访问 `http://localhost:3000` 即完整应用（前端产物由 Hono serveStatic 托管）；
   首个请求自动签发身份 cookie（AUTH_SECRET 模式）
 

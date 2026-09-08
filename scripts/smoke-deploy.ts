@@ -12,8 +12,11 @@
  *   SMOKE_PORT     宿主侧端口（默认 3000，经 compose PORT 插值映射容器 3000）
  *   SMOKE_KEEP=1   结束后保留栈运行（供浏览器级 UI 实机验证；否则 down 停栈）
  *   SMOKE_CLEAN=1  结束时连卷一起删除（down -v；默认保留卷，冒烟数据留待人工检视）
+ *   SMOKE_CONTAINER 主容器名（默认 jdm-editor，与 compose container_name 一致）
  *
  * 前提：AUTH_SECRET 已在 docker-compose.yml 给出本地默认值（签名 cookie 模式生效）。
+ * A3 硬化配套：历史卷（A3 之前以容器 root 创建）属主会被自动一次性迁移为 bun(1000)，
+ * 见 waitHealthz 内 migrateVolumeOwnership——存量部署升级到硬化镜像时同样适用。
  */
 
 const composePrefix = (process.env.SMOKE_COMPOSE ?? 'podman compose').trim().split(/\s+/);
@@ -47,9 +50,37 @@ const compose = async (...args: string[]) => {
   if (code !== 0) throw new Error(`compose ${args.join(' ')} exited ${code}`);
 };
 
-/** 轮询 healthz 直至 ok 且数据目录可写 */
+/** 一次性卷属主迁移：A3 硬化前的历史卷属主为容器 root，非 root 进程不可写——
+ *  以 --user 0 借用主容器的卷挂载（--volumes-from，卷名无关），把 /data 归属改为 bun(1000)。
+ *  幂等：仅当 healthz 报 graphsDirWritable=false 时执行一次。 */
+const migrateVolumeOwnership = async () => {
+  const container = process.env.SMOKE_CONTAINER ?? 'jdm-editor';
+  const image = 'ghcr.io/republicroad/editor:local';
+  const proc = Bun.spawn(
+    [
+      ...composePrefix.slice(0, 1),
+      'run',
+      '--rm',
+      '--user',
+      '0',
+      '--volumes-from',
+      container,
+      image,
+      'chown',
+      '-R',
+      '1000:1000',
+      '/data',
+    ],
+    { stdout: 'inherit', stderr: 'inherit' },
+  );
+  const code = await proc.exited;
+  if (code !== 0) throw new Error(`卷属主迁移 helper exited ${code}`);
+};
+
+/** 轮询 healthz 直至 ok 且数据目录可写（自动执行一次旧卷属主迁移） */
 const waitHealthz = async (label: string) => {
   const deadline = Date.now() + 120_000;
+  let migrated = false;
   for (;;) {
     try {
       const res = await fetch(`${base}/healthz`);
@@ -57,6 +88,12 @@ const waitHealthz = async (label: string) => {
       if (res.ok && body.ok && body.graphsDirWritable) {
         await step(`${label} healthz`, async () => `ok, graphsDirWritable=true`);
         return;
+      }
+      if (body.graphsDirWritable === false && !migrated) {
+        migrated = true;
+        await step(`${label} 旧卷属主迁移（历史 root 卷 → bun）`, () =>
+          migrateVolumeOwnership().then(() => 'chown 1000:1000 /data'),
+        );
       }
     } catch {
       // 未就绪，继续轮询

@@ -58,11 +58,11 @@
   （内核消费 S008：删 monaco 类型映射 + `MarkerSeverity` 本地字面量化；随批带入 6 个 UI 回归修复）；
   vite.config 与 .storybook/main.ts 切 Vite 8 原生 `resolve.tsconfigPaths`，卸载 vite-tsconfig-paths
   ——此前 19 错误的根因（monaco 映射入运行时解析）已消，informational 告警归零。
-- **第六十六批（2026-09-08，代码就绪/实机验证待环境）：A3 + A4 部署硬化**——A3 容器 USER
-  硬化（/data 预置 bun 属主 + `USER bun`，docs/16 §6.2 未来项落定）；A4 `scripts/smoke-deploy`
-  固化第五十九批手工链（非零退出码，SMOKE_KEEP/SMOKE_CLEAN 可调）。容器实机验证被 VM 网络
-  故障阻塞（podman machine 出站 TCP 死亡，修复手段已穷尽，见 docs/03 §7.3 诚实标注）；
-  环境恢复后 `bun run smoke:deploy` 补验，rename/diff UI 实机验证同链一并。
+- **第六十六批（✅ 2026-09-08/09）：A3 + A4 部署硬化**——A3 容器 USER 硬化（/data 预置 bun
+  属主 + `USER bun`；存量卷自愈迁移入 smoke 脚本，docs/16 §6.2 未来项落定）；A4
+  `scripts/smoke-deploy` 固化第五十九批手工链（非零退出码）。podman 网络恢复后实机全链
+  PASS（exit 0，含卷属主自愈迁移），详见 docs/03 §7.3；rename/diff UI 浏览器走查顺延
+  （数据链已容器实测，IAB webview 恢复后随任意部署走查）。
 - **第六十七批候选：D1 旧图 kind 迁移工具 → A5 lexicon**（默认序，产品需求到位可对调；
   D1 = 历史 stub 域旧图唯一恢复路径，映射表已验证未实现，具数据恢复属性，见 docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D2 函数域重建（custom_list_query / rate_1h / group_distinct_1h / ip_location，
@@ -110,5 +110,5 @@
   B2 diff 消费 + B4 验证归档），全门禁绿，详见 docs/03 §7.3。
 - **第六十五批（2026-09-08）**：S008 消费收尾（gitlink 98d79d3 + 原生 tsconfigPaths 迁移 +
   卸载 vite-tsconfig-paths），工具链跟踪清单清零，全门禁绿，详见 docs/03 §7.3。
-- **第六十六批（2026-09-08）**：部署硬化代码就绪（A3 USER 硬化 + A4 冒烟脚本固化）；
-  容器实机验证待 VM 网络恢复（用户级环境动作），详见 docs/03 §7.3。
+- **第六十六批（2026-09-08）**：部署硬化（A3 USER 硬化 + A4 冒烟脚本固化 + 存量卷自愈迁移）；
+  podman 网络恢复后实机全链 PASS，详见 docs/03 §7.3。

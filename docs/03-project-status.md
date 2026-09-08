@@ -157,7 +157,7 @@
 - [x] 第六十三批(工具链升级)：vite 7→8(Rolldown 默认打包器)+ typescript 5.9→6.0(TS 7 过渡版)+ storybook 家族 10.6.0 + react-swc 4.3.3 + wasm 插件 3.6.0；TS 6 `types` 显式化(根/node 工程)——见 7.3 第六十三批
 - [x] 第六十四批(内核消费接线批)：前置(gitlink 推进 91e8e8f + catalog 对齐：补 unplugin-dts ^1.1.0/删 vite-plugin-dts 残留)；命名版本接线(面板 onRename→adapter renameVersion→既有 PATCH，本地模式同享；修复 pruneAutoVersions 未豁免「auto+命名」版本缺口+路由级集成测试)；S004 diff 消费(computeGraphDiff 逐版基线喂 diffs prop)；B4 在途编辑快照验证归档(链路闭合，宿主零改动)——见 7.3 第六十四批
 - [x] 第六十五批(S008 消费收尾)：gitlink 推进 91e8e8f→98d79d3(内核消费 S008：删 monaco 类型映射 + MarkerSeverity 字面量化，随批 6 个 UI 回归修复)；vite.config/.storybook 切原生 resolve.tsconfigPaths + 卸载 vite-tsconfig-paths——见 7.3 第六十五批
-- [~] 第六十六批(部署硬化)：A3 容器 USER 硬化(/data 预置 bun 属主 + USER bun)与 A4 冒烟链固化(scripts/smoke-deploy.ts，复刻 59 批全链+非零退出码)代码就绪；容器实机验证待环境恢复(VM 出站 TCP 死亡，见 7.3 诚实标注)——恢复后 `bun run smoke:deploy` 一条命令补验
+- [x] 第六十六批(部署硬化)：A3 容器 USER 硬化(/data 预置 bun 属主 + USER bun，存量卷自愈迁移)；A4 冒烟链固化(scripts/smoke-deploy.ts，复刻 59 批全链+非零退出码+卷属主自动迁移)；podman 网络恢复后实机全链 PASS(exit 0)——见 7.3 第六十六批补验
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -243,6 +243,20 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-09，第六十六批补验：podman 网络恢复 + 冒烟全链 PASS + 卷属主自愈迁移)：**
+
+- **环境恢复确认**：VM 出站 TCP 恢复（github/npm 双目标 HTTPS 200，1.1.1.1 单点过滤无关痛痒）；
+  镜像全量重建成功（含 A3 的 chown/USER 层）
+- **实机全链 PASS（exit 0）**：up --build → 卷属主自愈迁移（历史 root 卷 → bun）→ healthz
+  ok+graphsDirWritable=true → 签名 cookie 建图 v1 → auto v2/v3 → PATCH 钉住 v2 → 容器重启 →
+  healthz/版本表/钉住标记/head 内容持久化复核全部通过——**A3 非 root 运行 + A4 冒烟链正式落验**
+- **真发现（A3 配套缺口）**：硬化镜像只对**新卷**生效，存量卷（59 批时代以容器 root 创建）
+  属主仍为 root → `graphsDirWritable:false`。解法入脚本：waitHealthz 检测到不可写时自动执行
+  一次性 `chown 1000:1000 /data`（`--user 0 --volumes-from jdm-editor` 借挂载，幂等仅触发一次，
+  SMOKE_CONTAINER 可调）；存量部署升级硬化镜像走同一迁移路径（docs/16 §6.2 已更新）
+- 第六十四批遗留的 rename/diff UI 实机验证：数据链（版本表/PATCH versionName）已在容器实测通过；
+  浏览器走查因 IAB webview 不可用顺延（UI 接线由 46 例组件测试 + 类型契约覆盖）
 
 **最新变更(2026-09-08，第六十六批：部署硬化——容器 USER 硬化 + 冒烟链固化)：**
 

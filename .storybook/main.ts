@@ -2,7 +2,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { StorybookConfig } from '@storybook/react-vite';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(currentDir, '..');
@@ -21,13 +20,9 @@ const config: StorybookConfig = {
       ...(config.resolve.alias ?? {}),
       '@republicroad/jdm-editor': join(repoRoot, 'jdm-editor/packages/jdm-editor/src/index.ts'),
     };
-    // 宿主 `@/*` 与内核 `@/*` 各解析各的（按 importer 目录匹配所属 project）
-    config.plugins = [
-      ...(config.plugins ?? []),
-      tsconfigPaths({
-        projects: [join(repoRoot, 'tsconfig.json'), join(repoRoot, 'jdm-editor/packages/jdm-editor/tsconfig.json')],
-      }),
-    ];
+    // Vite 8 内置 tsconfig paths（S008 消费后启用）：宿主 `@/*` 与内核 `#*`
+    // 按 importer 就近 tsconfig 各解析各的
+    config.resolve.tsconfigPaths = true;
     return config;
   },
 };

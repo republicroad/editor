@@ -54,11 +54,15 @@
   正文：B1a 命名版本接线（feature-detect `onRename`，本地模式同享）+ 保留策略豁免缺口修复
   （「auto+命名」版本不再被折叠，路由级集成测试）；B2 diff 消费（`computeGraphDiff` 逐版基线喂
   `diffs` prop）；B4 快照验证归档（链路闭合，宿主零改动）。S007 提案已交付。
-- **第六十五批（下一批）：A3 + A4 部署硬化**——A3 容器 USER 硬化（Dockerfile root→bun +
+- **第六十五批（✅ 2026-09-08）：S008 消费收尾批（工具链）**——gitlink 推进 `91e8e8f→98d79d3`
+  （内核消费 S008：删 monaco 类型映射 + `MarkerSeverity` 本地字面量化；随批带入 6 个 UI 回归修复）；
+  vite.config 与 .storybook/main.ts 切 Vite 8 原生 `resolve.tsconfigPaths`，卸载 vite-tsconfig-paths
+  ——此前 19 错误的根因（monaco 映射入运行时解析）已消，informational 告警归零。
+- **第六十六批（下一批）：A3 + A4 部署硬化**——A3 容器 USER 硬化（Dockerfile root→bun +
   卷属主处理，前置确认 rootless podman 卷属主映射，docs/16 §6.2）；A4 `scripts/smoke-deploy`
   固化第五十九批手工链（build→up→healthz→签名 cookie 建图→PATCH 钉住→重启验证持久化，
   非零退出码语义）；部署冒烟**顺带补第六十四批遗留的 rename/diff UI 实机验证**。纯宿主可闭环。
-- **第六十六批候选：D1 旧图 kind 迁移工具 → A5 lexicon**（默认序，产品需求到位可对调；
+- **第六十七批候选：D1 旧图 kind 迁移工具 → A5 lexicon**（默认序，产品需求到位可对调；
   D1 = 历史 stub 域旧图唯一恢复路径，映射表已验证未实现，具数据恢复属性，见 docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D2 函数域重建（custom_list_query / rate_1h / group_distinct_1h / ip_location，
   恢复「撞库攻击防御.json」仿真验收）、D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
@@ -103,3 +107,5 @@
   B1b（Pin）立项 S007，B3 维持待内核；A3+A4 顺延第六十五批；新增 66 批候选 D1/A5。
 - **第六十四批（2026-09-07）**：内核消费接线完成（B1a 命名版本接线 + 保留策略豁免契约修复 +
   B2 diff 消费 + B4 验证归档），全门禁绿，详见 docs/03 §7.3。
+- **第六十五批（2026-09-08）**：S008 消费收尾（gitlink 98d79d3 + 原生 tsconfigPaths 迁移 +
+  卸载 vite-tsconfig-paths），工具链跟踪清单清零，全门禁绿，详见 docs/03 §7.3。

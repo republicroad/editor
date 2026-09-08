@@ -6,7 +6,6 @@ import tailwindcss from '@tailwindcss/vite';
 import * as path from 'path';
 import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 // 反射定位 monaco-editor 的 package.json，读取其 version 生成版本化静态路径(与 src/lib/monaco.ts 单一来源，见下方 define)。
 // 说明：
@@ -47,15 +46,6 @@ function findMonacoPackageJson(entry: string): string {
 
 const MONACO_VS_BASE = `/monaco-editor@${(JSON.parse(readFileSync(findMonacoPackageJson(resolveMonacoEntry()), 'utf8')) as { version: string }).version}/min/vs`;
 
-// 内核 tsconfig 的 `@/*` 别名指向内核自身 src；宿主的 `@/*` 指向主仓 src。
-// 两个 project 一起交给 vite-tsconfig-paths，按 importer 所在目录各解析各的；
-// 内核 barrel(@republicroad/jdm-editor) 由 resolve.alias 显式直通 src（优先级高于 paths，
-// 且绕开根 tsconfig paths 中面向 tsc 的 tmp/kernel-types 类型桥）。
-const tsconfigProjects = [
-  path.join(rootDir, 'tsconfig.json'),
-  path.join(rootDir, 'jdm-editor/packages/jdm-editor/tsconfig.json'),
-];
-
 // https://vitejs.dev/config/
 export default defineConfig({
   define: {
@@ -65,7 +55,6 @@ export default defineConfig({
     react(),
     wasm(),
     tailwindcss(),
-    tsconfigPaths({ projects: tsconfigProjects }),
     viteStaticCopy({
       targets: [
         {
@@ -84,6 +73,11 @@ export default defineConfig({
     target: 'esnext',
   },
   resolve: {
+    // Vite 8 内置 tsconfig paths 解析（S008 消费后启用：内核 monaco 类型映射已删，
+    // monaco 全走 node_modules 解析）。按 importer 就近 tsconfig 各解析各的——
+    // 宿主 `@/*`、`@republicroad/jdm-appshell*` 走根 tsconfig，内核 `#*` 走内核 tsconfig。
+    // 内核 barrel(@republicroad/jdm-editor) 由下方 alias 显式直通 src（alias 优先于 paths）。
+    tsconfigPaths: true,
     alias: {
       '@republicroad/jdm-editor': path.join(rootDir, 'jdm-editor/packages/jdm-editor/src/index.ts'),
     },

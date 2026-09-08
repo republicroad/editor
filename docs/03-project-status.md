@@ -156,6 +156,7 @@
 - [x] 第六十二批(决策请求日志落盘)：simulate/decision 逐行 JSONL 落盘(日频滚动 + `DECISION_LOG_KEEP_DAYS` 清理)；Dockerfile/compose 增 logs 卷；`deploy/vector-oss/` Vector→对象存储归档示例——见 7.3 第六十二批
 - [x] 第六十三批(工具链升级)：vite 7→8(Rolldown 默认打包器)+ typescript 5.9→6.0(TS 7 过渡版)+ storybook 家族 10.6.0 + react-swc 4.3.3 + wasm 插件 3.6.0；TS 6 `types` 显式化(根/node 工程)——见 7.3 第六十三批
 - [x] 第六十四批(内核消费接线批)：前置(gitlink 推进 91e8e8f + catalog 对齐：补 unplugin-dts ^1.1.0/删 vite-plugin-dts 残留)；命名版本接线(面板 onRename→adapter renameVersion→既有 PATCH，本地模式同享；修复 pruneAutoVersions 未豁免「auto+命名」版本缺口+路由级集成测试)；S004 diff 消费(computeGraphDiff 逐版基线喂 diffs prop)；B4 在途编辑快照验证归档(链路闭合，宿主零改动)——见 7.3 第六十四批
+- [x] 第六十五批(S008 消费收尾)：gitlink 推进 91e8e8f→98d79d3(内核消费 S008：删 monaco 类型映射 + MarkerSeverity 字面量化，随批 6 个 UI 回归修复)；vite.config/.storybook 切原生 resolve.tsconfigPaths + 卸载 vite-tsconfig-paths——见 7.3 第六十五批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -241,6 +242,22 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-08，第六十五批：S008 消费收尾——原生 tsconfigPaths 迁移)：**
+
+- **gitlink 推进 `91e8e8f→98d79d3`**：内核消费 S008——删 `packages/jdm-editor/tsconfig.json` 的
+  monaco-editor 类型映射（包 typings 字段指向同一文件，typecheck 零变化）+ `function.tsx` 的
+  `MarkerSeverity` 值导入改本地字面量常量（monaco 在内核内降级为纯类型依赖）；随批带入 6 个
+  UI 回归修复（edit-expression 按钮恢复、图面板停靠回底行、业务模式表格高度对齐、
+  CustomFunctionTable tab fallback + storybook 内核源码透传、rolldown 下 dist i18n catalogs
+  修复）与 4 个 docs 提交。`bun install` 零 lockfile 增量（内核 deps 变化不影响宿主解析）
+- **原生 tsconfigPaths 迁移**：vite.config 与 .storybook/main.ts 切 `resolve.tsconfigPaths: true`
+  并卸载 vite-tsconfig-paths——此前 19 错误的根因（monaco 映射被应用于运行时解析）随 S008
+  消除，informational 告警归零；双 tsconfig 语义由原生「按 importer 就近 tsconfig」承担
+  （宿主 `@/*`/`@republicroad/jdm-appshell*` 走根 tsconfig，内核 `#*` 走内核 tsconfig）
+- 工具链跟踪清单清零：`__dirname` ✓（99ea0fd）、`resolve.tsconfigPaths` ✓（本批）
+- 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build 4.4s/storybook/
+  sync:schema:check/单实例守卫/preview 200(告警 0) 全绿
 
 **最新变更(2026-09-07，第六十三批：工具链升级——Vite 7→8(Rolldown) + TypeScript 5.9→6.0)：**
 

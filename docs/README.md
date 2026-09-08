@@ -40,6 +40,7 @@
 | [TS imports 字段解析语义](./bestpractice/ts-imports-field-resolution.md)              | 扩展探测/通配字面填充/不回落 paths——imports 写法守则      |
 | [发布手册](./bestpractice/release-process.md)                                         | 版本线规则/三包发布命令/回滚纪律/changesets 备案          |
 | [Monorepo TS 编译·链接·运行](./bestpractice/ts-compile-link-runtime.md)               | 三通道解析模型/包形态反转/发布契约——地基篇                |
+| [Monaco 集成与分发三路线](./bestpractice/monaco-integration-distribution.md)          | CDN/自托管 AMD/ESM 三路线选型、workers 分水岭与本仓自洽性 |
 
 ---
 

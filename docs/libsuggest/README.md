@@ -62,3 +62,4 @@ proposed（宿主写入）
 | S004 | 版本历史 diff 视图组件（P1 面板版：computeGraphDiff + 面板对比）                        | 中     | proposed |
 | S005 | 换肤布局槽位（SkinDefinition 布局扩展需求：工具栏/面板/头部注入）                       | 中     | proposed |
 | S006 | 版本钉住 auto→manual（面板 Pin 按钮 + adapter.updateVersionMeta；服务端端点宿主已上线） | 中     | proposed |
+| S007 | 版本钉住 Pin（S006 剩余半边：pinned meta + 面板 Pin 按钮 + updateVersionMeta）          | 中     | proposed |

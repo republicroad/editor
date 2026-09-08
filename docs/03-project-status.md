@@ -155,6 +155,7 @@
 - [x] 第六十一批(页面拆分 + 版本按天保留)：decision-simple 863→372 行(hooks/工具条组件抽取 + lib 纯函数)；顺带修复 `listRemoteVersions` 剥 `auto`/`versionName` 字段缺陷(Pin 面板此前恒空态)；auto 版本保留策略升级为 滚动 20 条 ∪ 按天检查点(`AUTO_VERSIONS_DAILY_KEEP`，纯逻辑 `auto-version-retention.ts`)——见 7.3 第六十一批
 - [x] 第六十二批(决策请求日志落盘)：simulate/decision 逐行 JSONL 落盘(日频滚动 + `DECISION_LOG_KEEP_DAYS` 清理)；Dockerfile/compose 增 logs 卷；`deploy/vector-oss/` Vector→对象存储归档示例——见 7.3 第六十二批
 - [x] 第六十三批(工具链升级)：vite 7→8(Rolldown 默认打包器)+ typescript 5.9→6.0(TS 7 过渡版)+ storybook 家族 10.6.0 + react-swc 4.3.3 + wasm 插件 3.6.0；TS 6 `types` 显式化(根/node 工程)——见 7.3 第六十三批
+- [ ] 第六十四批(内核消费接线批，排期)：gitlink 推进 91e8e8f(appshell 0.2.0)；命名版本接线(面板 onRename→adapter renameVersion→既有 PATCH，收敛直连 workaround；修复 pruneAutoVersions 未豁免「auto+命名」版本缺口+单测)；S004 diff 消费(computeGraphDiff 喂 diffs prop)；B4 在途编辑快照验证登记；libsuggest S007(Pin 半边)提案——排期见 docs/17 批次排期
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库

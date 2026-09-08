@@ -63,3 +63,4 @@ proposed（宿主写入）
 | S005 | 换肤布局槽位（SkinDefinition 布局扩展需求：工具栏/面板/头部注入）                       | 中     | proposed |
 | S006 | 版本钉住 auto→manual（面板 Pin 按钮 + adapter.updateVersionMeta；服务端端点宿主已上线） | 中     | proposed |
 | S007 | 版本钉住 Pin（S006 剩余半边：pinned meta + 面板 Pin 按钮 + updateVersionMeta）          | 中     | proposed |
+| S008 | monaco-editor 的 tsconfig paths 映射冗余且毒化 oxc 系打包器运行时解析（建议删除该映射） | 低     | proposed |

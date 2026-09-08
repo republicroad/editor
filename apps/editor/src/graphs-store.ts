@@ -308,7 +308,9 @@ async function pruneAutoVersions(dir: string, safeId: string): Promise<void> {
     const match = new RegExp(`^${safeId}\\.v(\\d+)\\.json$`).exec(entry.name);
     if (!match) continue;
     const graph = await readHeadFile(join(dir, entry.name));
-    if (!graph?.auto) continue;
+    // 治理对象 = 无命名的 auto 版本：manual 天然豁免；「命名版本豁免 auto 保留」是 appshell 0.2.0
+    // 持久化契约（66cb38a）——用户显式命名的版本不允许被滚动窗口静默删除（第六十四批修复）
+    if (!graph?.auto || graph.versionName) continue;
     autos.push({ n: Number(match[1]), file: join(dir, entry.name), updatedAt: graph.updatedAt });
   }
   const toPrune = pickAutoVersionsToPrune(autos);

@@ -155,7 +155,7 @@
 - [x] 第六十一批(页面拆分 + 版本按天保留)：decision-simple 863→372 行(hooks/工具条组件抽取 + lib 纯函数)；顺带修复 `listRemoteVersions` 剥 `auto`/`versionName` 字段缺陷(Pin 面板此前恒空态)；auto 版本保留策略升级为 滚动 20 条 ∪ 按天检查点(`AUTO_VERSIONS_DAILY_KEEP`，纯逻辑 `auto-version-retention.ts`)——见 7.3 第六十一批
 - [x] 第六十二批(决策请求日志落盘)：simulate/decision 逐行 JSONL 落盘(日频滚动 + `DECISION_LOG_KEEP_DAYS` 清理)；Dockerfile/compose 增 logs 卷；`deploy/vector-oss/` Vector→对象存储归档示例——见 7.3 第六十二批
 - [x] 第六十三批(工具链升级)：vite 7→8(Rolldown 默认打包器)+ typescript 5.9→6.0(TS 7 过渡版)+ storybook 家族 10.6.0 + react-swc 4.3.3 + wasm 插件 3.6.0；TS 6 `types` 显式化(根/node 工程)——见 7.3 第六十三批
-- [~] 第六十四批(内核消费接线批，进行中)：前置已完成(gitlink 推进 91e8e8f + catalog 对齐：补 unplugin-dts ^1.1.0/删 vite-plugin-dts 残留，内核 catalog 已自对齐宿主 vite 8.2.2 与 storybook 10.6.0，门禁复验绿)；剩余：命名版本接线(面板 onRename→adapter renameVersion→既有 PATCH，收敛直连 workaround；修复 pruneAutoVersions 未豁免「auto+命名」版本缺口+单测)；S004 diff 消费(computeGraphDiff 喂 diffs prop)；B4 在途编辑快照验证登记——排期见 docs/17 批次排期
+- [x] 第六十四批(内核消费接线批)：前置(gitlink 推进 91e8e8f + catalog 对齐：补 unplugin-dts ^1.1.0/删 vite-plugin-dts 残留)；命名版本接线(面板 onRename→adapter renameVersion→既有 PATCH，本地模式同享；修复 pruneAutoVersions 未豁免「auto+命名」版本缺口+路由级集成测试)；S004 diff 消费(computeGraphDiff 逐版基线喂 diffs prop)；B4 在途编辑快照验证归档(链路闭合，宿主零改动)——见 7.3 第六十四批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -231,6 +231,16 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 ```
 
 ### 7.3 zrule/reui 分支变更摘要
+
+**最新变更(2026-09-07，第六十四批：内核消费接线——命名版本 + 版本 diff + 快照验证归档)：**
+
+- **前置(3cc250f)**：gitlink 0020247→91e8e8f(appshell 0.2.0/kernel 0.3.3+) + catalog 跨树对齐(补 `unplugin-dts ^1.1.0`——缺失即 `bun install` not-in-catalog 实证复现；删 `vite-plugin-dts ^5.0.3` 残留；内核 catalog 已自对齐宿主 vite `^8.2.2`/storybook `10.6.0` 同款数值)
+- **命名版本接线(B1a)**：`use-remote-graph` 增 `renameVersion(revision, versionName|null)` → adapter `renameVersion` → 既有 PATCH `{versionName}`(第五十七批端点，零后端改动)；`VersionHistoryPanel` 按 `persistence.renameVersion` feature-detect 传 `onRename`(内核 66cb38a 的面板重命名/按名过滤入口点亮；IndexedDB 本地适配器同款实现，本地模式亦可重命名)。**钉住直连 PATCH 维持**——面板 Pin 入口属 S007 范围，交付后收敛
+- **保留策略契约修复**：`pruneAutoVersions` 增豁免——治理对象收窄为「无命名 auto」(`!graph?.auto || graph.versionName` 跳过)，堵住「auto 版本被命名后仍被滚动窗口折叠删除」的契约缺口(appshell 0.2.0「命名版本豁免 auto 保留」)。路由级集成测试：POST manual + 21 auto PUT + PATCH 命名最旧归档 + 1 次溢出保存 → 命名 v2 存活且总量 23(无豁免则 22)
+- **S004 diff 消费(B2)**：打开版本历史时以 adapter 返回序为时间序逐版 `load`、以前一版为基线跑 `computeGraphDiff`(内核 barrel 导出)，键 = revision 喂面板 `diffs` prop——+/−/~ 摘要与展开明细由内核 DiffSummary 渲染(宿主只算不算语义，第五十七批裁决不变)；换图/新建时清空。逐版全量加载的量级受保留策略约束(≤20+命名)，本地存储可接受
+- **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
+- **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
+- 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
 
 **最新变更(2026-09-07，第六十三批：工具链升级——Vite 7→8(Rolldown) + TypeScript 5.9→6.0)：**
 

@@ -111,11 +111,14 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
     libraryGraphs,
     remoteVersions,
     pinningRevision,
+    versionDiffs,
     persistToRemote,
     refreshLibrary,
     openRemoteGraph,
     refreshVersions,
     pinVersion,
+    renameVersion,
+    computeVersionDiffs,
     resetSource,
   } = useRemoteGraph({ persistence, storageMode, graph, fileName, graphRef, setGraph, setFileName });
 
@@ -232,6 +235,7 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
               onOpenVersions={() => {
                 if (!remoteSource) return;
                 void refreshVersions(remoteSource.id);
+                void computeVersionDiffs(remoteSource.id);
                 setHistoryOpen(true);
               }}
               showPin={Boolean(persistence?.listVersions && remoteSource && storageMode === 'http')}
@@ -356,6 +360,12 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
           versions={remoteVersions}
           currentRevision={remoteSource.revision}
           onRestore={(revision) => confirmOpenVersion(remoteSource.id, revision)}
+          onRename={
+            persistence?.renameVersion
+              ? (revision, versionName) => void renameVersion(revision, versionName)
+              : undefined
+          }
+          diffs={versionDiffs}
         />
       )}
       {remoteSource && storageMode === 'http' && (

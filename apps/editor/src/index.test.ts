@@ -553,6 +553,52 @@ describe('graph persistence routes', () => {
     expect(versions.filter((v) => v.auto)).toHaveLength(21); // 21 归档 auto + head
   });
 
+  test('命名版本豁免 auto 保留策略（appshell 0.2.0 契约）：滚动溢出后仍保留', async () => {
+    const name = `auto-named-${Date.now()}`;
+    const created = (await (
+      await app.request('/api/graphs', {
+        method: 'POST',
+        headers: asUser('user-a'),
+        body: JSON.stringify(graphBody(name)),
+      })
+    ).json()) as { id: string };
+
+    // 21 次 auto 保存 → 归档 v1(manual) + v2..v21(20 条 auto)，head v22
+    for (let i = 2; i <= 22; i++) {
+      const put = await app.request(`/api/graphs/${created.id}`, {
+        method: 'PUT',
+        headers: asUser('user-a'),
+        body: JSON.stringify({ ...graphBody(`${name}-a${i}`), baseRevision: `v${i - 1}`, auto: true }),
+      });
+      expect(put.status).toBe(200);
+    }
+    // 命名最旧的归档 auto（v2）——PATCH body 与 appshell renameVersion 契约一致（{versionName}）
+    const patch = await app.request(`/api/graphs/${created.id}/versions/v2`, {
+      method: 'PATCH',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ versionName: 'keep-me' }),
+    });
+    expect(patch.status).toBe(200);
+
+    // 再 1 次 auto 保存 → 归档 auto = v2..v22(21 条)：滚动窗口(20)溢出 v2，但 v2 已命名 → 豁免
+    const put = await app.request(`/api/graphs/${created.id}`, {
+      method: 'PUT',
+      headers: asUser('user-a'),
+      body: JSON.stringify({ ...graphBody(`${name}-a23`), baseRevision: 'v22', auto: true }),
+    });
+    expect(put.status).toBe(200);
+
+    const versions = (await (
+      await app.request(`/api/graphs/${created.id}/versions`, { headers: asUser('user-a') })
+    ).json()) as Array<{ revision: string; versionName?: string; auto?: boolean }>;
+    const byRevision = new Map(versions.map((v) => [v.revision, v]));
+    // 命名的 v2 存活且命名在列；若无豁免，v2 已被滚动窗口删除
+    expect(byRevision.get('v2')?.versionName).toBe('keep-me');
+    expect(byRevision.get('v2')?.auto).toBe(true);
+    // 总量：v1(manual) + v2(命名 auto 豁免) + v3..v22(20 auto) + v23(head) = 23
+    expect(versions).toHaveLength(23);
+  });
+
   test('auto 版本按天折叠：检查点救回滚动溢出条目，同日折叠以最新替代（第六十一批按天检查点）', async () => {
     const name = `auto-daily-${Date.now()}`;
     const created = (await (

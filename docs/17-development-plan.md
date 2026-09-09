@@ -63,13 +63,15 @@
   `scripts/smoke-deploy` 固化第五十九批手工链（非零退出码）。podman 网络恢复后实机全链
   PASS（exit 0，含卷属主自愈迁移），详见 docs/03 §7.3；rename/diff UI 浏览器走查顺延
   （数据链已容器实测，IAB webview 恢复后随任意部署走查）。
-- **第六十八批（下一批）：B 轨道第二轮接线（内核 07ad8a6 消费，2026-09-09 gitlink 已同步）**——
+- **第六十八批（下一批）：B 轨道第二轮接线（内核 65b2fb9 消费：0.4.0/0.3.0 发版 + i18n
+  catalog，2026-09-09 gitlink 已同步）**——
   ① `restoreVersion` 接线（appshell shell/restore.ts 库标准恢复即前进入口）：`onRestore`
   确认后改走新入口——load(revision)→save() 立即固化为新 head（可选 versionName、head 兜底、
   NOT_FOUND 语义），成功后 refreshVersions + 重载 head；**行为变化记录**：恢复从「载入画布随
   下次保存落盘」变「立即落盘」；② `diffBaseline` 消费（S004-P2 画布 diff）：恢复时记录恢复前
   图快照传 `DecisionGraph.diffBaseline`（画布差异标记，store 数据不受污染），编辑置 dirty 或
-  重开版本面板时清除。
+  重开版本面板时清除；③ i18n 验证：VersionHistoryPanel 文案已改走内核 `vh.*` catalog
+  （useT，en/zh-CN），宿主验证 zh 环境面板中文显示与语言跟随机制。
 - **第六十七批（✅ 2026-09-09）：D1 旧图 kind 迁移**——映射纯函数（落点 `node.content.kind`，
   实测定锚；contrib.*→裸名、http_request 例外保留、roster.roster/risk.query_list→roster）
   + normalizeGraphNodes 在线接线（幂等）+ 批量脚本（--dry-run）。**验收口径修正**：撞库图
@@ -86,9 +88,10 @@
 
 ### 跟踪项（不立批次）
 
-内核 0.4.0 观察项、S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待内核会话标记 done +
+S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待内核会话标记 done +
 宿主验证归档）、上游 zen-engine-wasm 版本跟进——内核会话消费后在 docs/03 批次记录中验证归档。
-（S004 P2 画布 diff 已随内核 0f3b4da 交付，消费排入第六十八批。）
+（内核 0.4.0 观察项已核销 2026-09-09：gru-hl-view / --grl-* 契约无变化；S004 P2 画布 diff
+已随内核 0f3b4da 交付，消费排入第六十八批。）
 
 ### 运维扩展（第六十二批新增）
 

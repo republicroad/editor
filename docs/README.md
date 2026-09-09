@@ -25,6 +25,7 @@
 | [10-从零重写评估与路线图](./10-rewrite-roadmap.md)                    | 从零重写 jdm-editor 的评估与 P1–P8 路线图(存档)    |
 | [11-antd vs shadcn+ReUI 对比](./11-antd-vs-shadcn-reui-comparison.md) | antd 与 shadcn+ReUI 组件能力对照                   |
 | [17-开发任务规划](./17-development-plan.md)                           | 三轨道任务规划(宿主自主/内核依赖/上线期)与执行状态 |
+| [18-历史规则图兼容](./18-legacy-graph-compatibility.md)               | 旧图兼容机制地图：normalize/兜底/运行时/存储治理四层 |
 
 ---
 

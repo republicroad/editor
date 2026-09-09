@@ -1,6 +1,6 @@
 # S006 版本钉住（auto→manual 升格）：面板按钮 + adapter 契约
 
-- 状态: proposed
+- 状态: superseded by S007 — 命名版本半已随 appshell 0.2.0 落地，Pin 半由 S007 承接
 - 目标库: @republicroad/jdm-appshell（VersionHistoryPanel + GraphPersistenceAdapter）
 - 提出方: editor 会话（第五十七批，2026-09-06）
 - 优先级: 中

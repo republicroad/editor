@@ -1,6 +1,6 @@
 # S003 appshell stories 在内核 pnpm 树下 typecheck 断链
 
-- 状态: proposed
+- 状态: proposed（观察中）— 待 S001/S002 版本口径统一后复验内核树 typecheck
 - 目标库: @republicroad/jdm-appshell
 - 提出方: editor 会话（第五十六批中断前实测发现，2026-09-06）
 - 优先级: 低

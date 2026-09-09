@@ -1,6 +1,6 @@
 # S007 版本钉住 Pin（S006 剩余半边：pinned meta + 面板 Pin 按钮 + updateVersionMeta）
 
-- 状态: proposed
+- 状态: done — appshell 0.4.0 已发布（2026-09-09）：pinned 元数据 + updateVersionMeta（IndexedDB/HTTP PATCH）+ 面板 Pin/Unpin/徽标/过滤 + 保留策略豁免
 - 目标库: @republicroad/jdm-appshell
 - 提出方: editor 会话（第六十三批规划 / 2026-09-07）
 - 优先级: 中

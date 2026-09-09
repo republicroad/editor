@@ -1,6 +1,6 @@
 # S004 版本历史 diff 视图组件（P1 面板版）
 
-- 状态: proposed
+- 状态: done — 内核侧实现于 packages/jdm-editor/src/components/decision-graph/diff/compute-graph-diff.ts（P1 面板摘要 + P2 diffBaseline 画布模式，2026-09-08）
 - 目标库: @republicroad/jdm-appshell（+ @republicroad/jdm-editor 类型导出）
 - 提出方: editor 会话（第五十七批规划，2026-09-06）
 - 优先级: 中

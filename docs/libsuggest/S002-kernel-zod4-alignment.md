@@ -1,6 +1,6 @@
 # S002 zod 3 → 4.3.6 对齐
 
-- 状态: proposed
+- 状态: done — 内核已钉 zod 4.3.6 精确版，全门禁（433+121 测试/build/size）绿（2026-09-09）
 - 目标库: @republicroad/jdm-editor
 - 提出方: editor 会话（第五十四~五十六批调研，2026-09-06）
 - 优先级: 中

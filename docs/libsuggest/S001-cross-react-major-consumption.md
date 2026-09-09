@@ -1,6 +1,6 @@
 # S001 跨 react 主版本消费的类型合规
 
-- 状态: proposed
+- 状态: done — 内核侧已落地（jdm-editor，dt-empty 改 React.JSX.Element + consumer-smoke 双宿主类型编译检查，2026-09-09）
 - 目标库: @republicroad/jdm-editor
 - 提出方: editor 会话（第五十六批调研，2026-09-06）
 - 优先级: 中

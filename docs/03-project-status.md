@@ -158,6 +158,7 @@
 - [x] 第六十四批(内核消费接线批)：前置(gitlink 推进 91e8e8f + catalog 对齐：补 unplugin-dts ^1.1.0/删 vite-plugin-dts 残留)；命名版本接线(面板 onRename→adapter renameVersion→既有 PATCH，本地模式同享；修复 pruneAutoVersions 未豁免「auto+命名」版本缺口+路由级集成测试)；S004 diff 消费(computeGraphDiff 逐版基线喂 diffs prop)；B4 在途编辑快照验证归档(链路闭合，宿主零改动)——见 7.3 第六十四批
 - [x] 第六十五批(S008 消费收尾)：gitlink 推进 91e8e8f→98d79d3(内核消费 S008：删 monaco 类型映射 + MarkerSeverity 字面量化，随批 6 个 UI 回归修复)；vite.config/.storybook 切原生 resolve.tsconfigPaths + 卸载 vite-tsconfig-paths——见 7.3 第六十五批
 - [x] 第六十六批(部署硬化)：A3 容器 USER 硬化(/data 预置 bun 属主 + USER bun，存量卷自愈迁移)；A4 冒烟链固化(scripts/smoke-deploy.ts，复刻 59 批全链+非零退出码+卷属主自动迁移)；podman 网络恢复后实机全链 PASS(exit 0)——见 7.3 第六十六批补验
+- [x] 第六十七批(D1 旧图 kind 迁移)：映射纯函数(node.content.kind：contrib.*→裸名/http 例外、roster.roster 与 risk.query_list→roster)+normalizeGraphNodes 在线接线+批量脚本(--dry-run)；验收口径修正：撞库图无 namespaced kind（恢复靠 D2），真实样本为 mock-user-1 例外保留图——见 7.3 第六十七批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -243,6 +244,25 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-09，第六十七批：D1 旧图 kind 迁移——在线恢复路径)：**
+
+- **映射纯函数(`src/lib/graph-kind-migration.ts`)**：迁移落点为 `node.content.kind`（实测定锚，
+  非 node.kind）——精确映射 `roster.roster`/`risk.query_list`→`roster`；`contrib.<fn>`→`<fn>`
+  （例外：`contrib.http_request` 不迁移——http 已由 http_request 专属节点取代，customNode 壳
+  无法转型，保持原 kind 走「配置不符合规范」占位卡，数据无损）。幂等：迁移结果再跑零变化，
+  零改写路径返回原节点引用
+- **在线接线**：`normalizeGraphNodes` 统一先过迁移（打开/导入全覆盖，`;;` 数组化迁移同款
+  先例位置）；用户导入旧图即自动恢复，无需手工跑工具
+- **批量脚本(`scripts/migrate-legacy-graphs.ts`)**：`bun scripts/migrate-legacy-graphs.ts
+  [路径...] [--dry-run]`——缺省扫 apps/editor/graphs，有变化才写盘；dry-run 与实迁移双模式
+  经合成旧图验证
+- **诚实标注（验收口径修正）**：撞库攻击防御.json 实查**无 namespaced kind 可迁**——其 4 个
+  UDF 节点为 generic customNode + expressions.value 首段函数名（`custom_list_query;;...`，
+  现行模型），加载/渲染/编辑本就通过，仿真恢复靠 D2 函数域重建（非 D1）。真实迁移样本为
+  mock-user-1 存量图 `contrib.http_request`（恰为例外保留类）。单测 6 例：合成映射/例外/
+  幂等 + 真实文件回归（contrib.http_request 保留断言）
+- 门禁：typecheck(root+apps)/lint 0-0/主仓 123(+6)/组件 46/apps 92/build 2.8s/schema/单实例 全绿
 
 **最新变更(2026-09-09，第六十六批补验：podman 网络恢复 + 冒烟全链 PASS + 卷属主自愈迁移)：**
 

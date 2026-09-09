@@ -63,20 +63,18 @@
   `scripts/smoke-deploy` 固化第五十九批手工链（非零退出码）。podman 网络恢复后实机全链
   PASS（exit 0，含卷属主自愈迁移），详见 docs/03 §7.3；rename/diff UI 浏览器走查顺延
   （数据链已容器实测，IAB webview 恢复后随任意部署走查）。
-- **第六十八批（排期）：B 轨道第二轮接线（内核 07ad8a6 消费，2026-09-09 gitlink 已同步）**——
+- **第六十八批（下一批）：B 轨道第二轮接线（内核 07ad8a6 消费，2026-09-09 gitlink 已同步）**——
   ① `restoreVersion` 接线（appshell shell/restore.ts 库标准恢复即前进入口）：`onRestore`
   确认后改走新入口——load(revision)→save() 立即固化为新 head（可选 versionName、head 兜底、
   NOT_FOUND 语义），成功后 refreshVersions + 重载 head；**行为变化记录**：恢复从「载入画布随
   下次保存落盘」变「立即落盘」；② `diffBaseline` 消费（S004-P2 画布 diff）：恢复时记录恢复前
   图快照传 `DecisionGraph.diffBaseline`（画布差异标记，store 数据不受污染），编辑置 dirty 或
   重开版本面板时清除。
-- **第六十七批候选：D1 旧图 kind 迁移**——映射纯函数（`contrib.<fn>`→`<fn>` 限当前
-  schema 存在者；`roster.roster`/`risk.query_list`→`roster`；旧 http/legacy_http 容器节点
-  不迁移，维持「配置不符合规范」占位卡现状）+ 接线宿主导入/打开 normalize 层（幂等在线
-  自动恢复，;; 迁移同款先例）+ 可选批量脚本（`scripts/migrate-legacy-graphs.ts`）；
-  验收 = 撞库攻击防御.json（apps/zen-rule/graph/）加载/渲染/编辑恢复（仿真验收仍待 D2）；
-  映射表单测。数据恢复属性：平台重设计后历史 stub 域旧图的唯一恢复路径（docs/13 §8.3）。
-  注：67/68 两批相互独立，执行顺序可按指示对调。
+- **第六十七批（✅ 2026-09-09）：D1 旧图 kind 迁移**——映射纯函数（落点 `node.content.kind`，
+  实测定锚；contrib.*→裸名、http_request 例外保留、roster.roster/risk.query_list→roster）
+  + normalizeGraphNodes 在线接线（幂等）+ 批量脚本（--dry-run）。**验收口径修正**：撞库图
+  实查无 namespaced kind（UDF 调用在 expressions.value，恢复靠 D2），真实样本为 mock-user-1
+  contrib.http_request 例外图；单测 6 例含真实文件回归。全门禁绿。
 - **第六十九批候选：D2 函数域重建 ↔ A5 lexicon 词表域**（默认序 D2 先——`custom_list_query`
   复用 queryRoster 最先，与 D1 构成「旧图恢复→仿真恢复」闭环，撞库仿真验收随之恢复；
   A5 aho-corasick 随产品需求可对调；rate_1h/group_distinct_1h 内存窗口、ip_location 需
@@ -128,3 +126,5 @@
   卸载 vite-tsconfig-paths），工具链跟踪清单清零，全门禁绿，详见 docs/03 §7.3。
 - **第六十六批（2026-09-08）**：部署硬化（A3 USER 硬化 + A4 冒烟脚本固化 + 存量卷自愈迁移）；
   podman 网络恢复后实机全链 PASS，详见 docs/03 §7.3。
+- **第六十七批（2026-09-09）**：D1 旧图 kind 迁移（映射纯函数 + 在线接线 + 批量脚本；
+  验收口径修正：撞库图靠 D2 恢复仿真），全门禁绿，详见 docs/03 §7.3。

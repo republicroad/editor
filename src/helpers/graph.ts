@@ -1,4 +1,5 @@
 import type { CustomNodeConfig, CustomNodeExpression } from '@republicroad/jdm-appshell';
+import { migrateLegacyNodeKinds } from '../lib/graph-kind-migration.ts';
 
 export type Position = {
   x: number;
@@ -39,7 +40,7 @@ const normalizeExpressionValue = (value: unknown): unknown => {
 };
 
 export const normalizeGraphNodes = (nodes: DecisionNode[]): DecisionNode[] =>
-  nodes.map((node) => {
+  migrateLegacyNodeKinds(nodes).nodes.map((node) => {
     if (node.type !== 'customNode') {
       return node;
     }

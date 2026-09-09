@@ -107,7 +107,7 @@
     },
     "jdm-editor/packages/appshell": {
       "name": "@republicroad/jdm-appshell",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@base-ui/react": "^1.7.0",
         "@radix-ui/react-alert-dialog": "^1.1.23",
@@ -201,7 +201,7 @@
         "ts-pattern": "catalog:",
         "use-debounce": "^10.0.4",
         "use-sync-external-store": "^1.6.0",
-        "zod": "^3.25.0",
+        "zod": "4.3.6",
         "zustand": "^5.0.15",
       },
       "devDependencies": {
@@ -2675,8 +2675,6 @@
     "@republicroad/jdm-appshell/axios": ["axios@1.20.0", "", { "dependencies": { "follow-redirects": "^1.16.0", "form-data": "^4.0.6", "https-proxy-agent": "^5.0.1", "proxy-from-env": "^2.1.0" } }, "sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg=="],
 
     "@republicroad/jdm-appshell/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
-
-    "@republicroad/jdm-editor/zod": ["zod@3.25.71", "", {}, "sha512-BsBc/NPk7h8WsUWYWYL+BajcJPY8YhjelaWu2NMLuzgraKAz4Lb4/6K11g9jpuDetjMiqhZ6YaexFLOC0Ogi3Q=="],
 
     "@rollup/pluginutils/picomatch": ["picomatch@4.0.2", "", {}, "sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg=="],
 

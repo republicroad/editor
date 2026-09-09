@@ -62,3 +62,7 @@ jdm-editor/src/components/decision-table/dt-empty.tsx:30
 宿主已用 overrides（react/react-dom/@types 家族 → 18.3.1）+ `check:single-instance`
 守卫实现编辑器树单实例 18 消费，无需宿主改动。内核保持 19 的前提下，该机制
 为宿主侧终态。
+
+## 追记（2026-09-09，宿主会话）
+
+内核 e3fa801 已落地 react18 类型合规检查（S001+S002 同批 deps 治理）。宿主侧机制不变。

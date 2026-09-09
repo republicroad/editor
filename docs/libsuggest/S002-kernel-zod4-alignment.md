@@ -41,3 +41,7 @@ isolated 布局下 store 中 `@republicroad/jdm-editor/zod → zod@3.25.71` 与�
 宿主无规避措施（zod 双版本宿主侧无类型/运行时越界：内核公开 API 未暴露 zod
 类型给宿主）。对齐后宿主 store 少一份副本，`check:single-instance` 口径可
 考虑扩至 zod（当前未监听 zod，因宿主自身曾存在第三方 zod@3 嵌套）。
+
+## 追记（2026-09-09，宿主会话）
+
+内核 e3fa801 钉版 zod 4.3.6 + 51ac63c lockfile 对齐（S002 落地）。宿主树同版 4.3.6，双副本收敛。

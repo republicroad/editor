@@ -29,7 +29,7 @@
 | A2 | auto 版本按天合并保留策略 | ✅ 第六十一批 | `auto-version-retention.ts` 纯逻辑（滚动 20 条 ∪ 每日检查点，`AUTO_VERSIONS_DAILY_KEEP` 默认 30，0 关闭）+ 路由级集成测试 |
 | A3 | 容器 USER 硬化（root→bun + 卷属主） | 第六十五批（排期） | 前置：确认 rootless podman 卷属主映射（docs/16 §6.2 取舍说明） |
 | A4 | 部署冒烟脚本固化（scripts/smoke-deploy） | 第六十五批（排期） | 把第五十九批手工冒烟链固化为可一键执行 + 非零退出码语义 |
-| A5 | lexicon 词表域重建 | 第六十六批候选 | aho-corasick；名单/风控场景价值最高（docs/13 §8.3 备案）；默认后于 D1，产品需求到位可对调 |
+| A5 | lexicon 词表域重建 | 待排 | aho-corasick；名单/风控场景价值最高（docs/13 §8.3 备案）；产品需求到位即启动 |
 
 ### 轨道 B：内核交付后的宿主接线（2026-09-07 按内核 reui@91e8e8f 实测重排）
 
@@ -83,8 +83,15 @@
   重建于 apps/zen-rule/src/contrib/；撞库攻击防御.json **仿真验收恢复**（双路径 trace 断言）；
   schema fixture 7→10 namespaces（在途同步待内核入库，push 前需内核会话吸收 fixture）。
   与 67 批 D1 构成撞库图「旧图恢复→仿真恢复」完整闭环。全门禁绿。
-- **待定/跟踪（不排批）**：D2 函数域重建（custom_list_query / rate_1h / group_distinct_1h / ip_location，
-  恢复「撞库攻击防御.json」仿真验收）、D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
+- **第七十批（下一批）：S007 版本钉住消费收口（内核 66fbf87 消费：appshell 0.4.0）**——
+  ① 后端：`graphs-store` patch 契约扩展 `pinned` 键（**内核裁决为独立 meta 键，未复用 auto**，
+  S007 提案口径更新）+ `pruneAutoVersions` 豁免 pinned（与命名版本同款）+ versions 列表透传
+  pinned + OpenAPI schema 更新 + 单测；② 前端：`VersionHistoryPanel.onPin` 接线
+  （feature-detect `updateVersionMeta`，HTTP PATCH body 已含 pinned）；**退役宿主自研
+  PinVersionsSheet 与直连 PATCH workaround**——内核面板已带 Pin/Unpin 控件 + pinned 徽标 +
+  pinned 过滤（消除双实现，同 68 批 restoreVersion 先例）。
+- **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
+- **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；轨道 C 上线期
   （用户决策驱动）；命名版本按名检索 UI 增强（服务端 versionName 已就绪）、版本存储治理（压缩/去重，量大再做）。
 

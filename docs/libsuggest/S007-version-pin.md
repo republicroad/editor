@@ -41,3 +41,10 @@ S006（版本管理增强）规划的两半中，**命名版本半边已由内�
 
 页面 `pin-versions-sheet` 以直连 PATCH `{auto:false}` workaround 钉住（第五十七批），版本面板无
 Pin 入口；内核交付后宿主升级消费并收敛 workaround（原轨道 B1 计划的 B1b 半边）。
+
+## 追记（2026-09-09，宿主会话）
+
+内核 66fbf87 已实现（appshell 0.4.0）：pinned 为独立 meta 键（未复用 auto，裁决更新）；
+updateVersionMeta(id, revision, {pinned?, versionName?}) 联合 meta，renameVersion 成兼容别名；
+HTTP PATCH body 扩展 pinned；面板 pinned 徽标 + Pin/Unpin + pinned 过滤（feature-detect onPin）。
+宿主后端 patch 契约需补 pinned 键 + 保留策略豁免，消费排入第七十批。

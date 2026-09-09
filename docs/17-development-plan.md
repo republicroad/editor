@@ -104,6 +104,10 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
 - Vite 7→8（Rolldown 默认打包器）+ TypeScript 5.9→6.0 + storybook 10.6 家族——全门禁绿。
   `__dirname` → `import.meta.dirname` 迁移已完成（2026-09-07，configLoader native 就绪，
   `engines.node` 同步升至 ≥20.19 与 Vite 8 门槛一致，preview 告警消除）。
+  防双实例备案（内核 playground 案例 2998cc6）：workspace 源码包若被 vite dev 预打包，会把当时
+  的 dist 冻结成第二份内核副本（双实例 → context 断裂白屏，dist 变化触发整页 reload）。宿主 dev
+  当前经 alias 源码直通未触发该症状；一旦出现，把 `@republicroad/jdm-editor`、
+  `@republicroad/jdm-appshell`、`@gorules/zen-engine-wasm` 加入 `optimizeDeps.exclude`。
   `resolve.tsconfigPaths` 内置替代已实证**不可切换**（2026-09-07）：选项仅 boolean 无细化配置，
   内核 tsconfig 的 `monaco-editor → editor.api.d.ts` 类型 shim 映射（内核 pnpm 树 typecheck 用）
   会被内置解析器应用于运行时，rolldown 解析 .d.ts 直接报错（19 errors）；插件的双项目过滤语义

@@ -168,4 +168,19 @@ describe('listRemoteVersions', () => {
       { revision: 'v2', updatedAt: '2026-01-02', versionName: 'release' },
     ]);
   });
+
+  test('pinned 字段透传（S007 钉住徽标/过滤数据源，第七十批）', async () => {
+    const adapter: GraphPersistenceAdapter = {
+      load: async () => null,
+      save: async () => ({ id: 'x', revision: 'v1' }),
+      listVersions: async () => [
+        { revision: 'v1', updatedAt: '2026-01-01', auto: true, pinned: true },
+        { revision: 'v2', updatedAt: '2026-01-02', auto: true },
+      ],
+    };
+    expect(await listRemoteVersions(adapter, 'g1')).toEqual([
+      { revision: 'v1', updatedAt: '2026-01-01', auto: true, pinned: true },
+      { revision: 'v2', updatedAt: '2026-01-02', auto: true },
+    ]);
+  });
 });

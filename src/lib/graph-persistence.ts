@@ -93,12 +93,12 @@ export const loadFromRemote = async (
 };
 
 /** 列出指定图的历史版本；适配器未实现时返回空列表。
- *  auto/versionName 透传（版本面板徽标与钉住面板的数据源——第六十一批修复：
- *  此前 map 只挑 revision/updatedAt，把这两个字段剥掉导致 Pin 面板恒为空态）。 */
+ *  auto/versionName/pinned 透传（版本面板徽标/钉住标记与过滤的数据源——第六十一批修复
+ *  剥字段的教训：透传必须全量）。 */
 export const listRemoteVersions = async (
   adapter: GraphPersistenceAdapter,
   id: string,
-): Promise<Array<{ revision: string; updatedAt?: string; versionName?: string; auto?: boolean }>> => {
+): Promise<Array<{ revision: string; updatedAt?: string; versionName?: string; auto?: boolean; pinned?: boolean }>> => {
   if (!adapter.listVersions) return [];
   return (await adapter.listVersions(id)) ?? [];
 };

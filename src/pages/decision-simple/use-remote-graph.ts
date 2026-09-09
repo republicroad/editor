@@ -8,7 +8,15 @@ import { displayError } from '../../helpers/error-message.ts';
 import { DecisionEdge, DecisionNode, normalizeGraphNodes } from '../../helpers/graph.ts';
 import { assertAcyclic } from '../../lib/graph-cycle.ts';
 import { listRemoteVersions, loadFromRemote, saveToRemote, type GraphLike } from '../../lib/graph-persistence.ts';
-import type { VersionEntry } from './pin-versions-sheet.tsx';
+
+export interface VersionEntry {
+  revision: string;
+  updatedAt?: string;
+  versionName?: string;
+  auto?: boolean;
+  /** 钉住标记（S007）：豁免 auto 保留策略滚动删除 */
+  pinned?: boolean;
+}
 
 export interface RemoteSource {
   id: string;
@@ -22,7 +30,6 @@ export type RemoteSaveOutcome =
 interface UseRemoteGraphOptions {
   persistence: GraphPersistenceAdapter | undefined;
   /** 仅 http 模式提供版本钉住（PATCH 直连服务端；IndexedDB 适配器无该端点） */
-  storageMode: 'local' | 'http';
   graph: DecisionGraphType;
   fileName: string;
   graphRef: React.RefObject<DecisionGraphRef>;
@@ -33,7 +40,6 @@ interface UseRemoteGraphOptions {
 /** 宿主存储分支（Graph library / 保存 / 版本历史 / 钉住）——页面与 persistence 适配器之间的状态接线 */
 export const useRemoteGraph = ({
   persistence,
-  storageMode,
   graph,
   fileName,
   graphRef,
@@ -44,7 +50,6 @@ export const useRemoteGraph = ({
   const [remoteSource, setRemoteSource] = useState<RemoteSource>();
   const [libraryGraphs, setLibraryGraphs] = useState<Array<{ id: string; name: string; updatedAt?: string }>>();
   const [remoteVersions, setRemoteVersions] = useState<VersionEntry[]>([]);
-  const [pinningRevision, setPinningRevision] = useState<string>();
   const [versionDiffs, setVersionDiffs] = useState<Record<string, GraphDiff>>();
   const [diffBaseline, setDiffBaseline] = useState<DecisionGraphType>();
 
@@ -129,29 +134,19 @@ export const useRemoteGraph = ({
     }
   };
 
-  /** 钉住 auto 版本（升格 manual，免于 AUTO_VERSIONS_KEEP 滚动删除）。
-   *  HTTP 模式直连 PATCH（面板 Pin 入口属内核 S007 范围，交付后切换）。 */
-  const pinVersion = async (revision: string) => {
-    if (!remoteSource || storageMode !== 'http') return;
-    setPinningRevision(revision);
+  /** 钉住/取消钉住版本（S007 消费）：adapter.updateVersionMeta（HTTP PATCH {pinned} /
+   *  IndexedDB 原生，两种存储模式同享）；钉住的版本（含 auto）豁免保留策略滚动删除。
+   *  直连 PATCH workaround 与自研 PinVersionsSheet 随内核面板 Pin 控件退役（消除双实现）。 */
+  const setVersionPinned = async (revision: string, pinned: boolean) => {
+    if (!remoteSource || !persistence?.updateVersionMeta) return;
     try {
-      const res = await fetch(
-        `/api/graphs/${encodeURIComponent(remoteSource.id)}/versions/${encodeURIComponent(revision)}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ auto: false }),
-        },
+      await persistence.updateVersionMeta(remoteSource.id, revision, { pinned });
+      toast.success(
+        pinned ? `Version ${revision} pinned — exempt from auto-version cleanup` : `Version ${revision} unpinned`,
       );
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      toast.success(`Version ${revision} pinned — exempt from auto-version cleanup`);
       await refreshVersions(remoteSource.id);
     } catch (e) {
       displayError(e);
-    } finally {
-      setPinningRevision(undefined);
     }
   };
 
@@ -222,14 +217,13 @@ export const useRemoteGraph = ({
     remoteSource,
     libraryGraphs,
     remoteVersions,
-    pinningRevision,
     versionDiffs,
     diffBaseline,
     persistToRemote,
     refreshLibrary,
     openRemoteGraph,
     refreshVersions,
-    pinVersion,
+    setVersionPinned,
     renameVersion,
     restoreVersionToHead,
     computeVersionDiffs,

@@ -161,6 +161,7 @@
 - [x] 第六十七批(D1 旧图 kind 迁移)：映射纯函数(node.content.kind：contrib.*→裸名/http 例外、roster.roster 与 risk.query_list→roster)+normalizeGraphNodes 在线接线+批量脚本(--dry-run)；验收口径修正：撞库图无 namespaced kind（恢复靠 D2），真实样本为 mock-user-1 例外保留图——见 7.3 第六十七批
 - [x] 第六十八批(B 轨道第二轮接线)：restoreVersion 接线(恢复变立即落盘，消除双实现分叉)+diffBaseline 消费(恢复前快照画布标记，编辑即清)+I18nProvider locale=zh-CN(面板 vh.* 中文)+组件测试桩补 useT——见 7.3 第六十八批
 - [x] 第六十九批(D2 函数域重建)：custom_list_query(复用 queryRoster)/rate_1h+group_distinct_1h(进程内滑动窗口)/ip_location(可插拔数据集)重建于 contrib/；schema fixture 7→10 namespaces(在途同步待内核入库)；撞库攻击防御.json 仿真验收恢复(双路径 trace 断言)——见 7.3 第六十九批
+- [x] 第七十批(S007 版本钉住消费收口)：后端 pinned 契约(patch 键+保留豁免+透传+OpenAPI)+前端 onPin 接线(updateVersionMeta)+退役 PinVersionsSheet/直连 PATCH 双实现——见 7.3 第七十批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -246,6 +247,23 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-09，第七十批：S007 版本钉住消费收口——pinned 契约 + 双实现退役)：**
+
+- **后端 pinned 契约（apps/editor）**：`graphs-store` patch 扩展 `pinned` 键（内核 66fbf87
+  裁决为独立 meta 键，未复用 auto——S007 提案口径更新）；`pruneAutoVersions` 治理对象收窄为
+  「无命名且未钉住的 auto」；versions 列表与 PATCH 响应透传 pinned；GraphVersionSchema/
+  GraphVersionMetaPatch/PATCH 响应 OpenAPI 同步
+- **前端收敛（双实现退役）**：`use-remote-graph` 增 `setVersionPinned(revision, pinned)` 走
+  adapter.updateVersionMeta（HTTP PATCH {pinned} / IndexedDB 原生，两种存储模式同享），删除
+  直连 PATCH workaround；**退役自研 PinVersionsSheet 与顶栏钉住入口**（内核面板已带 Pin/Unpin
+  控件 + pinned 徽标 + pinned 过滤）；`listRemoteVersions` 透传 pinned（61 批剥字段教训的
+  口径延续）；storageMode 自 hook 选项移除（唯一消费者消失）
+- 内核 66fbf87 同批携带 S001/S002 落地（react18 合规检查 + zod 4.3.6 钉版），libsuggest
+  S001/S002/S007 三提案已加追记段（状态回填留内核会话）
+- 门禁：typecheck/lint/主仓 131/组件 46/apps 48(editor)/build/storybook/schema 10ns/单实例
+  全绿；诚实标注：Pin/Unpin 浏览器实机走查顺延（IAB webview 不可用，同 66/68 批）；
+  fixture 10ns 在途待内核入库（push 前暂红项，同 69 批标注）
 
 **最新变更(2026-09-09，第六十九批：D2 函数域重建——撞库仿真验收恢复)：**
 

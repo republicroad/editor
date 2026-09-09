@@ -563,6 +563,7 @@ const GraphVersionSchema = z
   .object({
     revision: z.string(),
     versionName: z.string().optional(),
+    pinned: z.boolean().optional(),
     updatedAt: z.string(),
     auto: z.boolean().optional(),
   })
@@ -755,6 +756,7 @@ const graphVersionUpdateRoute = createRoute({
             .object({
               auto: z.boolean().optional(),
               versionName: z.string().optional(),
+              pinned: z.boolean().optional(),
             })
             .openapi('GraphVersionMetaPatch'),
         },
@@ -768,6 +770,7 @@ const graphVersionUpdateRoute = createRoute({
           schema: z.object({
             revision: z.string(),
             versionName: z.string().optional(),
+            pinned: z.boolean().optional(),
             updatedAt: z.string(),
             auto: z.boolean().optional(),
           }),

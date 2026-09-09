@@ -83,13 +83,13 @@
   重建于 apps/zen-rule/src/contrib/；撞库攻击防御.json **仿真验收恢复**（双路径 trace 断言）；
   schema fixture 7→10 namespaces（在途同步待内核入库，push 前需内核会话吸收 fixture）。
   与 67 批 D1 构成撞库图「旧图恢复→仿真恢复」完整闭环。全门禁绿。
-- **第七十批（下一批）：S007 版本钉住消费收口（内核 66fbf87 消费：appshell 0.4.0）**——
+- **第七十批（✅ 2026-09-09）：S007 版本钉住消费收口（内核 66fbf87 消费：appshell 0.4.0）**——
   ① 后端：`graphs-store` patch 契约扩展 `pinned` 键（**内核裁决为独立 meta 键，未复用 auto**，
   S007 提案口径更新）+ `pruneAutoVersions` 豁免 pinned（与命名版本同款）+ versions 列表透传
   pinned + OpenAPI schema 更新 + 单测；② 前端：`VersionHistoryPanel.onPin` 接线
   （feature-detect `updateVersionMeta`，HTTP PATCH body 已含 pinned）；**退役宿主自研
   PinVersionsSheet 与直连 PATCH workaround**——内核面板已带 Pin/Unpin 控件 + pinned 徽标 +
-  pinned 过滤（消除双实现，同 68 批 restoreVersion 先例）。
+  pinned 过滤（消除双实现，同 68 批 restoreVersion 先例）。全门禁绿。
 - **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；轨道 C 上线期
@@ -153,3 +153,5 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
   Provider），全门禁绿，详见 docs/03 §7.3。
 - **第六十九批（2026-09-09）**：D2 函数域重建（四函数 + 撞库仿真验收恢复），全门禁绿，
   详见 docs/03 §7.3。A5 lexicon 转待产品需求。
+- **第七十批（2026-09-09）**：S007 版本钉住消费收口（后端 pinned 契约 + 保留豁免 +
+  前端 onPin 接线 + 双实现退役），全门禁绿，详见 docs/03 §7.3。

@@ -1,4 +1,3 @@
-import { Pin } from 'lucide-react';
 import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
 import {
   DropdownMenu,
@@ -37,10 +36,6 @@ interface PageToolbarProps {
   /** 版本历史入口显隐（宿主存储支持 listVersions 且已打开图） */
   hasVersions: boolean;
   onOpenVersions: () => void;
-  /** 版本钉住入口显隐（仅 HTTP 存储模式） */
-  showPin: boolean;
-  autoVersionCount: number;
-  onOpenPin: () => void;
   showSave: boolean;
   onSave: () => void;
   onSaveAs: () => void;
@@ -61,9 +56,6 @@ export const PageToolbar = ({
   onOpenTemplate,
   hasVersions,
   onOpenVersions,
-  showPin,
-  autoVersionCount,
-  onOpenPin,
   showSave,
   onSave,
   onSaveAs,
@@ -121,18 +113,6 @@ export const PageToolbar = ({
           {hasVersions && (
             <Button type="button" variant="ghost" size="sm" onClick={onOpenVersions}>
               Versions
-            </Button>
-          )}
-          {showPin && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              title="Pin auto versions (exempt them from auto-version cleanup)"
-              onClick={onOpenPin}
-            >
-              <Pin size={14} />
-              {autoVersionCount > 0 && <span className="text-xs text-muted-foreground">{autoVersionCount}</span>}
             </Button>
           )}
           {showSave && (

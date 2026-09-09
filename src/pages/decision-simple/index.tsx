@@ -42,7 +42,6 @@ import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '@republicroad/jdm-appshell';
 // I18nProvider 尚未进内核 barrel（libsuggest 跟进），源码直通相对导入
 import { I18nProvider } from '../../../jdm-editor/packages/jdm-editor/src/theming/i18n';
-import { PinVersionsSheet } from './pin-versions-sheet.tsx';
 import { PageToolbar } from './page-toolbar.tsx';
 import { useAutosave } from './use-autosave.ts';
 import { useConfirmDialog } from './use-confirm-dialog.ts';
@@ -68,17 +67,13 @@ export const DecisionSimplePage: React.FC = () => {
   return (
     <I18nProvider locale="zh-CN">
       <EditorShellProvider options={{ persistence }}>
-        <DecisionSimpleInner storageMode={storageMode} />
+        <DecisionSimpleInner />
       </EditorShellProvider>
     </I18nProvider>
   );
 };
 
-interface DecisionSimpleInnerProps {
-  storageMode: 'local' | 'http';
-}
-
-const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }) => {
+const DecisionSimpleInner: React.FC = () => {
   const graphRef = React.useRef<DecisionGraphRef>(null);
   // 隐藏 <input type=file>：无 File System Access API 的浏览器回退打开通道
   const fileInput = useRef<HTMLInputElement>(null);
@@ -90,7 +85,6 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
   const [fileName, setFileName] = useState('Untitled Decision');
   const [graphTrace, setGraphTrace] = useState<Simulation>();
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [pinOpen, setPinOpen] = useState(false);
   const [mode, setMode] = useState<JdmUiMode>('business');
   const { pendingConfirm, confirm, close } = useConfirmDialog();
 
@@ -114,20 +108,19 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
     remoteSource,
     libraryGraphs,
     remoteVersions,
-    pinningRevision,
     versionDiffs,
     diffBaseline,
     persistToRemote,
     refreshLibrary,
     openRemoteGraph,
     refreshVersions,
-    pinVersion,
+    setVersionPinned,
     renameVersion,
     restoreVersionToHead,
     computeVersionDiffs,
     clearDiffBaseline,
     resetSource,
-  } = useRemoteGraph({ persistence, storageMode, graph, fileName, graphRef, setGraph, setFileName });
+  } = useRemoteGraph({ persistence, graph, fileName, graphRef, setGraph, setFileName });
 
   // 自动保存布防：仅宿主存储 + 已打开图 + 版本面板未开时；persist 成功返回 true 由 hook 清 dirty 位
   const graphSignature = useMemo(() => JSON.stringify(graph), [graph]);
@@ -245,13 +238,6 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
                 void refreshVersions(remoteSource.id);
                 void computeVersionDiffs(remoteSource.id);
                 setHistoryOpen(true);
-              }}
-              showPin={Boolean(persistence?.listVersions && remoteSource && storageMode === 'http')}
-              autoVersionCount={remoteVersions.filter((v) => v.auto).length}
-              onOpenPin={() => {
-                if (!remoteSource) return;
-                void refreshVersions(remoteSource.id);
-                setPinOpen(true);
               }}
               showSave={Boolean(supportFSApi || persistence)}
               onSave={() => void saveFile()}
@@ -376,16 +362,10 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
               ? (revision, versionName) => void renameVersion(revision, versionName)
               : undefined
           }
+          onPin={
+            persistence?.updateVersionMeta ? (revision, pinned) => void setVersionPinned(revision, pinned) : undefined
+          }
           diffs={versionDiffs}
-        />
-      )}
-      {remoteSource && storageMode === 'http' && (
-        <PinVersionsSheet
-          open={pinOpen}
-          onOpenChange={setPinOpen}
-          versions={remoteVersions}
-          pinningRevision={pinningRevision}
-          onPin={(revision) => void pinVersion(revision)}
         />
       )}
     </>

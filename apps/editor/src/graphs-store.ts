@@ -30,6 +30,8 @@ export interface StoredGraphMeta {
   /** 自动保存条目（保留策略：保留全部 manual + 最近 AUTO_VERSIONS_KEEP 条 auto） */
   auto?: boolean;
   versionName?: string;
+  /** 钉住标记（S007）：钉住的版本（含 auto）同样豁免 auto 保留策略治理 */
+  pinned?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +46,8 @@ export interface StoredGraph {
   revision: string;
   auto?: boolean;
   versionName?: string;
+  /** 钉住标记（S007，语义同 StoredGraphMeta） */
+  pinned?: boolean;
   createdAt: string;
   updatedAt: string;
   content: unknown;
@@ -308,9 +312,10 @@ async function pruneAutoVersions(dir: string, safeId: string): Promise<void> {
     const match = new RegExp(`^${safeId}\\.v(\\d+)\\.json$`).exec(entry.name);
     if (!match) continue;
     const graph = await readHeadFile(join(dir, entry.name));
-    // 治理对象 = 无命名的 auto 版本：manual 天然豁免；「命名版本豁免 auto 保留」是 appshell 0.2.0
-    // 持久化契约（66cb38a）——用户显式命名的版本不允许被滚动窗口静默删除（第六十四批修复）
-    if (!graph?.auto || graph.versionName) continue;
+    // 治理对象 = 无命名且未钉住的 auto 版本：manual 天然豁免；「命名/钉住版本豁免 auto 保留」
+    // 是 appshell 0.2.0/0.4.0 持久化契约——用户显式标记的版本不允许被滚动窗口静默删除
+    // （第六十四批命名豁免 + 第七十批钉住豁免）
+    if (!graph?.auto || graph.versionName || graph.pinned) continue;
     autos.push({ n: Number(match[1]), file: join(dir, entry.name), updatedAt: graph.updatedAt });
   }
   const toPrune = pickAutoVersionsToPrune(autos);
@@ -382,7 +387,13 @@ export async function listGraphVersions(
     return [];
   }
   const safeId = sanitizeGraphId(id);
-  const versions: Array<{ revision: string; versionName?: string; updatedAt: string; auto?: boolean }> = [];
+  const versions: Array<{
+    revision: string;
+    versionName?: string;
+    pinned?: boolean;
+    updatedAt: string;
+    auto?: boolean;
+  }> = [];
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     const match = new RegExp(`^${safeId}\\.(v\\d+)\\.json$`).exec(entry.name);
@@ -391,6 +402,7 @@ export async function listGraphVersions(
     versions.push({
       revision: match[1],
       versionName: graph?.versionName,
+      pinned: graph?.pinned,
       updatedAt: graph?.updatedAt ?? '',
       auto: graph?.auto,
     });
@@ -400,6 +412,7 @@ export async function listGraphVersions(
   versions.push({
     revision: head.revision,
     versionName: head.versionName,
+    pinned: head.pinned,
     updatedAt: head.updatedAt,
     auto: head.auto,
   });
@@ -412,8 +425,8 @@ export async function updateGraphVersionMeta(
   id: string,
   owner: string | undefined,
   revision: string,
-  patch: { auto?: boolean; versionName?: string },
-): Promise<{ revision: string; versionName?: string; updatedAt: string; auto?: boolean } | null> {
+  patch: { auto?: boolean; versionName?: string; pinned?: boolean },
+): Promise<{ revision: string; versionName?: string; pinned?: boolean; updatedAt: string; auto?: boolean } | null> {
   const headFile = await findHeadFile(id, owner);
   if (!headFile) return null;
   const head = await readHeadFile(headFile);
@@ -436,6 +449,7 @@ export async function updateGraphVersionMeta(
   if (!raw?.meta) return null;
   if (patch.auto !== undefined) raw.meta.auto = patch.auto;
   if (patch.versionName !== undefined) raw.meta.versionName = patch.versionName || undefined;
+  if (patch.pinned !== undefined) raw.meta.pinned = patch.pinned;
   try {
     await writeFile(filePath, `${JSON.stringify(raw, null, 2)}\n`, 'utf-8');
   } catch (error) {
@@ -445,6 +459,7 @@ export async function updateGraphVersionMeta(
   return {
     revision: raw.meta.revision,
     versionName: raw.meta.versionName,
+    pinned: raw.meta.pinned,
     updatedAt: raw.meta.updatedAt,
     auto: raw.meta.auto,
   };

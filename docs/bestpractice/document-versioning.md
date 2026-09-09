@@ -51,7 +51,7 @@
 | 自动/命名两层          | `meta.auto` + 保留策略（`AUTO_VERSIONS_KEEP=20`）；命名版本 = versionName（第五十三批） |
 | 完整现场快照           | `content.session = graphRef.serialize()`（viewport/页签/各页签 slice，第五十批）        |
 | 恢复即前进             | 第五十三批（restore 创建新版本，不覆盖其后）                                            |
-| 版本对比               | 已立项：内核会话 graph-diff（spec：`jdm-editor/docs/hostapp/graph-diff-spec.md`）       |
+| 版本对比               | 已立项：内核会话 graph-diff（spec：`jdm-editor/docs/archive/hostapp/graph-diff-spec.md`）       |
 | 本地兜底（无后端宿主） | IndexedDB 适配器（第五十三批）                                                          |
 
 ---

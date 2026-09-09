@@ -109,6 +109,11 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
   的 dist 冻结成第二份内核副本（双实例 → context 断裂白屏，dist 变化触发整页 reload）。宿主 dev
   当前经 alias 源码直通未触发该症状；一旦出现，把 `@republicroad/jdm-editor`、
   `@republicroad/jdm-appshell`、`@gorules/zen-engine-wasm` 加入 `optimizeDeps.exclude`。
+- 内核 3 个「有意为之勿顺手修复」脆弱点备案（内核 bestpractice `8f48747`，宿主升级
+  React / 调整 moduleResolution 时对照）：① appshell 钉 `@types/react` 18 / 内核 19 双轨——
+  内核源码用 React 19 独有类型会断 appshell typecheck，属预期信号；② 内核 `#*` 子路径导入
+  依赖其 package.json `imports` 字段（宿主 tsconfig paths 不覆盖该机制）；③ appshell 未设
+  esModuleInterop 且 lib 为 ES2022。
   `resolve.tsconfigPaths` 内置替代已实证**不可切换**（2026-09-07）：选项仅 boolean 无细化配置，
   内核 tsconfig 的 `monaco-editor → editor.api.d.ts` 类型 shim 映射（内核 pnpm 树 typecheck 用）
   会被内置解析器应用于运行时，rolldown 解析 .d.ts 直接报错（19 errors）；插件的双项目过滤语义

@@ -9,7 +9,7 @@
 
 版本历史面板（VersionHistoryPanel）目前只列表 + 恢复。用户无法回答"这两个版本
 之间改了什么"——规则编辑场景的高频问题（改了哪些节点/边/参数）。内核会话已有
-`docs/hostapp/graph-diff-spec.md`（P2 画布高亮方向）；本建议补 **P1 面板级
+`docs/archive/hostapp/graph-diff-spec.md`（hostapp 计划文档已归档）（P2 画布高亮方向）；本建议补 **P1 面板级
 变更清单**——两者共用同一 diff 纯函数，属同一能力族。
 
 ## 建议改动

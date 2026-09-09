@@ -160,6 +160,7 @@
 - [x] 第六十六批(部署硬化)：A3 容器 USER 硬化(/data 预置 bun 属主 + USER bun，存量卷自愈迁移)；A4 冒烟链固化(scripts/smoke-deploy.ts，复刻 59 批全链+非零退出码+卷属主自动迁移)；podman 网络恢复后实机全链 PASS(exit 0)——见 7.3 第六十六批补验
 - [x] 第六十七批(D1 旧图 kind 迁移)：映射纯函数(node.content.kind：contrib.*→裸名/http 例外、roster.roster 与 risk.query_list→roster)+normalizeGraphNodes 在线接线+批量脚本(--dry-run)；验收口径修正：撞库图无 namespaced kind（恢复靠 D2），真实样本为 mock-user-1 例外保留图——见 7.3 第六十七批
 - [x] 第六十八批(B 轨道第二轮接线)：restoreVersion 接线(恢复变立即落盘，消除双实现分叉)+diffBaseline 消费(恢复前快照画布标记，编辑即清)+I18nProvider locale=zh-CN(面板 vh.* 中文)+组件测试桩补 useT——见 7.3 第六十八批
+- [x] 第六十九批(D2 函数域重建)：custom_list_query(复用 queryRoster)/rate_1h+group_distinct_1h(进程内滑动窗口)/ip_location(可插拔数据集)重建于 contrib/；schema fixture 7→10 namespaces(在途同步待内核入库)；撞库攻击防御.json 仿真验收恢复(双路径 trace 断言)——见 7.3 第六十九批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -245,6 +246,29 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-09，第六十九批：D2 函数域重建——撞库仿真验收恢复)：**
+
+- **四函数重建（apps/zen-rule/src/contrib/，docs/13 §8.3 落定）**：`custom-list-query.ts`
+  （裸名 `custom_list_query`，复用 roster 存储 queryRoster，actor 隔离，返回图内 returnSchema
+  的 `{result}`）；`rate-window.ts`（`rate_1h`/`group_distinct_1h`，进程内 60min 滑动窗口，
+  返回图内声明的 RateCommonResult/GroupDistinctCommonResult 形态——字段语义按字段名与风控
+  语义重构【原实现已随重设计移除，注释明示】，导出 `__resetRateWindows()` 供测试；生产
+  多副本 Redis 化留宿主层）；`ip-location.ts`（`ip_location`，env `IP_LOCATION_DATASET`
+  可插拔 JSON 数据集最长前缀匹配，未配置/未命中返回空字段+ip 回显；**数据集不捆绑**）
+- **engine.ts** contrib import 区补三文件；裸名 UDF 经 `funcBindParams` 按 parametersSchema
+  声明序绑定位置参数（对齐图内 `custom_list_query;;"名单";;值` 调用形态）
+- **撞库仿真验收（D2 闭环）**：ZenRule 装载撞库内容 + 注册测试名单 → 双路径执行断言——
+  白名单命中路径（`result.reason` 含「白名单」+ trace 中 `"result":true`）；非白名单路径
+  （trace: true 验证 `"counter":1`/`"pv":1`/`"ip":"9.9.9.9"` 且无 udf not found）。
+  unit 6 例（计数递增/独立/去重/空回退/actor 隔离）
+- **schema fixture 7→10 namespaces**（sync:schema 重新生成）：新增 custom-list-query/
+  rate-window/ip-location 三域。**诚实标注（在途同步）**：fixture 属内核仓跟踪文件
+  （apps/ell src/assets），变更留在子模块工作区待内核会话入库；gitlink（2998cc6→da22f52）
+  随 fixture 一并 bump——此前 push 会让 CI sync:schema:check 暂红（fixture 与 gitlink 联动的
+  既有跨仓同步节奏）
+- 门禁：typecheck(root+apps)/lint/主仓 129/组件 46/apps(zen-rule+editor) 92→107/build/
+  storybook/schema/单实例 全绿
 
 **最新变更(2026-09-09，第六十八批：B 轨道第二轮接线——restoreVersion + 画布 diff + i18n)：**
 

@@ -17,6 +17,9 @@ import './contrib/json_path.ts';
 import './contrib/template.ts';
 import './contrib/http.ts';
 import './contrib/roster.ts';
+import './contrib/custom-list-query.ts';
+import './contrib/rate-window.ts';
+import './contrib/ip-location.ts';
 
 const CUSTOM_HANDLER_META = '__meta__';
 

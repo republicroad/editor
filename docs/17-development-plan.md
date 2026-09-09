@@ -78,10 +78,11 @@
   + normalizeGraphNodes 在线接线（幂等）+ 批量脚本（--dry-run）。**验收口径修正**：撞库图
   实查无 namespaced kind（UDF 调用在 expressions.value，恢复靠 D2），真实样本为 mock-user-1
   contrib.http_request 例外图；单测 6 例含真实文件回归。全门禁绿。
-- **第六十九批候选：D2 函数域重建 ↔ A5 lexicon 词表域**（默认序 D2 先——`custom_list_query`
-  复用 queryRoster 最先，与 D1 构成「旧图恢复→仿真恢复」闭环，撞库仿真验收随之恢复；
-  A5 aho-corasick 随产品需求可对调；rate_1h/group_distinct_1h 内存窗口、ip_location 需
-  geo 数据集殿后）。
+- **第六十九批（✅ 2026-09-09）：D2 函数域重建**——`custom_list_query`（复用 queryRoster）、
+  `rate_1h`/`group_distinct_1h`（进程内 60min 滑动窗口）、`ip_location`（可插拔数据集不捆绑）
+  重建于 apps/zen-rule/src/contrib/；撞库攻击防御.json **仿真验收恢复**（双路径 trace 断言）；
+  schema fixture 7→10 namespaces（在途同步待内核入库，push 前需内核会话吸收 fixture）。
+  与 67 批 D1 构成撞库图「旧图恢复→仿真恢复」完整闭环。全门禁绿。
 - **待定/跟踪（不排批）**：D2 函数域重建（custom_list_query / rate_1h / group_distinct_1h / ip_location，
   恢复「撞库攻击防御.json」仿真验收）、D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；轨道 C 上线期
@@ -143,3 +144,5 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
   验收口径修正：撞库图靠 D2 恢复仿真），全门禁绿，详见 docs/03 §7.3。
 - **第六十八批（2026-09-09）**：B 轨道第二轮接线（restoreVersion + diffBaseline + i18n
   Provider），全门禁绿，详见 docs/03 §7.3。
+- **第六十九批（2026-09-09）**：D2 函数域重建（四函数 + 撞库仿真验收恢复），全门禁绿，
+  详见 docs/03 §7.3。A5 lexicon 转待产品需求。

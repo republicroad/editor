@@ -135,7 +135,7 @@ scope 解析顺序（子模块 `resolveFunctionScope`）：`'UDF'`→legacy → 
 
 - 全部图文件自定义 kind 仅 `UDF`×4（撞库攻击防御.json）+ `sum`×3（custom\*.json 旧测试图）；**`ns.tool` 派生形从未上线**（仅评审讨论过）→ 极简路线：不生成旧 spec、不做 paletteHidden。`contrib.inout1` 为开发期实例、不在持久化图中，按新约定重建。
 - **`sum` 假设修正（2026-09-01）**：3 图 kind `sum` 为前约定时代节点标签，表达式**实调 `inout`/`foo`**，与求和函数无关。已将 3 图 kind 迁移为 `debug`（scoped 容器，`inout` ∈ 集合表达式完好；fullnode 的 `foo` 调用打开时会被 scoped 治愈改写为 `inout`，已知接受）。
-- 撞库攻击防御.json 验收**降级（2026-09-01）**：其 4 个 UDF 节点依赖的 `custom_list_query`/`ip_location`/`rate_1h`/`group_distinct_1h` 已随平台重设计移除、未来重新实现（§8.3）——当前验收保留**加载/渲染/编辑**（legacy 自由表格完好），**仿真验收暂缓**（节点报 udf not found 属预期）。
+- 撞库攻击防御.json 验收**降级（2026-09-01）**：其 4 个 UDF 节点依赖的 `custom_list_query`/`ip_location`/`rate_1h`/`group_distinct_1h` 已随平台重设计移除、未来重新实现（§8.3）——当前验收保留**加载/渲染/编辑**（legacy 自由表格完好），**仿真验收暂缓**（节点报 udf not found 属预期）。**仿真验收已恢复（2026-09-09 第六十九批）**：四函数重建落定（§8.3），全图仿真通过（白名单命中 + trace 中频控/组去重/属地输出齐全）。
 
 ### 7.4 主题承载位置（三层）
 
@@ -183,9 +183,12 @@ apps/zen-rule/src/
 
 ### 8.3 Backlog（插件化演进，刻意不进本次）
 
-- **重建移除的函数域（2026-09-01 放弃现存任务，未来按需重新实现）**：
+- **重建移除的函数域（~~2026-09-01 放弃现存任务~~ → 2026-09-09 第六十九批重建落定）**：
 
-  - `custom_list_query`（roster 存储已有 queryRoster 可直接复用）、`rate_1h`/`group_distinct_1h`（内存窗口计数，生产 Redis 化留宿主层）、`ip_location`（需 geo 数据集）——重建后撞库攻击防御.json 仿真验收恢复
+  - ✅ `custom_list_query`（`contrib/custom-list-query.ts`，复用 queryRoster，actor 隔离）、
+    ✅ `rate_1h`/`group_distinct_1h`（`contrib/rate-window.ts`，进程内 60min 滑动窗口，生产
+    Redis 化留宿主层）、✅ `ip_location`（`contrib/ip-location.ts`，env `IP_LOCATION_DATASET`
+    可插拔数据集，**数据集不捆绑**）——撞库攻击防御.json 仿真验收恢复（trace 验证四函数输出）
   - `lexicon`（Aho–Corasick 词表匹配，文件名建议 `aho-corasick.ts`）——2026-09-01 裁决未来重新实现
   - `http_call`/`http_call_with_headers` **无需重建**：已被 `http_request`（http 域专属节点）替代
 

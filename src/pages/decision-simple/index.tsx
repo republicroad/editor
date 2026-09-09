@@ -40,6 +40,8 @@ import { match, P } from 'ts-pattern';
 
 import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '@republicroad/jdm-appshell';
+// I18nProvider 尚未进内核 barrel（libsuggest 跟进），源码直通相对导入
+import { I18nProvider } from '../../../jdm-editor/packages/jdm-editor/src/theming/i18n';
 import { PinVersionsSheet } from './pin-versions-sheet.tsx';
 import { PageToolbar } from './page-toolbar.tsx';
 import { useAutosave } from './use-autosave.ts';
@@ -64,9 +66,11 @@ export const DecisionSimplePage: React.FC = () => {
     [storageMode],
   );
   return (
-    <EditorShellProvider options={{ persistence }}>
-      <DecisionSimpleInner storageMode={storageMode} />
-    </EditorShellProvider>
+    <I18nProvider locale="zh-CN">
+      <EditorShellProvider options={{ persistence }}>
+        <DecisionSimpleInner storageMode={storageMode} />
+      </EditorShellProvider>
+    </I18nProvider>
   );
 };
 
@@ -112,13 +116,16 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
     remoteVersions,
     pinningRevision,
     versionDiffs,
+    diffBaseline,
     persistToRemote,
     refreshLibrary,
     openRemoteGraph,
     refreshVersions,
     pinVersion,
     renameVersion,
+    restoreVersionToHead,
     computeVersionDiffs,
+    clearDiffBaseline,
     resetSource,
   } = useRemoteGraph({ persistence, storageMode, graph, fileName, graphRef, setGraph, setFileName });
 
@@ -189,11 +196,12 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
     });
   };
 
-  const confirmOpenVersion = (id: string, revision: string) => {
+  /** 恢复（restore-is-forward，库标准入口）：立即把目标版本固化为新 head 并重载画布 */
+  const confirmRestoreVersion = (revision: string) => {
     confirm({
-      title: 'Open historical version',
-      description: `Load version ${revision} of this graph? Current unsaved changes will be replaced.`,
-      onConfirm: () => void openRemoteGraph(id, revision),
+      title: 'Restore version',
+      description: `Restore version ${revision} as the new head? It is saved immediately; the canvas will mark differences against the pre-restore content.`,
+      onConfirm: () => void restoreVersionToHead(revision),
     });
   };
 
@@ -301,11 +309,14 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
               mode={mode}
               customNodes={customNodes}
               customFunctions={schema ?? undefined}
+              diffBaseline={diffBaseline}
               ref={graphRef}
               value={graph}
               onChange={(value) => {
                 // 编辑器内用户改动才标记 dirty——加载/恢复/模板等直接 setGraph 的路径不经过这里
                 autosave.markDirty();
+                // diffBaseline 是恢复时刻的差异标记：用户开始编辑即过期，立即清除
+                clearDiffBaseline();
                 setGraph(value);
               }}
               reactFlowProOptions={{ hideAttribution: true }}
@@ -359,7 +370,7 @@ const DecisionSimpleInner: React.FC<DecisionSimpleInnerProps> = ({ storageMode }
           onOpenChange={setHistoryOpen}
           versions={remoteVersions}
           currentRevision={remoteSource.revision}
-          onRestore={(revision) => confirmOpenVersion(remoteSource.id, revision)}
+          onRestore={(revision) => confirmRestoreVersion(revision)}
           onRename={
             persistence?.renameVersion
               ? (revision, versionName) => void renameVersion(revision, versionName)

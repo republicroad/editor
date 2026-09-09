@@ -1,5 +1,9 @@
 import { mock } from 'bun:test';
 import React from 'react';
+// 内核 i18n 子模块（无 monaco 依赖，bun 可求值）——为桩提供行为等价的 useT。
+// mock.module 为进程级粘性：全量跑时后续测试文件（如 version-history-panel，
+// 其文案已改走内核 vh.* catalog）会拿到本桩，故 useT 必须返回真实 catalog 文案。
+import { createT } from '../../../jdm-editor/packages/jdm-editor/src/theming/i18n';
 
 export interface MockGraphNode {
   id: string;
@@ -101,6 +105,8 @@ export const installJdmEditorMock = (): void => {
     GraphNode,
     createJdmNode: (specification: unknown) => specification,
     jsonSchemaToVariableType: (schema?: { type?: string }) => ({ type: schema?.type ?? 'any' }),
+    // 行为等价的英文翻译（内核 useT 无 Provider 时同为 en 回退）
+    useT: () => createT('en'),
     useDecisionGraphState: useGraphState,
     useDecisionGraphActions: () => ({
       updateNode: (id: string, updater: (draft: MockGraphNode) => MockGraphNode | void) => {

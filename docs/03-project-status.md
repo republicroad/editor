@@ -159,6 +159,7 @@
 - [x] 第六十五批(S008 消费收尾)：gitlink 推进 91e8e8f→98d79d3(内核消费 S008：删 monaco 类型映射 + MarkerSeverity 字面量化，随批 6 个 UI 回归修复)；vite.config/.storybook 切原生 resolve.tsconfigPaths + 卸载 vite-tsconfig-paths——见 7.3 第六十五批
 - [x] 第六十六批(部署硬化)：A3 容器 USER 硬化(/data 预置 bun 属主 + USER bun，存量卷自愈迁移)；A4 冒烟链固化(scripts/smoke-deploy.ts，复刻 59 批全链+非零退出码+卷属主自动迁移)；podman 网络恢复后实机全链 PASS(exit 0)——见 7.3 第六十六批补验
 - [x] 第六十七批(D1 旧图 kind 迁移)：映射纯函数(node.content.kind：contrib.*→裸名/http 例外、roster.roster 与 risk.query_list→roster)+normalizeGraphNodes 在线接线+批量脚本(--dry-run)；验收口径修正：撞库图无 namespaced kind（恢复靠 D2），真实样本为 mock-user-1 例外保留图——见 7.3 第六十七批
+- [x] 第六十八批(B 轨道第二轮接线)：restoreVersion 接线(恢复变立即落盘，消除双实现分叉)+diffBaseline 消费(恢复前快照画布标记，编辑即清)+I18nProvider locale=zh-CN(面板 vh.* 中文)+组件测试桩补 useT——见 7.3 第六十八批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -244,6 +245,26 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-09，第六十八批：B 轨道第二轮接线——restoreVersion + 画布 diff + i18n)：**
+
+- **restoreVersion 接线（行为变化）**：`use-remote-graph` 增 `restoreVersionToHead(revision)`——调
+  appshell `restoreVersion`（库标准恢复即前进：load(revision)→save() 立即固化为新 head，支持
+  versionName/head 兜底/NOT_FOUND）→ toast → refreshVersions → 重载 head 进画布；`onRestore`
+  确认对话框更新（Open historical version → Restore version）。**行为变化**：恢复从「载入画布随
+  下次保存落盘」变「立即落盘」，消除宿主自实现与库入口的语义分叉（appshell-plan §4 闭合）
+- **diffBaseline 消费（S004-P2 画布 diff）**：恢复前画布内容存为 `diffBaseline` 传
+  `DecisionGraph.diffBaseline`（画布投影差异标记，store 数据与 onChange 干净）；清除时机 =
+  用户开始编辑（DecisionGraph onChange，与 autosave.markDirty 同点）或新建图 reset
+- **i18n 接线（内核 9d56a16 消费）**：宿主补 `I18nProvider locale="zh-CN"`（VersionHistoryPanel
+  文案 vh.* 17 键 zh 环境显示中文；I18nProvider 尚未进内核 barrel，走源码直通相对导入，
+  barrel 导出跟进内核侧）
+- **配套修复（组件测试）**：内核 i18n 化后 `installJdmEditorMock` 部分桩缺 `useT`——`mock.module`
+  进程级粘性，全量跑时 version-history 文件拿到残缺桩（单文件跑正常，全量跑 "Export named
+  'useT' not found"）。桩补行为等价 `useT: () => createT('en')`（内核 createT + en catalog，
+  与无 Provider 回退一致，测试的真实文案断言保持有效）
+- 门禁：typecheck/lint/主仓 123/组件 46/apps 92/build/storybook/schema/单实例 全绿
+- i18n 浏览器实机走查仍顺延（IAB webview 不可用，同 66 批标注）
 
 **最新变更(2026-09-09，第六十七批：D1 旧图 kind 迁移——在线恢复路径)：**
 

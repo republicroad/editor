@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import type { DecisionGraphRef, DecisionGraphType, GraphDiff } from '@republicroad/jdm-editor';
 import { computeGraphDiff } from '@republicroad/jdm-editor';
+import { restoreVersion } from '@republicroad/jdm-appshell';
 import type { GraphPersistenceAdapter } from '@republicroad/jdm-appshell/src/shell/persistence';
 import { displayError } from '../../helpers/error-message.ts';
 import { DecisionEdge, DecisionNode, normalizeGraphNodes } from '../../helpers/graph.ts';
@@ -45,6 +46,7 @@ export const useRemoteGraph = ({
   const [remoteVersions, setRemoteVersions] = useState<VersionEntry[]>([]);
   const [pinningRevision, setPinningRevision] = useState<string>();
   const [versionDiffs, setVersionDiffs] = useState<Record<string, GraphDiff>>();
+  const [diffBaseline, setDiffBaseline] = useState<DecisionGraphType>();
 
   /**
    * 远程持久化（手动/自动保存共用）：session 快照入库 + 乐观锁推进。
@@ -191,10 +193,29 @@ export const useRemoteGraph = ({
     }
   };
 
+  /** 恢复版本为新的 head（appshell restoreVersion 库标准入口，立即固化落盘——
+   *  行为与旧「载入画布随下次保存落盘」不同，见 docs/17 第六十八批）。
+   *  成功后重载 head 进画布，并以恢复前画布内容为 diffBaseline（S004-P2 画布
+   *  差异标记；用户开始编辑时由 onChange 清除）。 */
+  const restoreVersionToHead = async (revision: string) => {
+    if (!remoteSource || !persistence) return;
+    const preRestore: DecisionGraphType = graph;
+    try {
+      await restoreVersion(persistence, remoteSource.id, revision);
+      toast.success(`Version ${revision} restored as new head`);
+      setDiffBaseline(preRestore);
+      await refreshVersions(remoteSource.id);
+      await openRemoteGraph(remoteSource.id);
+    } catch (e) {
+      displayError(e);
+    }
+  };
+
   /** 新建空白图时清空远程来源（回到未打开状态） */
   const resetSource = () => {
     setRemoteSource(undefined);
     setVersionDiffs(undefined);
+    setDiffBaseline(undefined);
   };
 
   return {
@@ -203,13 +224,16 @@ export const useRemoteGraph = ({
     remoteVersions,
     pinningRevision,
     versionDiffs,
+    diffBaseline,
     persistToRemote,
     refreshLibrary,
     openRemoteGraph,
     refreshVersions,
     pinVersion,
     renameVersion,
+    restoreVersionToHead,
     computeVersionDiffs,
+    clearDiffBaseline: () => setDiffBaseline(undefined),
     resetSource,
   };
 };

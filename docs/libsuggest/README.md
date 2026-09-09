@@ -59,7 +59,7 @@ proposed（宿主写入）
 | S001 | 跨 react 主版本消费的类型合规（JSX.Element 一处 + dist 消费守卫立项）                   | 中     | done |
 | S002 | zod 3 → 4.3.6 对齐（宿主树已完成迁移验证，362/362 绿）                                  | 中     | done |
 | S003 | appshell stories 在内核 pnpm 树下 typecheck 断链（Meta/StoryObj 缺失）                  | 低     | proposed |
-| S004 | 版本历史 diff 视图组件（P1 面板版：computeGraphDiff + 面板对比）                        | 中     | done |
+| S004 | 版本历史 diff 视图组件（P1 面板版：computeGraphDiff + 面板对比；P2 画布联动已闭环——面板 onCompare → DecisionGraph diffBaseline，playground 集成演示，kernel/appshell 0.5.0） | 中     | done |
 | S005 | 换肤布局槽位（SkinDefinition 布局扩展需求：工具栏/面板/头部注入）                       | 中     | proposed |
 | S006 | 版本钉住 auto→manual（面板 Pin 按钮 + adapter.updateVersionMeta；服务端端点宿主已上线） | 中     | superseded by S007 |
 | S007 | 版本钉住 Pin（S006 剩余半边：pinned meta + 面板 Pin 按钮 + updateVersionMeta）          | 中     | done |

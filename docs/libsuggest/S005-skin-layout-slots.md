@@ -113,3 +113,17 @@ ocean `host:toolbar.publish` 注入。P2（right 面板）/ P3（ShellHeader）�
 - playground ocean 皮肤演示 \`host:panel.notes\`；实机验收通过（切肤出现轨道 → 打开
   Sheet → ctx 注入实时节点数 → 关闭）
 - 测试：纯函数（排序/前缀）+ 组件（轨道/Sheet/零注入）；appshell 147 测试全绿
+
+## P3 交付与闭案追记（2026-09-10，内核会话）
+
+**P3 头部槽位已 shipped（appshell 0.9.0，reui 51553f47），S005 三期全部完成、闭案。**
+
+- \`ShellHeader\`（新导出）：渲染 \`layout.header.slots.left/right\`，注入 \`SkinSlotContext\`；
+  无槽位返回 null——宿主页面层头部不受影响（§10-3 裁决：kernel 无 header，页面骨架属宿主）
+- \`SkinnedDecisionGraph\` 在皮肤定义 header 槽位时自动把 ShellHeader 挂到画布上方，
+  与右缘轨道/Sheet、工具栏槽位自由组合；无任何槽位时渲染树与裸 \`DecisionGraph\` 一致
+- playground ocean 皮肤完整演示三期（工具栏按钮 + 右缘 notes 面板 + 头部环境标识/徽标）
+- 测试：appshell 152 用例全绿（新增头部 5 例）；kernel 全程 0.6.0 未动
+
+**宿主消费（72 批+）**：升级 appshell ≥0.8.0 时同步停止注册 json_path/template 节点
+（0.7.0 breaking），crypto 节点保留；verdict 后端承接 crypto 服务端执行。

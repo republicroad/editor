@@ -1,6 +1,6 @@
 # S005 换肤布局槽位（SkinDefinition 布局扩展需求）
 
-- 状态: proposed
+- 状态: spec-ready（规格稿已出：kernel 仓 `docs/design/skin-layout-slots.md`，待宿主确认 4 项后实现）
 - 目标库: @republicroad/jdm-appshell
 - 提出方: editor 会话（第五十七批规划，2026-09-06）
 - 优先级: 中
@@ -54,3 +54,21 @@ CustomNodeSpec 渲染上下文对齐）。约束：
 
 宿主 ocean 皮肤仅用 seeds/tokens；布局诉求暂以页面层自摆妥协。槽位就绪后宿主
 负责把自有 UI 迁入槽位并回归两套皮肤。
+
+## 规格化追记（2026-09-10，内核会话）
+
+规格稿 v1 已出：kernel 仓 **`docs/design/skin-layout-slots.md`**。对本文建议
+形态的裁决与修订：
+
+- **双层架构**：kernel 只出中性锚点（`toolbarItems`、`PanelType.position`），
+  `SkinDefinition.layout` 与映射层全在 appshell（`SkinnedDecisionGraph`）——
+  kernel 皮肤无感知，与 `nodeOverrides` 模式同构
+- **现状修正**：面板注入 kernel 已有半边（`panels?: PanelType[]`），缺口是
+  位置维度而非注入能力；工具栏为全硬编码，P1 新增锚点（宿主价值最高项）；头部
+  P3 改在 appshell 壳层实现，kernel 不引入 header 概念
+- **新增硬约束**：每槽位 ErrorBoundary 故障隔离；`host:` 裸名 dev-warn 自动补
+  前缀；缺省零快照差异防回归
+- **分期**：P1 工具栏（0.6.0）→ P2 面板位置（0.7.0，bottom 可裁）→ P3 头部
+  （appshell 0.8.0）
+- **待宿主确认 4 项**（分组命名 / bottom 真伪 / header 归属 / 上下文富度），
+  阻塞实现、不阻塞规格

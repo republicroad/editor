@@ -1,6 +1,6 @@
 # S003 appshell stories 在内核 pnpm 树下 typecheck 断链
 
-- 状态: proposed（观察中）— 待 S001/S002 版本口径统一后复验内核树 typecheck
+- 状态: done（2026-09-10 闭案——自愈，无需改动）
 - 目标库: @republicroad/jdm-appshell
 - 提出方: editor 会话（第五十六批中断前实测发现，2026-09-06）
 - 优先级: 低
@@ -52,3 +52,21 @@ StorybookConfig, definePreview }`——`Meta`/`StoryObj` 应经
 ## 宿主侧现状
 
 无影响（宿主树内同文件 typecheck 绿）。
+
+## 闭案追记（2026-09-10，内核会话）
+
+**原始错误已不复现，自愈闭案。** 复验证据（内核树内实测）：
+
+- appshell `tsc --noEmit`（`include: ["src"]` 天然覆盖 stories）全绿；
+  `--explainFiles` 确认 `decision-graph-appshell.stories.tsx` 正常编译，react
+  类型经 tsconfig paths 钉制解析到 `@types/react@18.3.31` 单一口径
+- `pnpm why @storybook/react`：catalog 已升 `10.5.10 → 10.6.0`，且仅存单一
+  peer 变体（原 `@storybook/react@10.5.10_@t_087c289a…` hash 分裂消失）——
+  即建议改动 #3（升级）与 #1（react 类型口径统一）均已被顺手完成
+
+自愈机制归因（按证据强度）：SB 10.6.0 catalog 升级 + S008 批次的 react
+类型 paths 钉制 + zod 4.3.6 批次的 lockfile 对齐，三者叠加消除了重导出链
+解析断裂。具体触发项无法也不必再归一。
+
+**门禁覆盖**：stories 位于 `include: ["src"]` 内，appshell typecheck 天然
+持续覆盖，无需新增 CI 步骤。

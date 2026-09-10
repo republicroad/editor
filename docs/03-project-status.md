@@ -279,7 +279,7 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
   S001/S002/S007 三提案已加追记段（状态回填留内核会话）
 - 门禁：typecheck/lint/主仓 131/组件 46/apps 48(editor)/build/storybook/schema 10ns/单实例
   全绿；诚实标注：Pin/Unpin 浏览器实机走查顺延（IAB webview 不可用，同 66/68 批）；
-  fixture 10ns 在途待内核入库（push 前暂红项，同 69 批标注）
+  fixture 10ns 已随内核 1c238f7 入库闭环
 
 **最新变更(2026-09-09，第六十九批：D2 函数域重建——撞库仿真验收恢复)：**
 
@@ -297,10 +297,8 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
   （trace: true 验证 `"counter":1`/`"pv":1`/`"ip":"9.9.9.9"` 且无 udf not found）。
   unit 6 例（计数递增/独立/去重/空回退/actor 隔离）
 - **schema fixture 7→10 namespaces**（sync:schema 重新生成）：新增 custom-list-query/
-  rate-window/ip-location 三域。**诚实标注（在途同步）**：fixture 属内核仓跟踪文件
-  （apps/ell src/assets），变更留在子模块工作区待内核会话入库；gitlink（2998cc6→da22f52）
-  随 fixture 一并 bump——此前 push 会让 CI sync:schema:check 暂红（fixture 与 gitlink 联动的
-  既有跨仓同步节奏）
+  rate-window/ip-location 三域。**在途同步已闭环（2026-09-10）**：fixture 经内核 1c238f7 入库，gitlink 5aac9bf 起一致，
+  CI sync:schema:check 恢复常态
 - 门禁：typecheck(root+apps)/lint/主仓 129/组件 46/apps(zen-rule+editor) 92→107/build/
   storybook/schema/单实例 全绿
 

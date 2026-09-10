@@ -81,7 +81,7 @@
 - **第六十九批（✅ 2026-09-09）：D2 函数域重建**——`custom_list_query`（复用 queryRoster）、
   `rate_1h`/`group_distinct_1h`（进程内 60min 滑动窗口）、`ip_location`（可插拔数据集不捆绑）
   重建于 apps/zen-rule/src/contrib/；撞库攻击防御.json **仿真验收恢复**（双路径 trace 断言）；
-  schema fixture 7→10 namespaces（在途同步待内核入库，push 前需内核会话吸收 fixture）。
+  schema fixture 7→10 namespaces（已闭环：内核 1c238f7 入库，gitlink 5aac9bf 起一致）。
   与 67 批 D1 构成撞库图「旧图恢复→仿真恢复」完整闭环。全门禁绿。
 - **第七十批（✅ 2026-09-09）：S007 版本钉住消费收口（内核 66fbf87 消费：appshell 0.4.0）**——
   ① 后端：`graphs-store` patch 契约扩展 `pinned` 键（**内核裁决为独立 meta 键，未复用 auto**，

@@ -251,7 +251,9 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 **最新变更(2026-09-09，第七十批：S007 版本钉住消费收口——pinned 契约 + 双实现退役)：**
 
 - **后端 pinned 契约（apps/editor）**：`graphs-store` patch 扩展 `pinned` 键（内核 66fbf87
-  裁决为独立 meta 键，未复用 auto——S007 提案口径更新）；`pruneAutoVersions` 治理对象收窄为
+  裁决 pinned 为**独立正交维度**——auto 来源/versionName 命名/pinned 保留意图三键组合表达，
+  不复用 auto 升格【升格丢来源信息且不可逆】，裁决依据全文见 libsuggest/S007 追记）；
+  `pruneAutoVersions` 治理对象收窄为
   「无命名且未钉住的 auto」；versions 列表与 PATCH 响应透传 pinned；GraphVersionSchema/
   GraphVersionMetaPatch/PATCH 响应 OpenAPI 同步
 - **前端收敛（双实现退役）**：`use-remote-graph` 增 `setVersionPinned(revision, pinned)` 走

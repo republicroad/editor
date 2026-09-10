@@ -25,7 +25,7 @@
 | **① normalize（入口改写）** | 宿主 `src/helpers/graph.ts#normalizeGraphNodes`；内核 `packages/jdm-editor/src/helpers/utility.ts#normalizeCustomNodeExpressions` | 纯函数、幂等；`;;` 拆分 + kind 映射 | 图进入画布的**每个入口**（见 §3 调用点） |
 | **② 渲染兜底（降级展示）** | 内核 customNode 渲染链：未知 kind 落「配置不符合规范」占位卡；generic customNode 缺 `renderTab` 落兜底 `CustomFunctionTable`（提交 `f47af5c` 修复 fallback 链） | 不改数据、降级展示 | 迁移不了的节点 / 函数未注册的节点 |
 | **③ 运行时执行兼容** | `apps/zen-rule/src/engine.ts#parseOperatorExpr`（数组原样返回）+ `custom_double_semicolon.json` 夹具 | 双形态表达式等价执行 | 仿真/决策执行 |
-| **④ 存储治理（历史不可破坏）** | 版本面板（宿主 `use-remote-graph` + 内核 `restoreVersion`）；`apps/editor/src/auto-version-retention.ts` | 恢复即前进；保留策略契约（manual 永久 / auto 滚动+按日检查点 / 命名版本豁免） | 版本恢复与清理 |
+| **④ 存储治理（历史不可破坏）** | 版本面板（宿主 `use-remote-graph` + 内核 `restoreVersion`）；`apps/editor/src/auto-version-retention.ts` | 恢复即前进；保留策略契约（manual 永久 / auto 滚动+按日检查点 / 命名与钉住豁免三维正交） | 版本恢复与清理 |
 
 ---
 
@@ -80,8 +80,11 @@
 
 - **恢复即前进**（restore-is-forward）：恢复旧版本 = 追加新 head，绝不覆盖其后版本
   （第六十八批起宿主 `onRestore` 走内核标准入口 `restoreVersion`，消除双实现分叉）；
-- **保留策略契约**（第六十一/六十六批）：manual 永久；auto 滚动 `AUTO_VERSIONS_KEEP`=20
-  条 ∪ 按 UTC 日检查点（`AUTO_VERSIONS_DAILY_KEEP` 默认 30）；**命名版本豁免**折叠
+- **保留策略契约**（第六十一/六十六/七十批）：manual 永久；auto 滚动 `AUTO_VERSIONS_KEEP`=20
+  条 ∪ 按 UTC 日检查点（`AUTO_VERSIONS_DAILY_KEEP` 默认 30）；**命名版本与钉住版本豁免**
+  ——豁免谓词为三维正交合取 `auto && !versionName && !pinned`（auto=来源标记 / versionName=命名
+  / pinned=保留意图，各自独立标记组合表达，不复用升格——裁决依据全文见
+  [libsuggest/S007 追记](../libsuggest/S007-version-pin.md)）；
   （存量 root 卷属主迁移见 `bun run smoke:deploy` 自愈逻辑）。
 
 ---

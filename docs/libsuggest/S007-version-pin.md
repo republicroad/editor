@@ -47,4 +47,24 @@ Pin 入口；内核交付后宿主升级消费并收敛 workaround（原轨道 B
 内核 66fbf87 已实现（appshell 0.4.0）：pinned 为独立 meta 键（未复用 auto，裁决更新）；
 updateVersionMeta(id, revision, {pinned?, versionName?}) 联合 meta，renameVersion 成兼容别名；
 HTTP PATCH body 扩展 pinned；面板 pinned 徽标 + Pin/Unpin + pinned 过滤（feature-detect onPin）。
-宿主后端 patch 契约需补 pinned 键 + 保留策略豁免，消费排入第七十批。
+宿主后端 patch 契约已补 pinned 键 + 保留策略豁免，消费落地于第七十批。
+
+### 裁决依据：为何不复用 auto 升格（内核会话四层理由，宿主会话转录）
+
+1. **两个键回答不同的问题**：auto 是来源标记（这条版本怎么产生的：自动 vs 手动保存），
+   pinned 是保留意图（用户希望它豁免治理）。复用即把「它怎么来的」改写成「我想留它」——
+   `auto: true → false` 后来源信息永久丢失，自动存档从此冒充手动保存。独立键下钉住的自动
+   存档同时显示 auto + pinned 两个徽标（"这是我选择保留的自动存档"），语义如实。
+2. **升格不可逆**：钉住再取消是常规操作——独立键下 unpin 只是把版本放回 auto 治理池；
+   若 pin = 翻转 auto，unpin 时无从得知是否该翻回 `auto: true`（除非另存原始值，本质是
+   第二个键还搭上状态机复杂度）。宿主旧 `PATCH {auto:false}` workaround 正踩在此不可逆点
+   （第七十批已收敛退役）。
+3. **治理谓词保持正交**：保留豁免过滤（`auto && !versionName && !pinned`）是三个独立维度的
+   合取，「命名豁免」在第六十四批已是先例，pinned 只是往同一谓词加一项。若走升格，
+   「命名的 auto」与「钉住的」都会塌缩成 manual，再分不清 unpin 后各回哪个治理池。
+4. **写入者与写入时机不同**：auto 由保存路径在创建时刻写（保存者上下文），pinned 由面板
+   事后经 updateVersionMeta 写（用户后续意图）——PATCH 契约里根本不含 auto。分键让写权限
+   天然隔离，服务端 pruneAutoVersions 只需照搬同款豁免谓词。
+
+一句话：auto/versionName/pinned 是三个正交维度（怎么来的 / 叫什么 / 保不保），各自独立
+标记、组合表达，豁免谓词按需组合——升格方案用一个比特硬编码三种状态的交集，丢信息且不可逆。

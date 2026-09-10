@@ -21,12 +21,35 @@ import 'ace-builds/src-noconflict/snippets/javascript';
 import 'ace-builds/src-noconflict/theme-chrome';
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { ThemeContextProvider, type SkinDefinition } from '@republicroad/jdm-appshell';
+import { toast } from 'sonner';
+import { Rocket } from 'lucide-react';
+import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
+import { ThemeContextProvider, type SkinDefinition, type SkinSlotRender } from '@republicroad/jdm-appshell';
 import { OceanCurrentDateNode } from './components/skins/ocean-current-date-node';
 import { DecisionSimplePage } from './pages/decision-simple/index.tsx';
 import { NotFoundPage } from './pages/not-found';
 
-// 皮肤目录 = 宿主关注点：seeds 换配色，nodeOverrides 劫持节点 UI（一键换UI/换肤）
+// 皮肤目录 = 宿主关注点：seeds 换配色，nodeOverrides 劫持节点 UI（一键换UI/换肤），
+// layout 注入布局槽位（S005 P1：工具栏槽位；槽位 id 必须 host: 前缀，映射层校验）
+/** ocean 皮肤的工具栏注入：发布按钮（S005 P1 消费示范，host:toolbar.publish 独立组） */
+const publishSlot: SkinSlotRender = (ctx) => (
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    disabled={ctx.disabled ?? false}
+    title="Publish (skin slot demo — host:toolbar.publish)"
+    onClick={() =>
+      toast.info(
+        `发布：当前图 ${ctx.graph?.nodes?.length ?? 0} 节点 / ${ctx.graph?.edges?.length ?? 0} 连线（槽位示范动作）`,
+      )
+    }
+  >
+    <Rocket size={13} />
+    发布
+  </Button>
+);
+
 const SKINS: SkinDefinition[] = [
   { id: 'default', label: '默认' },
   { id: 'violet', label: '品牌紫', seeds: { primary: '#7c3aed' } },
@@ -35,6 +58,11 @@ const SKINS: SkinDefinition[] = [
     label: '海洋蓝（接管 current_date UI）',
     seeds: { primary: '#0369a1' },
     nodeOverrides: { current_date: { renderNode: OceanCurrentDateNode } },
+    layout: {
+      toolbar: {
+        slots: { 'host:toolbar.publish': publishSlot },
+      },
+    },
   },
 ];
 

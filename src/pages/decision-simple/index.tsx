@@ -3,15 +3,9 @@ import { CirclePlay, Lightbulb, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { decisionTemplates } from '../../assets/decision-templates';
 import { useSearchParams } from 'react-router-dom';
+import { DecisionGraphRef, DecisionGraphType, GraphSimulator, JdmUiMode, Simulation } from '@republicroad/jdm-editor';
 import {
-  DecisionGraph,
-  DecisionGraphRef,
-  DecisionGraphType,
-  GraphSimulator,
-  JdmUiMode,
-  Simulation,
-} from '@republicroad/jdm-editor';
-import {
+  SkinnedDecisionGraph,
   VersionHistoryPanel,
   createGraphsHttpAdapter,
   createIndexedDbAdapter,
@@ -291,7 +285,7 @@ const DecisionSimpleInner: React.FC = () => {
         />
         <div className={classes.contentWrapper}>
           <div className={classes.content}>
-            <DecisionGraph
+            <SkinnedDecisionGraph
               mode={mode}
               customNodes={customNodes}
               customFunctions={schema ?? undefined}

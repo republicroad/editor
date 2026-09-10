@@ -162,6 +162,7 @@
 - [x] 第六十八批(B 轨道第二轮接线)：restoreVersion 接线(恢复变立即落盘，消除双实现分叉)+diffBaseline 消费(恢复前快照画布标记，编辑即清)+I18nProvider locale=zh-CN(面板 vh.* 中文)+组件测试桩补 useT——见 7.3 第六十八批
 - [x] 第六十九批(D2 函数域重建)：custom_list_query(复用 queryRoster)/rate_1h+group_distinct_1h(进程内滑动窗口)/ip_location(可插拔数据集)重建于 contrib/；schema fixture 7→10 namespaces(在途同步待内核入库)；撞库攻击防御.json 仿真验收恢复(双路径 trace 断言)——见 7.3 第六十九批
 - [x] 第七十批(S007 版本钉住消费收口)：后端 pinned 契约(patch 键+保留豁免+透传+OpenAPI)+前端 onPin 接线(updateVersionMeta)+退役 PinVersionsSheet/直连 PATCH 双实现——见 7.3 第七十批
+- [x] 第七十一批(S005 P1 消费)：DecisionGraph→SkinnedDecisionGraph 切换(appshell 0.6.0)+ocean 皮肤 host:toolbar.publish 发布按钮注入(layout.toolbar 槽位示范)——见 7.3 第七十一批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -247,6 +248,19 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-10，第七十一批：S005 P1 消费——SkinnedDecisionGraph 切换 + ocean 工具栏槽位)：**
+
+- **内核前置已就绪**：jdm-editor 0.6.0 + appshell 0.6.0（S005 P1：kernel `toolbarItems` 锚点 +
+  appshell `SkinLayout.toolbar` 映射 + `SkinnedDecisionGraph`，规格 §10 四项宿主裁决全部体现）
+- **渲染切换（B3 消费）**：`index.tsx` `<DecisionGraph>` → `<SkinnedDecisionGraph>`（appshell
+  0.6.0 barrel 导出；props 全透传 + ref 转发，graphRef/serialize/restore 链路经组件测试与
+  typecheck 验证不变）。无皮肤时与直渲染行为一致（内核缺省零渲染快照防回归）
+- **ocean 槽位注入（main.tsx 皮肤目录）**：`layout.toolbar.slots['host:toolbar.publish']`
+  ——发布按钮（Rocket 图标 + disabled 跟随 ctx.disabled + toast 节点/连线计数示范动作，
+  `SkinSlotRender` 类型化）。default/violet 无 layout → 零开销（切换皮肤验证注入生效/消失）
+- 门禁：typecheck/lint/主仓 131/组件 46/apps 99/build 3.1s/storybook/schema 10ns/单实例/
+  preview 200 全绿；「发布」按钮浏览器实机走查随 IAB 恢复补录（打包产物已验证含槽位）
 
 **最新变更(2026-09-09，第七十批：S007 版本钉住消费收口——pinned 契约 + 双实现退役)：**
 

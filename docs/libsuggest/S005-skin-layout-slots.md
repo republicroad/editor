@@ -80,3 +80,21 @@ CustomNodeSpec 渲染上下文对齐）。约束：
 ShellHeader（宿主自摆 PageHeader 为可选迁移）；④ P1 最小集 {graph, disabled, graphRef} 确认，
 富上下文建议以独立 context hook 向后兼容追加。P1 可进入实现（kernel/appshell 0.6.0）；
 宿主消费批（SkinnedDecisionGraph 切换 + ocean 注入示范）随 0.6.0 发版排期。
+
+## P1 交付追记（2026-09-10，内核会话）
+
+**P1 工具栏槽位已 shipped（kernel/appshell 0.6.0，reui `d337796`）**：
+
+- kernel：中性 `ToolbarItem` 锚点（`toolbarItems` prop），渲染于页签条右端原生操作
+  之后——group 聚类分隔线、组内 order 稳定排序、每项独立 SafeBoundary（槽位抛错
+  降级不渲染）、零注入零 DOM
+- appshell：`SkinDefinition.layout.toolbar`（最小 ctx `{graph, disabled, graphRef}`）+
+  `mapToolbarSlots`（裸名 dev-warn 补 `host:` 前缀、order 排序、缺省独立组）+
+  `SkinnedDecisionGraph` 透传壳
+- playground：Default/Ocean 双肤切换 + `host:toolbar.hello` 槽位演示，实机验收通过
+  （默认零注入 → 切肤出现 → 点击读实时图 → 切回零残留）
+- 测试：kernel 7 用例 + appshell 8 用例；门禁全绿；0.6.0 已发布 npm（registry smoke 绿）
+
+宿主消费（72 批）前置已就绪：`DecisionGraph → SkinnedDecisionGraph` 切换 +
+ocean `host:toolbar.publish` 注入。P2（right 面板）/ P3（ShellHeader）按规格稿
+分期待交付。

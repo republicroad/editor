@@ -60,7 +60,7 @@ proposed（宿主写入）
 | S002 | zod 3 → 4.3.6 对齐（宿主树已完成迁移验证，362/362 绿）                                  | 中     | done |
 | S003 | appshell stories 在内核 pnpm 树下 typecheck 断链（Meta/StoryObj 缺失）                  | 低     | done |
 | S004 | 版本历史 diff 视图组件（P1 面板版：computeGraphDiff + 面板对比；P2 画布联动已闭环——面板 onCompare → DecisionGraph diffBaseline，playground 集成演示，kernel/appshell 0.5.0） | 中     | done |
-| S005 | 换肤布局槽位（SkinDefinition 布局扩展需求：工具栏/面板/头部注入）                       | 中     | spec-ready |
+| S005 | 换肤布局槽位（P1 工具栏槽位 shipped 0.6.0；P2 right 面板 / P3 ShellHeader 待交付） | 中     | in-progress |
 | S006 | 版本钉住 auto→manual（面板 Pin 按钮 + adapter.updateVersionMeta；服务端端点宿主已上线） | 中     | superseded by S007 |
 | S007 | 版本钉住 Pin（S006 剩余半边：pinned meta + 面板 Pin 按钮 + updateVersionMeta）          | 中     | done |
 | S008 | monaco-editor 的 tsconfig paths 映射冗余且毒化 oxc 系打包器运行时解析（建议删除该映射） | 低     | accepted |

@@ -39,7 +39,7 @@
 | B2 | S004 diff 视图消费（P1） | ✅ kernel `computeGraphDiff`（b8a1bc2，零依赖纯函数，经 barrel 导出）+ 面板 `diffs` prop + DiffSummary 组件 | 打开版本历史时以各版本前一版为基线计算喂入（宿主只消费不算语义，第五十七批裁决不变）；P2 画布高亮内核未做，不阻塞 | **第六十四批** |
 | B4 | TabRequest 快照盲区闭合 | ✅ 0.3.2（`useRequestSessionDraftSerializer` 在途草稿 700ms 防抖捕获 + `GraphRecord.session` 双适配器往返修复 57106d3） | 登记验证：input 在途编辑进历史快照；归档结论至 docs/03 | **第六十四批** |
 | B1b | 版本钉住 Pin（S006 剩余半边） | ❌ 未实现（契约无 pinned 字段、面板无 Pin 按钮、无 `updateVersionMeta`）→ 已立项 libsuggest **S007** | S007 交付后升级消费 + 收敛 pin 直连 workaround | 待内核 |
-| B3 | S005 布局槽位示范 | ❌ 未实现（`SkinDefinition` 无 `layout` 字段，S005 提案维持） | ocean 皮肤扩展工具栏/头部槽位示范（宿主诉求优先级：工具栏 > 面板 > 头部） | 待内核 |
+| B3 | S005 布局槽位示范 | 📐 spec v1 已确认（内核 design/skin-layout-slots.md §10，四项裁决落定 2026-09-10）→ 待内核 P1 实现（toolbarItems 锚点 + appshell 映射 + SkinnedDecisionGraph，0.6.0） | 宿主消费：DecisionGraph→SkinnedDecisionGraph 切换 + ocean 发布按钮/右侧面板注入示范（含 68 批 restoreVersion/diffBaseline 回归） | 待内核 P1 |
 
 ### 轨道 C：上线期（用户决策驱动，暂不排批）
 

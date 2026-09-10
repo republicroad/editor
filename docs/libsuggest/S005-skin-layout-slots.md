@@ -72,3 +72,11 @@ CustomNodeSpec 渲染上下文对齐）。约束：
   （appshell 0.8.0）
 - **待宿主确认 4 项**（分组命名 / bottom 真伪 / header 归属 / 上下文富度），
   阻塞实现、不阻塞规格
+
+## 追记（2026-09-10，宿主会话）——四项裁决已确认
+
+宿主已就 spec v1 §9 四项全部裁决（详见 jdm-editor/docs/design/skin-layout-slots.md §10）：
+① 保留组够用，宿主「发布」走独立组；② bottom 裁剪，P2 仅交付 right；③ 接受 appshell 壳层
+ShellHeader（宿主自摆 PageHeader 为可选迁移）；④ P1 最小集 {graph, disabled, graphRef} 确认，
+富上下文建议以独立 context hook 向后兼容追加。P1 可进入实现（kernel/appshell 0.6.0）；
+宿主消费批（SkinnedDecisionGraph 切换 + ocean 注入示范）随 0.6.0 发版排期。

@@ -13,8 +13,6 @@ import { udfManager } from './register.ts';
 import './contrib/crypto.ts';
 import './contrib/debug.ts';
 import './contrib/debugui.ts';
-import './contrib/json_path.ts';
-import './contrib/template.ts';
 import './contrib/http.ts';
 import './contrib/roster.ts';
 import './contrib/custom-list-query.ts';

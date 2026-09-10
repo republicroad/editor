@@ -39,7 +39,7 @@
 | B2 | S004 diff 视图消费（P1） | ✅ kernel `computeGraphDiff`（b8a1bc2，零依赖纯函数，经 barrel 导出）+ 面板 `diffs` prop + DiffSummary 组件 | 打开版本历史时以各版本前一版为基线计算喂入（宿主只消费不算语义，第五十七批裁决不变）；P2 画布高亮内核未做，不阻塞 | **第六十四批** |
 | B4 | TabRequest 快照盲区闭合 | ✅ 0.3.2（`useRequestSessionDraftSerializer` 在途草稿 700ms 防抖捕获 + `GraphRecord.session` 双适配器往返修复 57106d3） | 登记验证：input 在途编辑进历史快照；归档结论至 docs/03 | **第六十四批** |
 | B1b | 版本钉住 Pin（S006 剩余半边） | ❌ 未实现（契约无 pinned 字段、面板无 Pin 按钮、无 `updateVersionMeta`）→ 已立项 libsuggest **S007** | S007 交付后升级消费 + 收敛 pin 直连 workaround | 待内核 |
-| B3 | S005 布局槽位示范 | ✅ 内核 P1 已交付（66fbf87 后 0.6.0：toolbarItems + SkinnedDecisionGraph）| ✅ 第七十一批：DecisionGraph→SkinnedDecisionGraph 切换 + ocean `host:toolbar.publish` 注入示范；右侧面板槽位待 P2（0.7.0） | ✅ |
+| B3 | S005 布局槽位示范 | ✅ 内核 P1/P2/P3 全部交付（0.6.0–0.9.0：toolbarItems + right 面板槽位 + ShellHeader）| ✅ 第七十一批：SkinnedDecisionGraph 切换 + ocean 注入示范；P2 right/P3 header 消费待需求（§10-2/§10-3 备用） | ✅ |
 
 ### 轨道 C：上线期（用户决策驱动，暂不排批）
 
@@ -90,6 +90,14 @@
   （feature-detect `updateVersionMeta`，HTTP PATCH body 已含 pinned）；**退役宿主自研
   PinVersionsSheet 与直连 PATCH workaround**——内核面板已带 Pin/Unpin 控件 + pinned 徽标 +
   pinned 过滤（消除双实现，同 68 批 restoreVersion 先例）。全门禁绿。
+- **第七十一批（✅ 2026-09-10）：S005 P1 消费（内核 0.6.0：toolbarItems + SkinnedDecisionGraph）**——
+  DecisionGraph → SkinnedDecisionGraph 切换（props 透传 + ref 转发，68 批链路不变）+ ocean
+  皮肤 `host:toolbar.publish` 发布按钮注入示范。全门禁绿。
+- **第七十二批（✅ 2026-09-10）：内核 0.7.0–0.9.0 消费（S005 P2/P3 + break change 消化）**——
+  gitlink → 51553f4（appshell 0.9.0：P2 右面板槽位 + P3 ShellHeader，均就绪备用）；
+  **breaking 0.7.0 消化**：移除 json_path/template contrib 对齐内核终态（零调用实证，
+  zen 表达式覆盖；crypto 内核终态已加回且与宿主 crypto.ts 契约一致故保留）；fixture 8ns
+  对齐。B3 全部三期（P1 工具栏/P2 右面板/P3 头部）宿主侧就绪。全门禁绿。
 - **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；轨道 C 上线期

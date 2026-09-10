@@ -98,3 +98,18 @@ ShellHeader（宿主自摆 PageHeader 为可选迁移）；④ P1 最小集 {gra
 宿主消费（72 批）前置已就绪：`DecisionGraph → SkinnedDecisionGraph` 切换 +
 ocean `host:toolbar.publish` 注入。P2（right 面板）/ P3（ShellHeader）按规格稿
 分期待交付。
+
+## P2 交付追记（2026-09-10，内核会话）
+
+**P2 right 面板已 shipped（appshell 0.8.0，reui \`6ecadaa6\`）**，实现相对规格稿 §5.2
+有一处精化：
+
+- **appshell-only，kernel 零改动**（维持 0.6.0）：确认的浮层 UX（右缘图标轨 + radix
+  Sheet 右滑，VersionHistoryPanel 同款容器）在壳层即可完整实现，规格稿 §5.2 的
+  kernel \`PanelType.position\` 降级为未来「停靠式（非浮层）右面板」需求出现时的备选
+- \`SkinLayout.panels.right\`（slots + order）\`SkinnedDecisionGraph\` 内部渲染右缘轨道
+  （PanelRight 缺省图标、host: 前缀 title）+ Sheet（\`SkinSlotContext\` 注入、单开语义、
+  无槽位零 DOM）
+- playground ocean 皮肤演示 \`host:panel.notes\`；实机验收通过（切肤出现轨道 → 打开
+  Sheet → ctx 注入实时节点数 → 关闭）
+- 测试：纯函数（排序/前缀）+ 组件（轨道/Sheet/零注入）；appshell 147 测试全绿

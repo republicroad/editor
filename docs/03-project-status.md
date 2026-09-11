@@ -164,6 +164,8 @@
 - [x] 第七十批(S007 版本钉住消费收口)：后端 pinned 契约(patch 键+保留豁免+透传+OpenAPI)+前端 onPin 接线(updateVersionMeta)+退役 PinVersionsSheet/直连 PATCH 双实现——见 7.3 第七十批
 - [x] 第七十一批(S005 P1 消费)：DecisionGraph→SkinnedDecisionGraph 切换(appshell 0.6.0)+ocean 皮肤 host:toolbar.publish 发布按钮注入(layout.toolbar 槽位示范)——见 7.3 第七十一批
 - [x] 第七十二批(内核 0.7.0–0.9.0 消费)：S005 P2 右面板/P3 ShellHeader 就绪备用；break change 消化——移除 json_path/template contrib 对齐内核终态(crypto 内核已加回且契约一致)，fixture 8ns 对齐——见 7.3 第七十二批
+- [x] 第七十三批(S005 三期槽位全消费)：ShellHeader 接线(ocean header 左右槽位示范)+P2 右缘面板消费(host:panel.environment 图元信息面板)+dev concurrently 单命令全栈——见 7.3 第七十三批
+- [x] 第七十四批(持久化默认翻转 local-first)：无参数默认 IndexedDB 本地适配器(?storage=http 显式切服务端)；apps/editor + graphs-store 保留为后端集成示例——见 7.3 第七十四批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -250,6 +252,18 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
 
+**最新变更(2026-09-10，第七十四批：持久化默认翻转 local-first)：**
+
+- **默认存储模式翻转**：无 URL 参数 → IndexedDB 本地适配器（storageMode 判定 === 'http' 才走
+  服务端）——clone → `bun run dev` 纯前端即得完整编辑器（业界演示仓 local-first 惯例：
+  excalidraw/tldraw 同款，零服务端、零滥用面）；`?storage=http` 显式切换服务端适配器
+  （apps/editor + graphs-store 保留为 **GraphPersistenceAdapter 后端集成示例**，版本治理/钉住/
+  保留策略全套服务端能力不变）
+- **能力矩阵不变**：本地模式下版本治理/钉住/命名/diff/保留策略全功能可用（IndexedDB 适配器
+  原生实现 updateVersionMeta/renameVersion/listVersions pinned）；模拟执行仍走 /api/simulate
+  （dev concurrently 全栈或 dev:api）；**自托管部署不受影响**（smoke:deploy 走部署态 HTTP 模式）
+- 门禁：typecheck/lint/主仓 124/组件 46/zen-rule+editor 92/build 2.2s/storybook/
+  schema 8ns/单实例 全绿
 **最新变更(2026-09-10，第七十三批：自包含演示栈收口——S005 三期槽位全消费)：**
 
 - **P3 ShellHeader 接线**：页面渲染 `<ShellHeader graph />`（PageHeader 宿主自摆不动；无槽位皮肤

@@ -51,10 +51,11 @@ const THEME_LABELS: Record<ThemePreference, string> = {
 
 export const DecisionSimplePage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  // 持久化双模式：默认接入 apps/editor 内建 /api/graphs（HTTP 适配器，版本治理/钉住等
-  // 服务端能力齐全）；?storage=local 切换 IndexedDB 本地适配器（backend-less 演示，
-  // 本地保留策略同 AUTO_VERSIONS_KEEP）。宿主应用换成自己的适配器即可（见 docs/15）。
-  const storageMode = searchParams.get('storage') === 'local' ? 'local' : 'http';
+  // 持久化默认 local-first（第七十四批，业界演示仓惯例：excalidraw/tldraw 同款）：
+  // IndexedDB 本地适配器，clone → bun run dev 纯前端即得完整编辑器，零服务端零滥用面；
+  // ?storage=http 显式切换服务端适配器（apps/editor /api/graphs，作为 GraphPersistenceAdapter
+  // 的后端集成示例保留，见 docs/15）。宿主应用换成自己的适配器即可。
+  const storageMode = searchParams.get('storage') === 'http' ? 'http' : 'local';
   const persistence = useMemo(
     () => (storageMode === 'local' ? createIndexedDbAdapter() : createGraphsHttpAdapter()),
     [storageMode],

@@ -100,13 +100,14 @@ mystate/轨道C上线方案.md（含决策清单）。自托管演示部署（co
   zen 表达式覆盖；crypto 内核终态已加回且与宿主 crypto.ts 契约一致故保留）；fixture 8ns
   对齐。B3 全部三期（P1 工具栏/P2 右面板/P3 头部）宿主侧就绪。全门禁绿。
 - **第七十三批（✅ 2026-09-10）：自包含演示栈收口 + S005 三期槽位全消费**——P3 ShellHeader 接线
+- **第七十四批（✅ 2026-09-10）：持久化默认翻转 local-first**——无参数默认 IndexedDB 本地
+  适配器（clone → `bun run dev` 纯前端即得完整编辑器，业界演示仓 local-first 惯例：
+  excalidraw/tldraw 同款，零服务端零滥用面）；`?storage=http` 显式切换服务端适配器
+  （apps/editor + graphs-store 保留为 GraphPersistenceAdapter 后端集成示例）。
+  模拟执行仍走 /api/simulate（dev concurrently 全栈）。全门禁绿。
   （ocean header 左右槽位示范）+ P2 右缘面板消费（ocean host:panel.environment 图元信息面板）+
   `bun run dev` concurrently 单命令全栈（对齐 editor-demo-boundary 自包含定位）。全门禁绿。
-- **第七十四批候选（待确认）：持久化默认翻转 local-first**——业界演示仓惯例为 local-first
-  （IndexedDB/文件，零服务端、零滥用面；excalidraw/tldraw/react-flow examples 同款）。宿主
-  已有 IndexedDB 适配器（?storage=local），翻转 = 默认 storageMode 改 local + 服务端持久化
-  降级为「后端集成示例」（?storage=http 显式开启；apps/editor + graphs-store 保留为适配器
-  参考实现）。模拟执行仍走 /api/simulate（dev 全栈保留）。
+
 - **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；命名版本按名检索 UI 增强（服务端 versionName 已就绪）、版本存储治理（压缩/去重，量大再做）。

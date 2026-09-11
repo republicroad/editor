@@ -29,7 +29,6 @@
 | A2 | auto 版本按天合并保留策略 | ✅ 第六十一批 | `auto-version-retention.ts` 纯逻辑（滚动 20 条 ∪ 每日检查点，`AUTO_VERSIONS_DAILY_KEEP` 默认 30，0 关闭）+ 路由级集成测试 |
 | A3 | 容器 USER 硬化（root→bun + 卷属主） | 第六十五批（排期） | 前置：确认 rootless podman 卷属主映射（docs/16 §6.2 取舍说明） |
 | A4 | 部署冒烟脚本固化（scripts/smoke-deploy） | 第六十五批（排期） | 把第五十九批手工冒烟链固化为可一键执行 + 非零退出码语义 |
-| A5 | lexicon 词表域重建 | 待排 | aho-corasick；名单/风控场景价值最高（docs/13 §8.3 备案）；产品需求到位即启动 |
 
 ### 轨道 B：内核交付后的宿主接线（2026-09-07 按内核 reui@91e8e8f 实测重排）
 
@@ -108,7 +107,9 @@ mystate/轨道C上线方案.md（含决策清单）。自托管演示部署（co
   （ocean header 左右槽位示范）+ P2 右缘面板消费（ocean host:panel.environment 图元信息面板）+
   `bun run dev` concurrently 单命令全栈（对齐 editor-demo-boundary 自包含定位）。全门禁绿。
 
-- **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
+- **已移交（2026-09-10）：A5 lexicon 词表域 → verdict 平台承接**——随编辑器演示定位调整
+  迁出本仓（需求与契约问题记录于 mystate/lexicon-词表域需求.md）；editor contrib 无此域、
+  无存量图调用，零迁移成本。B3 全部三期（P1 工具栏/P2 右面板/P3 头部）宿主侧就绪。全门禁绿。
 - **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   命名版本按名检索 UI 增强（服务端 versionName 已就绪）、版本存储治理（压缩/去重，量大再做）。
 - **已裁撤（2026-09-10 演示栈定位决策）**：运行日志搜集的后续项全部裁撤（Vector→OSS 实机

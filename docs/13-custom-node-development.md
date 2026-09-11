@@ -189,7 +189,7 @@ apps/zen-rule/src/
     ✅ `rate_1h`/`group_distinct_1h`（`contrib/rate-window.ts`，进程内 60min 滑动窗口，生产
     Redis 化留宿主层）、✅ `ip_location`（`contrib/ip-location.ts`，env `IP_LOCATION_DATASET`
     可插拔数据集，**数据集不捆绑**）——撞库攻击防御.json 仿真验收恢复（trace 验证四函数输出）
-  - `lexicon`（Aho–Corasick 词表匹配，文件名建议 `aho-corasick.ts`）——2026-09-01 裁决未来重新实现
+  - `lexicon`（Aho–Corasick 词表匹配，文件名建议 `aho-corasick.ts`）——~~2026-09-01 裁决未来重新实现~~ **2026-09-10 需求移交 verdict 平台承接**（随编辑器演示定位调整迁出 editor 仓；无存量图调用，零迁移成本）
   - `http_call`/`http_call_with_headers` **无需重建**：已被 `http_request`（http 域专属节点）替代
 
 - **per-tool `ui` 字段（独立节点形态强化，待需求拐点启动）**：在 UDF schema 的 tool 定义上增加可选

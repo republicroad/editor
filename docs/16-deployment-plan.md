@@ -36,7 +36,9 @@
 
 ## 5. 开放项(推进部署后续还需要的)
 
-- 真实部署配置：镜像对外推送仓库名、生产 env(`TRUST_PROXY_HEADERS`/`X-User-Id` 网关、`PORT`)、卷挂载编排(docker-compose / k8s)。
+- ~~真实部署配置：镜像对外推送仓库名、生产 env、卷挂载编排~~——生产上线方案已移出公开仓
+  （editor 重定位为 jdm-editor 官方演示项目，2026-09-11，方案归平台侧 mystate 管理）；
+  本文档保留**自托管演示部署**口径（AUTH_SECRET 本地默认、卷备份见 §6.2）。
 - 日志采集归档：决策请求日志 JSONL 落盘已上线(第六十二批，`LOGS_DIR`)；Vector→对象存储编排示例见 `deploy/vector-oss/`（可运行起点，OSS 侧未实机联调）。
 
 ---

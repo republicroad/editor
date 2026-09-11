@@ -41,11 +41,12 @@
 | B1b | 版本钉住 Pin（S006 剩余半边） | ❌ 未实现（契约无 pinned 字段、面板无 Pin 按钮、无 `updateVersionMeta`）→ 已立项 libsuggest **S007** | S007 交付后升级消费 + 收敛 pin 直连 workaround | 待内核 |
 | B3 | S005 布局槽位示范 | ✅ 内核 P1/P2/P3 全部交付（0.6.0–0.9.0：toolbarItems + right 面板槽位 + ShellHeader）| ✅ 第七十一批：SkinnedDecisionGraph 切换 + ocean 注入示范；P2 right/P3 header 消费待需求（§10-2/§10-3 备用） | ✅ |
 
-### 轨道 C：上线期（用户决策驱动，暂不排批）
+### 轨道 C：上线期（已移出本仓，2026-09-11）
 
-1. 域名/反代/HTTPS + `TRUST_PROXY_HEADERS` 生产网关配置（docs/16 §5）。
-2. better-auth 升级（触发条件四条见 docs/14 §5.2；迁移路径已备案，组件层零改动）。
-3. GHCR 镜像发布节奏与正式环境消费约定。
+editor 重定位为 jdm-editor 官方演示项目（边界备案 editor-demo-boundary.md）后，生产上线
+方案（域名/HTTPS/镜像消费约定/better-auth 升级等）属平台侧管理，**已迁出公开仓**至本地
+mystate/轨道C上线方案.md（含决策清单）。自托管演示部署（compose/podman）不受影响，
+文档见 docs/16。
 
 ### 批次排期（2026-09-07 重新规划）
 
@@ -101,10 +102,14 @@
 - **第七十三批（✅ 2026-09-10）：自包含演示栈收口 + S005 三期槽位全消费**——P3 ShellHeader 接线
   （ocean header 左右槽位示范）+ P2 右缘面板消费（ocean host:panel.environment 图元信息面板）+
   `bun run dev` concurrently 单命令全栈（对齐 editor-demo-boundary 自包含定位）。全门禁绿。
+- **第七十四批候选（待确认）：持久化默认翻转 local-first**——业界演示仓惯例为 local-first
+  （IndexedDB/文件，零服务端、零滥用面；excalidraw/tldraw/react-flow examples 同款）。宿主
+  已有 IndexedDB 适配器（?storage=local），翻转 = 默认 storageMode 改 local + 服务端持久化
+  降级为「后端集成示例」（?storage=http 显式开启；apps/editor + graphs-store 保留为适配器
+  参考实现）。模拟执行仍走 /api/simulate（dev 全栈保留）。
 - **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
-  运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；轨道 C 上线期
-  （用户决策驱动）；命名版本按名检索 UI 增强（服务端 versionName 已就绪）、版本存储治理（压缩/去重，量大再做）。
+  运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；命名版本按名检索 UI 增强（服务端 versionName 已就绪）、版本存储治理（压缩/去重，量大再做）。
 
 ### 跟踪项（不立批次）
 

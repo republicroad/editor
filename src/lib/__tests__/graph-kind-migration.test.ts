@@ -52,7 +52,7 @@ describe('migrateLegacyNodeKinds（第六十七批 D1）', () => {
 
   test('真实样本回归：mock-user-1 v9（contrib.http_request 保留、文件可解析）', async () => {
     // 样本固化为被跟踪夹具（原文件在 apps/editor/graphs 为 gitignore 的运行时数据，CI 无此文件）
-    const file = path.resolve(import.meta.dir, '../fixtures/legacy-contrib-http-request.v9.json');
+    const file = path.resolve(import.meta.dir, 'fixtures/legacy-contrib-http-request.v9.json');
     const graph = (await Bun.file(file).json()) as { content: { nodes: DecisionNode[] } };
     const { nodes, changes } = migrateLegacyNodeKinds(graph.content.nodes);
     expect(changes).toHaveLength(0); // 该样本唯一旧 kind 为 contrib.http_request（例外保留）

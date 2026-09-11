@@ -98,6 +98,9 @@
   **breaking 0.7.0 消化**：移除 json_path/template contrib 对齐内核终态（零调用实证，
   zen 表达式覆盖；crypto 内核终态已加回且与宿主 crypto.ts 契约一致故保留）；fixture 8ns
   对齐。B3 全部三期（P1 工具栏/P2 右面板/P3 头部）宿主侧就绪。全门禁绿。
+- **第七十三批（✅ 2026-09-10）：自包含演示栈收口 + S005 三期槽位全消费**——P3 ShellHeader 接线
+  （ocean header 左右槽位示范）+ P2 右缘面板消费（ocean host:panel.environment 图元信息面板）+
+  `bun run dev` concurrently 单命令全栈（对齐 editor-demo-boundary 自包含定位）。全门禁绿。
 - **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
   运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；轨道 C 上线期

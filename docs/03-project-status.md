@@ -250,6 +250,20 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
 
+**最新变更(2026-09-10，第七十三批：自包含演示栈收口——S005 三期槽位全消费)：**
+
+- **P3 ShellHeader 接线**：页面渲染 `<ShellHeader graph />`（PageHeader 宿主自摆不动；无槽位皮肤
+  返回 null 零影响）；ocean 皮肤 layout.header.slots 注入（left：🌊 Ocean staging 标识；right：
+  节点数徽标，随受控图实时更新）
+- **P2 右缘面板消费**：ocean layout.panels.right.slots[host:panel.environment] 图元信息面板
+  （节点/连线计数 + 槽位来源说明）——rail + Sheet 交互形态点亮（§10-2 裁决下 right 唯一交付位）
+- **自包含执行收口**：`bun run dev` 升级 concurrently 单命令全栈（-k api+web，dev:api + vite 并起），
+  对齐边界文档「clone 后即得完整编辑器 + 本地执行」定位（concurrently devDep +1）；模拟器浏览器
+  wasm 回退（无 UDF 执行能力）列为可选后续备案
+- **红线**：S005 L129 verdict 字样改写为「平台侧后端」（零字样口径）；代码零 verdict 依赖、
+  .env.local 已忽略且 REUI_LICENSE_KEY 仅本地（复核 ✓）
+- 门禁：typecheck/lint/主仓 124/组件 46/zen-rule 44/apps 99/build/storybook/schema 8ns/单实例
+  + dev 单命令冒烟（api healthz + web 200 同时起）全绿
 **最新变更(2026-09-10，第七十二批：内核 0.7.0–0.9.0 消费——S005 P2/P3 + break change 消化)：**
 
 - **内核交付（66fbf87→51553f4，含 breaking 0.7.0）**：S005 P2 右侧面板槽位（0.8.0，Sheet 容器

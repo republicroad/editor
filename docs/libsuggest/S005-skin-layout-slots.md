@@ -126,4 +126,4 @@ ocean `host:toolbar.publish` 注入。P2（right 面板）/ P3（ShellHeader）�
 - 测试：appshell 152 用例全绿（新增头部 5 例）；kernel 全程 0.6.0 未动
 
 **宿主消费（72 批+）**：升级 appshell ≥0.8.0 时同步停止注册 json_path/template 节点
-（0.7.0 breaking），crypto 节点保留；verdict 后端承接 crypto 服务端执行。
+（0.7.0 breaking），crypto 节点保留；crypto 的服务端执行由平台侧后端承接（演示栈边界见 editor-demo-boundary 备案）。

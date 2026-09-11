@@ -28,7 +28,7 @@
     "jdm-editor/packages/*"
   ],
   "scripts": {
-    "dev": "vite --host",
+    "dev": "concurrently -k -n api,web -c blue,green \"bun run dev:api\" \"vite --host\"",
     "dev:api": "bun run --cwd apps/editor dev",
     "build": "tsc --noEmit && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
@@ -108,6 +108,7 @@
     "@typescript-eslint/eslint-plugin": "^8.69.0",
     "@typescript-eslint/parser": "^8.69.0",
     "@vitejs/plugin-react-swc": "^4.3.3",
+    "concurrently": "^10.0.5",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",

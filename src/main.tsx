@@ -62,6 +62,51 @@ const SKINS: SkinDefinition[] = [
       toolbar: {
         slots: { 'host:toolbar.publish': publishSlot },
       },
+      // S005 P2：右缘面板槽位（Sheet 容器）
+      panels: {
+        right: {
+          slots: {
+            'host:panel.environment': ({ graph: g }) => (
+              <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                <p style={{ margin: '0 0 8px' }}>
+                  <strong>Ocean 环境</strong>
+                </p>
+                <p style={{ margin: '0 0 8px' }}>
+                  节点 <strong>{(g.nodes ?? []).length}</strong> · 连线 <strong>{(g.edges ?? []).length}</strong>
+                </p>
+                <p style={{ margin: 0, opacity: 0.7 }}>
+                  由皮肤 layout.panels.right 槽位渲染（host:panel.environment）。
+                </p>
+              </div>
+            ),
+          },
+          order: ['host:panel.environment'],
+        },
+      },
+      // S005 P3：头部槽位（左：环境标识；右：节点数徽标）
+      header: {
+        slots: {
+          left: () => (
+            <span style={{ fontSize: 13, fontWeight: 600 }}>
+              🌊 Ocean&nbsp;
+              <span style={{ fontWeight: 400, opacity: 0.7 }}>staging</span>
+            </span>
+          ),
+          right: ({ graph: g }) => (
+            <span
+              style={{
+                fontSize: 11,
+                padding: '2px 8px',
+                borderRadius: 999,
+                background: 'rgba(3, 105, 161, 0.15)',
+                color: '#075985',
+              }}
+            >
+              {(g.nodes ?? []).length} nodes
+            </span>
+          ),
+        },
+      },
     },
   },
 ];

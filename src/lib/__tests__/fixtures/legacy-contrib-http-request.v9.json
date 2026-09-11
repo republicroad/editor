@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "id": "c0d277e3-a5a7-45dd-b0a5-bc661e66d50a",
+    "name": "c0d277e3-a5a7-45dd-b0a5-bc661e66d50a",
+    "owner": "mock-user-1",
+    "revision": "v9",
+    "createdAt": "2026-09-01T02:13:12.606Z",
+    "updatedAt": "2026-09-01T02:13:27.220Z"
+  },
+  "content": {
+    "nodes": [
+      {
+        "type": "customNode",
+        "content": {
+          "kind": "contrib.http_request",
+          "config": {
+            "inputField": null,
+            "outputPath": null,
+            "passThrough": true,
+            "expressions": [
+              {
+                "id": "3397c10c-fc3e-45b5-965a-9d02fe30cf80",
+                "key": "result",
+                "value": [
+                  "http_request",
+                  "\"https://httpbin.org/get\"",
+                  "\"GET\"",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          }
+        },
+        "id": "ecef966a-7f75-4444-be65-b9073a88e803",
+        "name": "contrib.http_request2",
+        "position": {
+          "x": -5,
+          "y": -40
+        }
+      },
+      {
+        "type": "inputNode",
+        "content": {
+          "schema": "",
+          "expressions": [],
+          "inputField": null,
+          "outputPath": null
+        },
+        "id": "8f721a68-22d3-49bd-a24f-9a7573b8698c",
+        "name": "request",
+        "position": {
+          "x": -370,
+          "y": 100
+        }
+      },
+      {
+        "type": "outputNode",
+        "content": {
+          "schema": ""
+        },
+        "id": "52f0926f-5732-4c19-8ea5-df936bc26580",
+        "name": "response",
+        "position": {
+          "x": 325,
+          "y": 110
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "c1a87e6d-e3d4-4b03-bae4-fa7abc868e36",
+        "sourceId": "8f721a68-22d3-49bd-a24f-9a7573b8698c",
+        "type": "edge",
+        "targetId": "ecef966a-7f75-4444-be65-b9073a88e803"
+      },
+      {
+        "id": "11b4c8fe-6acb-4bc5-9cdc-d97dcfe96584",
+        "sourceId": "ecef966a-7f75-4444-be65-b9073a88e803",
+        "type": "edge",
+        "targetId": "52f0926f-5732-4c19-8ea5-df936bc26580"
+      }
+    ]
+  }
+}

@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "catalog": {
-    "@gorules/zen-engine": "0.51.5",
+    "@gorules/zen-engine": "2.0.2",
     "@lezer/common": "^1.5.2",
     "@lezer/lr": "^1.4.2",
     "@storybook/react-vite": "10.6.0",

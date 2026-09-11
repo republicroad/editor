@@ -166,6 +166,7 @@
 - [x] 第七十二批(内核 0.7.0–0.9.0 消费)：S005 P2 右面板/P3 ShellHeader 就绪备用；break change 消化——移除 json_path/template contrib 对齐内核终态(crypto 内核已加回且契约一致)，fixture 8ns 对齐——见 7.3 第七十二批
 - [x] 第七十三批(S005 三期槽位全消费)：ShellHeader 接线(ocean header 左右槽位示范)+P2 右缘面板消费(host:panel.environment 图元信息面板)+dev concurrently 单命令全栈——见 7.3 第七十三批
 - [x] 第七十四批(持久化默认翻转 local-first)：无参数默认 IndexedDB 本地适配器(?storage=http 显式切服务端)；apps/editor + graphs-store 保留为后端集成示例——见 7.3 第七十四批
+- [x] 第七十五批(zen-engine 跨大版本升级)：catalog 0.51.5→2.0.2（新引擎线首稳定版）；API 逐点比对全部兼容，唯一适配为 getDecision loader 四形联合收窄；撞库仿真验收在 2.0.2 下全过（运行时风险点核销）——见 7.3 第七十五批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -252,6 +253,24 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
 
+**最新变更(2026-09-12，第七十五批：zen-engine 跨大版本升级 0.51.5 → 2.0.2)：**
+
+- **升级**：catalog `@gorules/zen-engine 0.51.5 → 2.0.2`（跨 1.x 直上新引擎线：Policy documents/
+  Workspace/safeEvaluate/evaluateBatch/httpHandler 等纯增量 API）。升级前 API 逐点比对
+  （unpkg index.d.ts vs 宿主 8 符号使用面）：customHandler 契约、HandlerRequest（node/input
+  getter）、HandlerResponse {output}、ZenDecisionContent(object)、evaluateExpressionSync、
+  ZenEvaluateOptions.trace、ZenEngineResponse envelope、ZenDecision.evaluate **全部签名不变或兼容**
+- **唯一代码适配**：`ZenEngineOptions.loader` 在 2.0 变为「函数 | static/fs/zip 对象」四形联合
+  ——`getDecision` 按 typeof 收窄为同步函数形态调用（该分支实际从未被使用：editor 用无参构造）
+- **运行时风险点核销（测试实证）**：表达式方言（`outputPath=_` 赋值式）、校验严格度
+  （graphAddons 注入自定义键）、`$nodes` 注入假设、customHandler ALS 上下文传播——撞库仿真
+  验收双路径（白名单命中 + 非白名单 trace）在 2.0.2 下全部通过，零代码语义改动
+- **不受影响**：前端 zen-engine-wasm 0.23.1（独立版本线，双引擎对齐为既有口径）；内核
+  demo-server（0.54.0 独立应用）；appshell 0.9.0
+- 门禁：typecheck/lint/主仓 124/组件 46/zen-rule 44/apps(editor) 48/build/storybook/
+  schema 8ns/单实例 全绿
+- 遗留口径：loader 仍仅支持同步函数形态（Promise/对象形态待真实需求）；前端 wasm 对齐为
+  独立评估项（不变）
 **最新变更(2026-09-10，第七十四批：持久化默认翻转 local-first)：**
 
 - **默认存储模式翻转**：无 URL 参数 → IndexedDB 本地适配器（storageMode 判定 === 'http' 才走

@@ -121,7 +121,8 @@ class ZenRule {
       return cached;
     }
     const loader = this.options.loader;
-    if (!loader) {
+    // zen-engine 2.0：loader 为「函数 | static/fs/zip 对象」四形联合——本仓仅支持同步函数形态
+    if (typeof loader !== 'function') {
       throw new Error(`decision ${key} not found, please use createDecisionWithCacheKey`);
     }
     const decisionContent = loader(key);

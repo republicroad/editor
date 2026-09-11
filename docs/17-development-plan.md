@@ -110,7 +110,12 @@ mystate/轨道C上线方案.md（含决策清单）。自托管演示部署（co
 
 - **待排：A5 lexicon 词表域**（aho-corasick，产品需求到位即启动；docs/13 §8.3）。
 - **待定/跟踪（不排批）**：D3 per-tool ui 字段 + ext/ 插件化（docs/13 §8.3，拐点驱动）；
-  运维收尾（Vector→OSS 实机联调需测试 bucket 配合、Grafana/Loki、OSS 生命周期策略）；命名版本按名检索 UI 增强（服务端 versionName 已就绪）、版本存储治理（压缩/去重，量大再做）。
+  命名版本按名检索 UI 增强（服务端 versionName 已就绪）、版本存储治理（压缩/去重，量大再做）。
+- **已裁撤（2026-09-10 演示栈定位决策）**：运行日志搜集的后续项全部裁撤（Vector→OSS 实机
+  联调、Grafana/Loki、OSS 生命周期策略——演示栈无审计需求）。已实现的 decision-request-log
+  JSONL 落盘与签名 cookie 鉴权**维持现状、不再投入**（行为无害，代码去留另议）。生产上线
+  方案整体已迁出本仓（mystate/轨道C上线方案.md）。
+
 
 ### 跟踪项（不立批次）
 

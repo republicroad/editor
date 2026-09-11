@@ -176,7 +176,7 @@
 - [x] 补充 Storybook 组件文档(simulator-request-panel + simulator-nodes-panel stories，`--smoke-test`/`--ci --smoke-test` 通过；主仓 Storybook 已于第十六批配置：src/stories/ 下 KeyValueEditor 与 DecisionGraph 嵌入示范)
 - [x] 修复 vite build 预存在问题(vite-plugin-dts 加载失败；子模块构建已正常产出 dist/)
 - [x] CI 迁移提交(`.github/workflows/validate.yml` pnpm→bun，见 `c0f8d89`)
-- [~] `/api/auth/get-session` 由 Mock 用户升级为真实会话(better-auth 服务端 + 数据库)——**暂缓**：编辑器定位为通用无状态库，鉴权由宿主应用负责(2026-08-24 决策)
+- [x] `/api/auth/get-session` 维持 Mock 用户——**裁撤升级路径**（2026-09-10 演示栈定位：better-auth 升级随轨道 C 移出本仓；签名 cookie 鉴权维持现状不再投入）(2026-08-24 决策：鉴权由宿主应用负责)
 - [x] 第八批：A AuthAdapter 抽取(`9e13933`) / B ExecCtx 执行上下文通道(`1f31d9c`)——详见 docs/14-batch-eight-plan.md；C 名单 owner 隔离已于第九批实施(`f63e6c5`+`4bd678f`)
 - [x] 库化第二步(第十批)：EditorShell Provider(schemaSource/authAdapter/simulate 注入)+ useCustomNodes 组合选项 + storage 键命名空间化 + docs/14-auth-integration.md 集成指南
 - [x] 库化第三步(第十一批)：Graph Persistence 接口契约(`src/shell/persistence.ts`)+ 设计提案(`docs/15-persistence-interface-proposal.md`)——图+配置打包(extensions)、历史版本(revision 必选语义)、乐观锁(baseRevision)

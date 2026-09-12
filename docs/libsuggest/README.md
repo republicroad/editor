@@ -64,3 +64,4 @@ proposed（宿主写入）
 | S006 | 版本钉住 auto→manual（面板 Pin 按钮 + adapter.updateVersionMeta；服务端端点宿主已上线） | 中     | superseded by S007 |
 | S007 | 版本钉住 Pin（S006 剩余半边：pinned meta + 面板 Pin 按钮 + updateVersionMeta）          | 中     | done |
 | S008 | monaco-editor 的 tsconfig paths 映射冗余且毒化 oxc 系打包器运行时解析（建议删除该映射） | 低     | accepted |
+| S009 | flow UI 增强：编辑撤销栈（undo/redo，kernel dg-store 命令栈）+ MiniMap/网格吸附 | 高     | proposed |

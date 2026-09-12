@@ -158,7 +158,7 @@
     },
     "jdm-editor/packages/jdm-editor": {
       "name": "@republicroad/jdm-editor",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "@codemirror/autocomplete": "^6.20.3",
         "@codemirror/commands": "^6.11.0",
@@ -254,6 +254,7 @@
         "@monaco-editor/react": "^4.7.0",
         "@republicroad/jdm-appshell": "workspace:*",
         "@republicroad/jdm-editor": "workspace:*",
+        "@tanstack/react-table": "^8.21.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
       },

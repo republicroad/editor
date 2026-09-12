@@ -102,7 +102,7 @@ mystate/轨道C上线方案.md（含决策清单）。自托管演示部署（co
   （ocean header 左右槽位示范）+ P2 右缘面板消费（ocean host:panel.environment 图元信息面板）+
   `bun run dev` concurrently 单命令全栈（对齐 editor-demo-boundary 自包含定位）。全门禁绿。
 - **第七十六批（✅ 2026-09-12）：内核 0.7.0 消费（ShellHeader ref 修复 + 键盘拖拽/rolldown i18n
-  修复随 gitlink 进入），详见 docs/03 §7.3。**
+  修复随 gitlink 进入）；roadmap 3.2 宿主回归闭环（宿主侧零专属工作），详见 docs/03 §7.3。**
 - **第七十四批（✅ 2026-09-10）：持久化默认翻转 local-first**——无参数默认 IndexedDB 本地
   适配器（clone → `bun run dev` 纯前端即得完整编辑器，业界演示仓 local-first 惯例：
   excalidraw/tldraw 同款，零服务端零滥用面）；`?storage=http` 显式切换服务端适配器

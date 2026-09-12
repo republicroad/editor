@@ -297,6 +297,9 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
   方向互相印证（宿主侧仍按需缓发）
 - 门禁：typecheck/lint/主仓 124/组件 46/zen-rule+editor 92/build/storybook/schema 8ns/
   单实例 全绿
+- **roadmap 3.2 宿主回归闭环**：内核 cf-table 键盘拖拽修复（array-move 语义）宿主侧零专属
+  工作——宿主对拖拽仅消费表达式顺序数据（源码/测试零 dnd 引用），全门禁即回归验证
+- 边界文档（editor-demo-boundary.md）候选 #5 状态闭环：键盘拖拽宿主侧配合完成
 **最新变更(2026-09-10，第七十三批：自包含演示栈收口——S005 三期槽位全消费)：**
 
 - **P3 ShellHeader 接线**：页面渲染 `<ShellHeader graph />`（PageHeader 宿主自摆不动；无槽位皮肤

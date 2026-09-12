@@ -166,6 +166,7 @@
 - [x] 第七十二批(内核 0.7.0–0.9.0 消费)：S005 P2 右面板/P3 ShellHeader 就绪备用；break change 消化——移除 json_path/template contrib 对齐内核终态(crypto 内核已加回且契约一致)，fixture 8ns 对齐——见 7.3 第七十二批
 - [x] 第七十三批(S005 三期槽位全消费)：ShellHeader 接线(ocean header 左右槽位示范)+P2 右缘面板消费(host:panel.environment 图元信息面板)+dev concurrently 单命令全栈——见 7.3 第七十三批
 - [x] 第七十四批(持久化默认翻转 local-first)：无参数默认 IndexedDB 本地适配器(?storage=http 显式切服务端)；apps/editor + graphs-store 保留为后端集成示例——见 7.3 第七十四批
+- [x] 第七十六批(内核 0.7.0 消费)：gitlink → 33b8f2b；ShellHeader 恢复 ref 对象传参(内核 0ae6e74 修复 ref 接受)——见 7.3 第七十六批
 - [x] 第七十五批(zen-engine 跨大版本升级)：catalog 0.51.5→2.0.2（新引擎线首稳定版）；API 逐点比对全部兼容，唯一适配为 getDecision loader 四形联合收窄；撞库仿真验收在 2.0.2 下全过（运行时风险点核销）——见 7.3 第七十五批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
@@ -283,6 +284,19 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
   （dev concurrently 全栈或 dev:api）；**自托管部署不受影响**（smoke:deploy 走部署态 HTTP 模式）
 - 门禁：typecheck/lint/主仓 124/组件 46/zen-rule+editor 92/build 2.2s/storybook/
   schema 8ns/单实例 全绿
+**最新变更(2026-09-12，第七十六批：内核 0.7.0 消费——ShellHeader ref 对象 + 键盘拖拽修复)：**
+
+- **gitlink → 33b8f2b（jdm-editor 0.7.0）**：内核交付 ① ShellHeader graphRef 接受 ref 对象
+  （0ae6e74——73 批页面传 useRef 产物的类型不匹配与渲染期读 ref 违规问题被内核在契约层
+  修复：接受 `DecisionGraphRef | RefObject | null` 并内部解包）；② cf-table 键盘拖拽修复
+  （a76d3bd——swap 语义改 array-move、onDragOver 实时应用，roadmap 3.2 done）；③ 同批
+  rolldown dist i18n 修复随 gitlink 进入宿主消费视图
+- **宿主适配**：ShellHeader 恢复 `graphRef={graphRef}` ref 对象传参（比 73 批的省略传参更优：
+  ref 对象实时解包，无需页面重渲染传播 graphRef 更新）
+- 同批 playground 新增 reui/TanStack Data Grid 演示页——与本仓「图库列表网格化」reui 候选
+  方向互相印证（宿主侧仍按需缓发）
+- 门禁：typecheck/lint/主仓 124/组件 46/zen-rule+editor 92/build/storybook/schema 8ns/
+  单实例 全绿
 **最新变更(2026-09-10，第七十三批：自包含演示栈收口——S005 三期槽位全消费)：**
 
 - **P3 ShellHeader 接线**：页面渲染 `<ShellHeader graph />`（PageHeader 宿主自摆不动；无槽位皮肤

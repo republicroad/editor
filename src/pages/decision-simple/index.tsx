@@ -286,7 +286,7 @@ const DecisionSimpleInner: React.FC = () => {
           ]}
         />
         {/* S005 P3：皮肤头部槽位增量行（无槽位皮肤返回 null 零影响；PageHeader 宿主自摆不动） */}
-        <ShellHeader className="border-b px-2 py-1" graph={graph} />
+        <ShellHeader className="border-b px-2 py-1" graph={graph} graphRef={graphRef} />
         <div className={classes.contentWrapper}>
           <div className={classes.content}>
             <SkinnedDecisionGraph

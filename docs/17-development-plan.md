@@ -13,7 +13,8 @@
   宿主 gitlink 已推进 reui@91e8e8f（appshell 0.2.0 命名版本、kernel computeGraphDiff P1、
   0.3.2 在途草稿快照）——第六十四批前置完成（2026-09-07，随 catalog 对齐一并落地）。
 - **架构**：前端 SPA（根仓 src/，React 18 + Vite 7 + shadcn/ReUI）+ 内核/外壳子模块
-  （jdm-editor 仓，pnpm 树）+ Bun/Hono 后端（apps/editor）+ zen-engine UDF 库（apps/zen-rule）。
+  （jdm-editor 仓，pnpm 树）+ Bun/Hono 后端（apps/editor）+ zen-engine UDF 运行时
+  （内核包 jdm-editor/packages/zen-udf，2026-09 自 apps/zen-rule 迁入并更名）。
 - **门禁基线（第六十三批）**：typecheck（root+apps）/ lint 0-0 / 主仓 116 测 / 组件 46 /
   apps 91 / build / storybook / sync:schema:check / 单实例守卫——全绿；工具链 Vite 8（Rolldown）+ TS 6.0。
 - **协作机制**：宿主对内核的改动只能经 `docs/libsuggest/` 单向建议（S001–S007 proposed），

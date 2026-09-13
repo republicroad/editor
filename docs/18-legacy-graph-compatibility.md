@@ -24,7 +24,7 @@
 | --- | --- | --- | --- |
 | **① normalize（入口改写）** | 宿主 `src/helpers/graph.ts#normalizeGraphNodes`；内核 `packages/jdm-editor/src/helpers/utility.ts#normalizeCustomNodeExpressions` | 纯函数、幂等；`;;` 拆分 + kind 映射 | 图进入画布的**每个入口**（见 §3 调用点） |
 | **② 渲染兜底（降级展示）** | 内核 customNode 渲染链：未知 kind 落「配置不符合规范」占位卡；generic customNode 缺 `renderTab` 落兜底 `CustomFunctionTable`（提交 `f47af5c` 修复 fallback 链） | 不改数据、降级展示 | 迁移不了的节点 / 函数未注册的节点 |
-| **③ 运行时执行兼容** | `apps/zen-rule/src/engine.ts#parseOperatorExpr`（数组原样返回）+ `custom_double_semicolon.json` 夹具 | 双形态表达式等价执行 | 仿真/决策执行 |
+| **③ 运行时执行兼容** | 内核包 `packages/zen-udf/src/engine.ts#parseOperatorExpr`（数组原样返回）+ `custom_double_semicolon.json` 夹具 | 双形态表达式等价执行 | 仿真/决策执行 |
 | **④ 存储治理（历史不可破坏）** | 版本面板（宿主 `use-remote-graph` + 内核 `restoreVersion`）；`apps/editor/src/auto-version-retention.ts` | 恢复即前进；保留策略契约（manual 永久 / auto 滚动+按日检查点 / 命名与钉住豁免三维正交） | 版本恢复与清理 |
 
 ---
@@ -104,7 +104,7 @@
 
 ## 7. 验收基准与已知口径
 
-- **撞库攻击防御.json**（`apps/zen-rule/graph/`）：加载/渲染/编辑通过（第十九批起持续），
+- **撞库攻击防御.json**（`jdm-editor/packages/zen-udf/graph/`）：加载/渲染/编辑通过（第十九批起持续），
   节点为现行 generic customNode 模型、**无 namespaced kind 可迁**；仿真恢复靠 D2；
 - **mock-user-1 存量图**（`apps/editor/graphs/users/mock-user-1/`）：真实旧 kind 样本
   （`contrib.http_request`，例外保留类），单测做真实文件回归；

@@ -37,7 +37,7 @@
 # ① 全门禁（本地）
 bun install && bun run lint && bunx tsc --noEmit && bun run typecheck:apps
 bun test src --path-ignore-patterns **/jdm-editor/** && bun test component-tests
-bun test apps/zen-rule apps/editor && bun run build
+bun test apps/editor && bun run test:zen-udf && bun run build
 
 # ② 版本提交（package.json version 手动 bump）
 git commit -m "chore(release): v0.x.y"

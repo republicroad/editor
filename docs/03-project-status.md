@@ -275,8 +275,16 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **现行指引文档同步**：README（质量门禁/apps 章节/API 表）、docs/02（架构图 + 技术栈表）、
   docs/04 §3.4、docs/13 全文（apps/zen-rule → jdm-editor/packages/zen-udf 路径口径）；
   历史批次记录不回写
-- 门禁：test:zen-udf 48 / typecheck(root+apps) / lint / 主仓 / 组件 / sync:schema:check(8ns) /
+- **门禁**：test:zen-udf 48 / typecheck(root+apps) / lint / 主仓 / 组件 / sync:schema:check(8ns) /
   build 全绿（实测数见提交信息）
+- **收尾补全（2026-09-13，随批 78 消费提交后复核）**：自动化配置残留同步——CI `validate.yml`
+  Test(apps) 步骤 `bun test apps/zen-rule apps/editor`（引用已删目录，必挂）拆为
+  `bun test apps/editor` + `bun run test:zen-udf`（zen-udf 纯 node 无 react 混树问题，宿主 CI
+  直跑；内核 UI 测试仍归内核仓 CI）；Dockerfile 依赖清单 COPY `apps/zen-rule/package.json`
+  → `jdm-editor/packages/zen-udf/package.json`（五成员清单齐全，.dockerignore 无阻挡）；
+  活文档口径同步（docs/02 §4.4 workspace 树、docs/06 tsconfig 表、docs/16 §3 本地回归、
+  docs/17 §1 架构、docs/18 §2/§7、bestpractice/release-process §2 门禁命令）。历史批次
+  记录（docs/03 §7.3 旧条目、docs/08、docs/14）按当时事实保留不回写
 
 **最新变更(2026-09-12，第七十五批：zen-engine 跨大版本升级 0.51.5 → 2.0.2)：**
 

@@ -181,8 +181,9 @@ const customNodes = [
 ```
 editor (bun workspace root, workspaces: ["apps/*", "jdm-editor/packages/*"])
 ├── apps/editor            → Hono API 后端
-├── apps/zen-rule          → zen-engine 自定义函数处理库(workspace:* 被 apps/editor 引用)
-└── jdm-editor/packages/jdm-editor   → @gorules/jdm-editor(workspace:*)
+├── jdm-editor/packages/jdm-editor   → @gorules/jdm-editor(workspace:*)
+└── jdm-editor/packages/zen-udf      → zen-engine UDF 运行时(workspace:* 被 apps/editor 引用；
+                                    2026-09 自 apps/zen-rule 迁入内核包并更名)
 ```
 
 > zrule 分支统一使用 **bun** 管理依赖(单一 `bun.lock`，bun ≥1.3 可识别 pnpm 元数据)。

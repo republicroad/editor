@@ -701,7 +701,7 @@ opencode 分支是一个**深度定制的开发分支**，基于 master 分支�
 | 类型对齐（内核源码入根程序） | 根 tsconfig paths                                      | `react`/`react/jsx-runtime`→根 @types/react 18（内核 devDep 19 隔离）；`@lezer/common`/`@lezer/lr`→顶层单实例（防双实例）                 |
 | ambient 声明                 | 根 tsconfig include（`内核 src/**/*.d.ts`）            | lezer 模块声明 + function helpers 全局声明（无人 import 它们，必须显式收编）                                                              |
 | barrel 别名                  | vite.config.ts / .storybook/main.ts（resolve.alias）   | `@republicroad/jdm-editor`→子模块 src/index.ts（运行时源码直通）                                                                          |
-| allowImportingTsExtensions   | apps/zen-rule、apps/editor 的 tsconfig                 | 子模块内部以 .ts 后缀互相导入——凡把子模块源码拉进编译程序的项目都必须开启（需 noEmit）                                                    |
+| allowImportingTsExtensions   | jdm-editor/packages/zen-udf、apps/editor 的 tsconfig   | 子模块内部以 .ts 后缀互相导入——凡把子模块源码拉进编译程序的项目都必须开启（需 noEmit）                                                    |
 | wasm 支持                    | vite.config.ts（vite-plugin-wasm）                     | @gorules/zen-engine-wasm 的加载                                                                                                           |
 | monaco                       | vite.config.ts（静态拷贝 + **MONACO_VS_BASE** define） | 版本化静态路径（内核 0.3.0 起 monaco 转 peer，宿主已显式 pin 0.52.2）                                                                     |
 | react 去重                   | vite.config.ts（`dedupe: [react, react-dom]`）         | 防止主仓与子模块解析出两份 React 实例                                                                                                     |

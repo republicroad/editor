@@ -5,13 +5,14 @@ FROM docker.io/oven/bun:1.4.2 AS builder
 
 WORKDIR /app
 
-# 先复制依赖清单以利用层缓存(workspace 含 apps/* 与 jdm-editor/packages/*)
+# 先复制依赖清单以利用层缓存(workspace 含 apps/* 与 jdm-editor/packages/*；
+# zen-udf 自第七十八批起为内核包成员，原 apps/zen-rule 已删除)
 COPY package.json bun.lock bunfig.toml ./
 COPY apps/editor/package.json apps/editor/package.json
-COPY apps/zen-rule/package.json apps/zen-rule/package.json
 COPY jdm-editor/package.json jdm-editor/package.json
 COPY jdm-editor/packages/jdm-editor/package.json jdm-editor/packages/jdm-editor/package.json
 COPY jdm-editor/packages/appshell/package.json jdm-editor/packages/appshell/package.json
+COPY jdm-editor/packages/zen-udf/package.json jdm-editor/packages/zen-udf/package.json
 RUN bun install --frozen-lockfile
 
 # 复制全部源码(含 jdm-editor 子模块)并构建前端(tsc && vite build → /app/static)

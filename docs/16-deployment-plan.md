@@ -22,7 +22,7 @@
 
 ## 3. 验证
 
-- 本地回归：lint 0 errors、typecheck/apps 绿、主仓 `bun run test`、apps `bun test apps/zen-rule apps/editor`
+- 本地回归：lint 0 errors、typecheck/apps 绿、主仓 `bun run test`、apps `bun test apps/editor` + `bun run test:zen-udf`
 - 镜像：podman 本地 `podman build -t editor .` + 冒烟运行 `podman run -p 3000:3000 editor`
 
 ## 4. 已知问题 backlog

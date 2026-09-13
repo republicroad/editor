@@ -257,7 +257,7 @@ describe('roster owner scoping', () => {
 
   test('存量无 owner 名单视为共享，任意用户可读可删', async () => {
     const name = `legacy-${Date.now()}`;
-    const { registerRoster } = await import('zen-rule');
+    const { registerRoster } = await import('@republicroad/zen-rule');
     registerRoster({ name, items: ['s'] });
     await writeFile(path.join(rostersDir, `${name}.json`), JSON.stringify({ name, items: ['s'] }), 'utf-8');
 

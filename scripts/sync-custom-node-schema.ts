@@ -9,7 +9,7 @@ import path from 'node:path';
 
 import { format } from 'prettier';
 
-import { udfManager } from '../apps/zen-rule/src/index.js';
+import { udfManager } from '../jdm-editor/packages/zen-rule/src/index.ts';
 
 // 夹具随 appshell 抽包迁移（第四十三批）：归 packages/appshell 所有
 const OUT_FILE = path.resolve(import.meta.dir, '../jdm-editor/packages/appshell/src/assets/custom-node-schema.json');

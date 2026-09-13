@@ -1,4 +1,4 @@
-import { udfManager, type CustomFunctionTool, type CustomNodeNamespace } from 'zen-rule';
+import { udfManager, type CustomFunctionTool, type CustomNodeNamespace } from '@republicroad/zen-rule';
 
 export type { CustomFunctionTool, CustomNodeNamespace };
 

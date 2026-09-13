@@ -19,24 +19,7 @@ const namespaces = udfManager.udfFunctionSchemaNamespaces();
 // 经 prettier 格式化(与仓库 .prettierrc 一致：endOfLine=lf、printWidth=120)，保证重复执行零 diff
 const formatted = await format(JSON.stringify(namespaces), { parser: 'json', endOfLine: 'lf', printWidth: 120 });
 
-if (checkMode) {
-  // 语义比较（第七十八批）：解析后深比较而非逐字节——容忍内核/宿主两侧 prettier 口径差异，
-  // 只要 namespace/tool 契约一致即绿（背景：内核 HEAD fixture 曾为展开/混合格式）
-  const existingRaw = await readFile(OUT_FILE, 'utf8');
-  const existingParsed = JSON.parse(existingRaw) as unknown;
-  const semanticallyEqual = JSON.stringify(sortKeysDeep(existingParsed)) === JSON.stringify(sortKeysDeep(namespaces));
-  if (!semanticallyEqual) {
-    console.error('[sync:schema] 夹具与合并注册表不一致——请执行 bun run sync:schema 刷新后提交');
-    process.exit(1);
-  }
-  console.log(`[sync:schema] fixture up to date (${namespaces.length} namespace(s))`);
-  process.exit(0);
-}
-
-await mkdir(path.dirname(OUT_FILE), { recursive: true });
-await writeFile(OUT_FILE, formatted, 'utf8');
-
-/** 深比较辅助：对象键递归排序后序列化，消除键序与格式噪声 */
+/** 深比较辅助：递归排序对象键 + 数组按 name 规范化，消除键序/数组序/格式噪声 */
 function sortKeysDeep(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map(sortKeysDeep);
@@ -50,6 +33,34 @@ function sortKeysDeep(value: unknown): unknown {
       }, {});
   }
   return value;
+}
+
+/** 语义规范化：namespace 与 tools 数组按 name 排序（内核/宿主生成端的数组序可能不同，契约无关） */
+function normalizeNamespaces(value: unknown): unknown {
+  const normalized = sortKeysDeep(value);
+  if (Array.isArray(normalized)) {
+    return normalized.sort((a, b) =>
+      String((a as Record<string, unknown>).name ?? '').localeCompare(
+        String((b as Record<string, unknown>).name ?? ''),
+      ),
+    );
+  }
+  return normalized;
+}
+
+if (checkMode) {
+  // 语义比较（第七十八批）：解析后规范化深比较而非逐字节——容忍内核/宿主两侧 prettier 口径
+  // 与数组序差异，只要 namespace/tool 契约一致即绿
+  const existingRaw = await readFile(OUT_FILE, 'utf8');
+  const semanticallyEqual =
+    JSON.stringify(normalizeNamespaces(JSON.parse(existingRaw) as unknown)) ===
+    JSON.stringify(normalizeNamespaces(namespaces));
+  if (!semanticallyEqual) {
+    console.error('[sync:schema] 夹具与合并注册表不一致——请执行 bun run sync:schema 刷新后提交');
+    process.exit(1);
+  }
+  console.log(`[sync:schema] fixture up to date (${namespaces.length} namespace(s))`);
+  process.exit(0);
 }
 
 await mkdir(path.dirname(OUT_FILE), { recursive: true });

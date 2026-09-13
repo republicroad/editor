@@ -171,6 +171,7 @@
 - [x] 第七十七批(zen-rule 迁入内核)：apps/zen-rule 全量迁至 jdm-editor/packages/zen-rule(@republicroad/zen-rule，独立发布能力保留)；宿主引用重指向(workspace:* + imports + sync:schema)——记录并入 7.3 第七十八批
 - [x] 第七十八批(内核 zen-udf 更名消费 + 工作区清理)：内核并行会话语义更名 @republicroad/zen-rule→@republicroad/zen-udf(1beb9afc)；宿主消费面跟随(依赖/imports/脚本/lockfile)；子模块工作区遗留比对发现重构漏删 15 个测试用例→补回内核 d2aaf896(48/48)；遗留拷贝备份后删除——见 7.3 第七十八批
 - [x] 第七十九批(内核 zen-udf 0.2.0 消费)：gitlink → 10d3627+e7824bf(38 提交，U/V/W/X/Y 系列)；第二波命名跟随 ZenRule→DecisionRuntime、udfManager→globalUdfRegistry；U5 租户名单适配(RosterScope 必填 tenantId，宿主 TENANT_ID 单租户口径 + readRosterOwner 落盘推导)；夹具刷新(Y1 semantics + custom-list-query 回归)——见 7.3 第七十九批
+- [x] 第八十批(内核 0.3.0 跟进)：gitlink → 795c92e(origin e0cb422 + 夹具变基)；e7824bf 核查非重复(内核夹具仍未刷新)变基保留；Z 系列宿主零代码影响——见 7.3 第八十批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -256,6 +257,20 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-13，第八十批：内核 zen-udf 0.3.0 跟进 + 夹具提交变基)：**
+
+- **e7824bf 重复性核查（用户质询）**：内核 origin/reui 推进 4 提交（Z 系列：Z1 act 幂等
+  声明/Z2 文档刷新/Z4 demo-server 审计演示/0.3.0 发版），**夹具仍未刷新**——origin 夹具
+  blob 仍为旧版 95b3a74（无 semantics 字段、缺 custom-list-query 域）。结论：**非重复，
+  保留**；rebase 至 origin/reui 之上 → `795c92e`，0.3.0 下 `sync:schema:check` 复验直接通过
+  （内容仍精确，无需再生成）
+- **Z 系列宿主影响：零代码**——唯一导出增量 `packWarnings`（UdfPack 校验警告清单）+
+  版本号 0.3.0；宿主未消费 UdfPack 面，纯 gitlink 跟进。新增裁决 D13（HAProxy observe
+  算子包归 verdict）/D14（审计演示归内核）均不涉宿主
+- 门禁：zen-udf 23 文件/114 用例、apps(editor) 48、typecheck:apps、sync:schema:check 8ns
+  全绿
+- gitlink → `795c92e`（origin/reui e0cb422 + 夹具 795c92e）；push 顺序：先内核后宿主
 
 **最新变更(2026-09-13，第七十九批：内核 zen-udf 0.2.0 消费——DecisionRuntime 更名 + U5 租户名单)：**
 

@@ -198,3 +198,6 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
 - **宿主侧后续候选**：① Y7 runDecisionTests 接 CI（演示图回归）；② resultValidation
   enforce 择机（内核 D5 缺省 warn）；③ RosterScope 包索引导出 libsuggest；④ S009
   undo/redo 消费待 UI 需求；OTel 桥/Redis RateStore 归 verdict（D1）。
+- **第八十批（2026-09-13）**：内核 0.3.0 跟进——e7824bf 重复性核查（结论：非重复，
+  内核夹具至今未刷新），变基为 795c92e（origin e0cb422 之上，0.3.0 下 check 复验通过）；
+  Z 系列宿主零代码影响（唯一导出增量 packWarnings），gitlink 跟进，全门禁绿。

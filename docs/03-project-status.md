@@ -172,6 +172,7 @@
 - [x] 第七十八批(内核 zen-udf 更名消费 + 工作区清理)：内核并行会话语义更名 @republicroad/zen-rule→@republicroad/zen-udf(1beb9afc)；宿主消费面跟随(依赖/imports/脚本/lockfile)；子模块工作区遗留比对发现重构漏删 15 个测试用例→补回内核 d2aaf896(48/48)；遗留拷贝备份后删除——见 7.3 第七十八批
 - [x] 第七十九批(内核 zen-udf 0.2.0 消费)：gitlink → 10d3627+e7824bf(38 提交，U/V/W/X/Y 系列)；第二波命名跟随 ZenRule→DecisionRuntime、udfManager→globalUdfRegistry；U5 租户名单适配(RosterScope 必填 tenantId，宿主 TENANT_ID 单租户口径 + readRosterOwner 落盘推导)；夹具刷新(Y1 semantics + custom-list-query 回归)——见 7.3 第七十九批
 - [x] 第八十批(内核 0.3.0 跟进)：gitlink → 795c92e(origin e0cb422 + 夹具变基)；e7824bf 核查非重复(内核夹具仍未刷新)变基保留；Z 系列宿主零代码影响——见 7.3 第八十批
+- [x] 第八十一批(演示图级回归)：Y7 runDecisionTests 接 CI(随 apps 测试自动执行)；三层回归(编译 11 图/空输入执行/撞库深执行)+D5 试跑(warn 违例 0 条，enforce 无阻塞)；图资产孤岛登记——见 7.3 第八十一批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -257,6 +258,26 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-13，第八十一批：演示图级回归——Y7 消费 + D5 试跑)：**
+
+- **图级回归三层**（`apps/editor/src/graph-regression.test.ts`，6 用例，随既有 CI 步骤
+  `bun test apps/editor` 自动执行，无需改 validate.yml）：
+  ① 编译层：宿主 11 张 head 图（multi2 + mock-user-1 全部 head）经 DecisionRuntime
+  编译零失败；② 执行层：空输入全图执行不中断，UDF 解析失败仅限 legacy 域
+  （json_path/template，七十二批口径）；③ 深执行层：撞库图（内核包 graph/，4 个 UDF
+  节点全接线）真实输入执行——custom_list_query/ip_location/rate_1h/group_distinct_1h
+  全解析、白名单路径命中，legacy 断言非空转
+- **Y7 runDecisionTests 消费**：multi2（rand×2 非确定性图）以 predicate 期望锚定输出域，
+  夹具报告 failed=0——图级 fixture 回归范式在宿主侧首次落地
+- **D5 试跑数据**：warn 档全量违例 **0 条**、enforce 档全图执行不中断——演示图语料对
+  enforce 切换无阻塞（真实流量数据仍是切换决策的最终依据，缺省维持 warn 不变）
+- **图资产发现（登记）**：mock-user-1 的 72fab3c2 图 9 个 customNode 均为无边孤岛
+  （demo 期遗留，任何输入不触发 UDF 解析）——不构成回归盲区，但如需图级 UDF 深覆盖
+  以撞库图为正标本
+- **CI 安全闸**：测试内 `configureHttpUdf` 注入拒绝式 EgressGuard——http_request 节点
+  不触网，返回结构化错误
+- 门禁：lint/typecheck×2/apps 54(+6)/主仓 86/组件 46/build 全绿
 
 **最新变更(2026-09-13，第八十批：内核 zen-udf 0.3.0 跟进 + 夹具提交变基)：**
 

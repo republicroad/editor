@@ -24,8 +24,7 @@ if (checkMode) {
   // 只要 namespace/tool 契约一致即绿（背景：内核 HEAD fixture 曾为展开/混合格式）
   const existingRaw = await readFile(OUT_FILE, 'utf8');
   const existingParsed = JSON.parse(existingRaw) as unknown;
-  const semanticallyEqual =
-    JSON.stringify(sortKeysDeep(existingParsed)) === JSON.stringify(sortKeysDeep(namespaces));
+  const semanticallyEqual = JSON.stringify(sortKeysDeep(existingParsed)) === JSON.stringify(sortKeysDeep(namespaces));
   if (!semanticallyEqual) {
     console.error('[sync:schema] 夹具与合并注册表不一致——请执行 bun run sync:schema 刷新后提交');
     process.exit(1);

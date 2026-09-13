@@ -122,6 +122,24 @@ mystate/轨道C上线方案.md（含决策清单）。自托管演示部署（co
   已迁出本仓（mystate/轨道C上线方案.md）。
 
 
+### 2026-09-13 重规划（zen-udf 0.3.0 后，第八十一批起）
+
+> 基线：内核 zen-udf U–Z 六系列全部 shipped（0.3.0 在架，D1–D14 宿主裁决全确认）；内核 UI 侧
+> S005 三期完结、S009（undo/redo + MiniMap + snapToGrid）已交付未消费；宿主消费面当前
+> （第八十批，gitlink 795c92e）。内核未决项仅 U10（verdict 接入）与 W4（上游 issue，
+> 按宿主指示挂起）。
+
+| 批 | 主题 | 内容 | 依赖 |
+| --- | --- | --- | --- |
+| **81** | 演示图回归批（Y7 消费） | ① 内核 Y7 `runDecisionTests`/DecisionFixture 接宿主 CI：存量图（撞库攻击防御/custom*.json/mock-user-1 样本）做成图级 fixture 回归，validate.yml 新 step；② 同批在 `resultValidation:'enforce'` 下试跑产违例清单 → 为 D5 择机切换供数据（缺省维持 warn） | 内核已交付（Y7） |
+| **82** | S009 消费批 | undo/redo + MiniMap + snapToGrid 宿主接线（开关/快捷键暴露 + 组件测试）；顺带浏览器实机走查（rename/diff/pin + undo/redo），了结「IAB 走查」遗留项 | 内核已交付（172b608）；前置：读交付形态定接线面 |
+| **83** | libsuggest 轻量批 | ① S010：`RosterScope` 类型从包索引导出（宿主现结构化字面量绕行）；② S011（视 81 批反馈）：fixture runner 宿主消费工效反馈；③ W4/D7 推进：宿主总结 Python contextvars 对比 → 上游 issue 定稿建议 | 提案文档先行 |
+| 持续 | 待触发项 | S005 P2/P3 深消费（待真实 UI 需求）；resultValidation enforce 正式切换（视 81 批清单）；TS 7（待 typescript-eslint 支持）；zen-engine-wasm 对齐（独立评估） | — |
+| 归属他仓 | 不在本仓 | U10 verdict 接入、Redis RateStore（D1）、OTel 桥消费、A5 lexicon、轨道 C 上线（mystate 决策清单） | verdict/mystate |
+
+排序理由：81 先于 82——图级回归是 enforce 切换与后续任何内核升级的安全网，且纯 CI 侧
+零 UI 风险；82 需要实机走查配合、前置侦察较多；83 是提案类轻量批，可穿插。
+
 ### 跟踪项（不立批次）
 
 S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待内核会话标记 done +

@@ -1,7 +1,5 @@
 // http 域(http_request 函数，有专属 UI 设计，文件名即 namespace)
-import { createExtRegister } from '../register.ts';
-
-const registerUdf = createExtRegister(import.meta.url);
+import { defineContrib, defineTool } from '../register.ts';
 
 const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']);
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -75,7 +73,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const shouldRetryResult = (result: HttpAttemptResult): boolean =>
   result.status === 0 || result.status === 429 || result.status >= 500;
 
-export const httpRequest = registerUdf('http_request', {
+export const http_request = defineTool({
+  name: 'http_request',
   description:
     '发起 HTTP 请求, 返回响应结果 { status, headers, body }. 支持 params 查询参数合并、timeout 单次超时(默认 10s, 上限 60s)、' +
     'retry 重试(仅网络异常/超时/5xx/429, 指数退避)与 auth 认证({ type: "basic", username, password } 或 { type: "bearer", token }, ' +
@@ -137,78 +136,85 @@ export const httpRequest = registerUdf('http_request', {
     type: 'object',
   },
   returnsSchema: { type: 'object', title: 'http_request 函数返回', properties: {} },
-})(async function httpRequestUdf(kwargs: Record<string, unknown>) {
-  const rawUrl = String(kwargs?.url ?? '').trim();
-  const method =
-    String(kwargs?.method ?? 'GET')
-      .trim()
-      .toUpperCase() || 'GET';
-  const rawBody = asRecord(kwargs?.body);
-  const rawParams = asRecord(kwargs?.params);
-  const rawAuth = asRecord(kwargs?.auth);
-  const retryCount = coerceCount(kwargs?.retry, 0, MAX_RETRIES, 0);
+  fn: async function httpRequestUdf(kwargs: Record<string, unknown>) {
+    const rawUrl = String(kwargs?.url ?? '').trim();
+    const method =
+      String(kwargs?.method ?? 'GET')
+        .trim()
+        .toUpperCase() || 'GET';
+    const rawBody = asRecord(kwargs?.body);
+    const rawParams = asRecord(kwargs?.params);
+    const rawAuth = asRecord(kwargs?.auth);
+    const retryCount = coerceCount(kwargs?.retry, 0, MAX_RETRIES, 0);
 
-  if (!rawUrl) {
-    return httpErrorResult('url is required');
-  }
-  if (!HTTP_METHODS.has(method)) {
-    return httpErrorResult(`unsupported http method '${method}'`);
-  }
-
-  const url = buildUrlWithParams(rawUrl, rawParams);
-  if (!url) {
-    return httpErrorResult(`invalid url '${rawUrl}'`);
-  }
-
-  const requestHeaders: Record<string, string> = {};
-  for (const [key, value] of Object.entries(asRecord(kwargs?.headers))) {
-    requestHeaders[String(key)] = String(value);
-  }
-  applyAuthHeader(requestHeaders, rawAuth);
-
-  let requestBody: string | undefined;
-  if (method !== 'GET' && method !== 'HEAD' && Object.keys(rawBody).length > 0) {
-    requestBody = JSON.stringify(rawBody);
-    const hasContentType = Object.keys(requestHeaders).some((k) => k.toLowerCase() === 'content-type');
-    if (!hasContentType) {
-      requestHeaders['content-type'] = 'application/json';
+    if (!rawUrl) {
+      return httpErrorResult('url is required');
     }
-  }
+    if (!HTTP_METHODS.has(method)) {
+      return httpErrorResult(`unsupported http method '${method}'`);
+    }
 
-  const attemptOnce = async (): Promise<HttpAttemptResult> => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: requestHeaders,
-        body: requestBody,
-        signal: controller.signal,
-      });
-      const responseText = await response.text();
-      let responseBody: unknown;
-      try {
-        responseBody = JSON.parse(responseText);
-      } catch {
-        responseBody = responseText;
+    const url = buildUrlWithParams(rawUrl, rawParams);
+    if (!url) {
+      return httpErrorResult(`invalid url '${rawUrl}'`);
+    }
+
+    const requestHeaders: Record<string, string> = {};
+    for (const [key, value] of Object.entries(asRecord(kwargs?.headers))) {
+      requestHeaders[String(key)] = String(value);
+    }
+    applyAuthHeader(requestHeaders, rawAuth);
+
+    let requestBody: string | undefined;
+    if (method !== 'GET' && method !== 'HEAD' && Object.keys(rawBody).length > 0) {
+      requestBody = JSON.stringify(rawBody);
+      const hasContentType = Object.keys(requestHeaders).some((k) => k.toLowerCase() === 'content-type');
+      if (!hasContentType) {
+        requestHeaders['content-type'] = 'application/json';
       }
-      return {
-        status: response.status,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: responseBody,
-      };
-    } catch (e) {
-      return { status: 0, headers: {}, body: null, error: e instanceof Error ? e.message : String(e) };
-    } finally {
-      clearTimeout(timer);
     }
-  };
 
-  const timeoutMs = coerceCount(kwargs?.timeout, MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-  let result = await attemptOnce();
-  for (let attempt = 1; attempt <= retryCount && shouldRetryResult(result); attempt += 1) {
-    await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
-    result = await attemptOnce();
-  }
-  return result;
+    const attemptOnce = async (): Promise<HttpAttemptResult> => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: requestHeaders,
+          body: requestBody,
+          signal: controller.signal,
+        });
+        const responseText = await response.text();
+        let responseBody: unknown;
+        try {
+          responseBody = JSON.parse(responseText);
+        } catch {
+          responseBody = responseText;
+        }
+        return {
+          status: response.status,
+          headers: Object.fromEntries(response.headers.entries()),
+          body: responseBody,
+        };
+      } catch (e) {
+        return { status: 0, headers: {}, body: null, error: e instanceof Error ? e.message : String(e) };
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
+    const timeoutMs = coerceCount(kwargs?.timeout, MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+    let result = await attemptOnce();
+    for (let attempt = 1; attempt <= retryCount && shouldRetryResult(result); attempt += 1) {
+      await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
+      result = await attemptOnce();
+    }
+    return result;
+  },
+});
+
+export const { fn: httpRequest } = http_request;
+
+export default defineContrib(import.meta.url, {
+  tools: [http_request],
 });

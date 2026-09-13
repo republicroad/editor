@@ -311,4 +311,37 @@ export function createExtRegister(importMetaUrl: string) {
   return (name: string, schema?: UdfSchema): ((fn: UdfFunction) => UdfFunction) => registerUdf(name, namespace, schema);
 }
 
+/** contrib 域单工具定义（defineContrib 数组项；字段与 UdfSchema 注册参数一致） */
+export interface ContribToolDef {
+  name: string;
+  description?: string;
+  parametersSchema?: UdfSchema['parametersSchema'];
+  returnsSchema?: UdfSchema['returnsSchema'];
+  fn: UdfFunction;
+}
+
+/** contrib 域定义（defineContrib 的入参） */
+export interface ContribDef {
+  tools: ContribToolDef[];
+}
+
+/**
+ * contrib 域单调用注册（第七十七批 ergonomics）：文件名即 namespace，tools 逐个挂载。
+ * 返回传入的 tools（便于测试断言与再导出）。旧 createExtRegister/registerUdf 签名保留向后兼容。
+ */
+export function defineContrib(importMetaUrl: string, def: ContribDef): ContribToolDef[] {
+  const namespace = decodeURIComponent(importMetaUrl.split('/').pop() ?? '').replace(/\.[^.]+$/, '');
+  for (const tool of def.tools) {
+    registerUdf(tool.name, namespace, {
+      description: tool.description,
+      parametersSchema: tool.parametersSchema,
+      returnsSchema: tool.returnsSchema,
+    })(tool.fn);
+  }
+  return def.tools;
+}
+
+/** 单工具声明助手：为字面量提供 ContribToolDef 类型检查与补全 */
+export const defineTool = (tool: ContribToolDef): ContribToolDef => tool;
+
 export { UDFManager, udfManager, registerUdf };

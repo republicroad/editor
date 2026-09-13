@@ -1,6 +1,4 @@
-import { createExtRegister } from '../register.ts';
-
-const registerUdf = createExtRegister(import.meta.url);
+import { defineContrib, defineTool } from '../register.ts';
 
 /**
  * 旧平台函数域重建（第六十九批 D2，docs/13 §8.3）：内存滑动窗口计数。
@@ -31,7 +29,8 @@ const inWindow = (stamps: number[], now: number): number[] => stamps.filter((t) 
 
 const secondsSince = (now: number, t?: number): number => (t ? Math.max(0, Math.floor((now - t) / 1000)) : 0);
 
-registerUdf('rate_1h', {
+const rate_1h = defineTool({
+  name: 'rate_1h',
   description: '旧域重建·频次统计：记录实体事件并返回其 1 小时滑动窗口内的事件计数。',
   parametersSchema: {
     properties: {
@@ -52,22 +51,24 @@ registerUdf('rate_1h', {
       timestamp: { type: 'string', title: 'Timestamp', default: '' },
     },
   },
-})(function rateUdf(kwargs: Record<string, unknown>) {
-  const entity = String(kwargs?.entity ?? '');
-  const now = Date.now();
-  const stamps = inWindow(rateWindows.get(entity) ?? [], now);
-  const previous = stamps[stamps.length - 1];
-  stamps.push(now);
-  rateWindows.set(entity, stamps);
-  return {
-    counter: stamps.length,
-    v: entity,
-    idle: secondsSince(now, previous),
-    timestamp: new Date(now).toISOString(),
-  };
+  fn: function rateUdf(kwargs: Record<string, unknown>) {
+    const entity = String(kwargs?.entity ?? '');
+    const now = Date.now();
+    const stamps = inWindow(rateWindows.get(entity) ?? [], now);
+    const previous = stamps[stamps.length - 1];
+    stamps.push(now);
+    rateWindows.set(entity, stamps);
+    return {
+      counter: stamps.length,
+      v: entity,
+      idle: secondsSince(now, previous),
+      timestamp: new Date(now).toISOString(),
+    };
+  },
 });
 
-registerUdf('group_distinct_1h', {
+const group_distinct_1h = defineTool({
+  name: 'group_distinct_1h',
   description: '旧域重建·组去重统计：记录 (组, 值) 事件并返回 1 小时滑动窗口内组事件数(pv)与去重值数(uv)。',
   parametersSchema: {
     properties: {
@@ -97,38 +98,43 @@ registerUdf('group_distinct_1h', {
       timestamp: { type: 'string', title: 'Timestamp', default: '' },
     },
   },
-})(function groupDistinctUdf(kwargs: Record<string, unknown>) {
-  const group = String(kwargs?.group ?? '');
-  const value = String(kwargs?.value ?? '');
-  const now = Date.now();
+  fn: function groupDistinctUdf(kwargs: Record<string, unknown>) {
+    const group = String(kwargs?.group ?? '');
+    const value = String(kwargs?.value ?? '');
+    const now = Date.now();
 
-  const entry = groupWindows.get(group) ?? { pv: [], values: new Map<string, number[]>() };
-  entry.pv = inWindow(entry.pv, now);
-  const groupPrevious = entry.pv[entry.pv.length - 1];
-  entry.pv.push(now);
+    const entry = groupWindows.get(group) ?? { pv: [], values: new Map<string, number[]>() };
+    entry.pv = inWindow(entry.pv, now);
+    const groupPrevious = entry.pv[entry.pv.length - 1];
+    entry.pv.push(now);
 
-  const valueStamps = inWindow(entry.values.get(value) ?? [], now);
-  const pairPrevious = valueStamps[valueStamps.length - 1];
-  valueStamps.push(now);
-  entry.values.set(value, valueStamps);
-  for (const [v, stamps] of entry.values) {
-    if (inWindow(stamps, now).length === 0) entry.values.delete(v);
-  }
-  groupWindows.set(group, entry);
+    const valueStamps = inWindow(entry.values.get(value) ?? [], now);
+    const pairPrevious = valueStamps[valueStamps.length - 1];
+    valueStamps.push(now);
+    entry.values.set(value, valueStamps);
+    for (const [v, stamps] of entry.values) {
+      if (inWindow(stamps, now).length === 0) entry.values.delete(v);
+    }
+    groupWindows.set(group, entry);
 
-  const globalPrevious = (valueWindows.get(value) ?? []).filter((t) => now - t < WINDOW_MS).slice(-1)[0];
-  const globalStamps = inWindow(valueWindows.get(value) ?? [], now);
-  globalStamps.push(now);
-  valueWindows.set(value, globalStamps);
+    const globalPrevious = (valueWindows.get(value) ?? []).filter((t) => now - t < WINDOW_MS).slice(-1)[0];
+    const globalStamps = inWindow(valueWindows.get(value) ?? [], now);
+    globalStamps.push(now);
+    valueWindows.set(value, globalStamps);
 
-  return {
-    idle: secondsSince(now, pairPrevious),
-    pv: entry.pv.length,
-    uv: entry.values.size,
-    gidle: secondsSince(now, groupPrevious),
-    vidle: secondsSince(now, globalPrevious),
-    group,
-    v: value,
-    timestamp: new Date(now).toISOString(),
-  };
+    return {
+      idle: secondsSince(now, pairPrevious),
+      pv: entry.pv.length,
+      uv: entry.values.size,
+      gidle: secondsSince(now, groupPrevious),
+      vidle: secondsSince(now, globalPrevious),
+      group,
+      v: value,
+      timestamp: new Date(now).toISOString(),
+    };
+  },
+});
+
+export default defineContrib(import.meta.url, {
+  tools: [rate_1h, group_distinct_1h],
 });

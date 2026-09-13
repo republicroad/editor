@@ -10,7 +10,7 @@ import {
   listRosters,
   runWithExecContext,
   type ExecContext,
-  ZenRule,
+  DecisionRuntime,
 } from '@republicroad/zen-udf';
 import { cors } from 'hono/cors';
 import { getCookie, setCookie } from 'hono/cookie';
@@ -87,13 +87,20 @@ export const execContextOf = (c: IdentityCarrier): ExecContext => {
   return resolveExecContext((name) => c.req.header(name));
 };
 
+// 名单租户域（zen-udf U5 租户化：scope.tenantId 必填，跨租户永不可见）。
+// 演示栈单租户，env TENANT_ID 可覆盖；actor = 会话用户（缺省 = 租户共享/管理员语义）。
+// 结构化匹配 RosterScope（内核暂未从包索引导出该类型——libsuggest 候选）。
+const TENANT_ID = process.env.TENANT_ID ?? 'demo';
+const rosterScopeOf = (execCtx: ExecContext) => ({ tenantId: TENANT_ID, actor: execCtx.userId });
+
 const staticConfig = {
   assets: 'public', // Directory to serve static files from
 };
 
-// ZenRule 封装了 customHandlerFunc(执行 customNode 的 UDF 表达式)与 graphAddons，
-// 决策对象缓存由 ZenRule 内部维护(createDecisionWithCacheKey / getDecisionCache)。
-const zenRuleEngine = new ZenRule();
+// DecisionRuntime 封装了 customHandlerFunc(执行 customNode 的 UDF 表达式)与 graphAddons，
+// 决策对象缓存由 DecisionRuntime 内部维护(createDecisionWithCacheKey / getDecisionCache)。
+// (0.1.x 类名 ZenRule，内核 2026-09 更名 DecisionRuntime——见 zen-udf docs/naming.md)
+const decisionRuntime = new DecisionRuntime();
 
 // 请求日志中间件：打印每个请求的方法、路径、状态码与耗时
 async function requestLogger(c: Context, next: Next) {
@@ -115,7 +122,11 @@ async function registerRosterFile(filePath: string): Promise<void> {
     const roster = JSON.parse(raw) as { name?: string; description?: string; items?: string[]; owner?: string };
     if (!roster.name || !Array.isArray(roster.items)) return;
     const items = roster.items.map((item) => String(item));
-    registerRoster({ name: roster.name, description: roster.description, items, owner: roster.owner });
+    // U5 租户化：归属由 scope 表达（owner → actor 私有域；无 owner → 租户共享）
+    registerRoster(
+      { name: roster.name, description: roster.description, items },
+      roster.owner ? { tenantId: TENANT_ID, actor: roster.owner } : { tenantId: TENANT_ID },
+    );
   } catch {
     // 单个文件损坏不阻塞其余装载
   }
@@ -193,6 +204,46 @@ interface PersistableRoster {
   description?: string;
   items: string[];
   owner?: string;
+}
+
+/** 内存 Roster 已不携带归属（U5 后归属由 scope 表达），owner 从落盘文件权威推导。
+ *  prefer = 请求者用户目录最先扫描（同名遮蔽场景：自有命中即归属请求者）。 */
+async function readRosterOwner(name: string, prefer?: string): Promise<string | undefined> {
+  const roots: string[] = [];
+  if (prefer) roots.push(join(USERS_ROSTERS_DIR, sanitizeRosterFilename(prefer)));
+  roots.push(SHARED_ROSTERS_DIR, ROSTERS_DIR);
+  try {
+    const userDirs = await readdir(USERS_ROSTERS_DIR, { withFileTypes: true });
+    for (const dir of userDirs) {
+      if (dir.isDirectory()) {
+        const dirPath = join(USERS_ROSTERS_DIR, dir.name);
+        if (dirPath !== roots[0]) roots.push(dirPath);
+      }
+    }
+  } catch {
+    // 目录缺失按空处理
+  }
+  for (const root of roots) {
+    let entries;
+    try {
+      entries = await readdir(root, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
+      try {
+        const parsed = JSON.parse(await readFile(join(root, entry.name), 'utf-8')) as {
+          name?: string;
+          owner?: string;
+        };
+        if (parsed.name === name) return parsed.owner;
+      } catch {
+        // 单个文件损坏不阻塞查找
+      }
+    }
+  }
+  return undefined;
 }
 
 async function writeRosterFile(roster: PersistableRoster): Promise<void> {
@@ -882,18 +933,18 @@ app.get('/', () => {
 app.use('/*', serveStatic({ root: './public' }));
 // /api 以后使用 prefix 或者 plugin 来使用.
 app.openapi(simulateRoute, async (c) => {
-  // 动态加载规则文件(含自定义节点执行：ZenRule.graphAddons + customHandlerFunc)；执行失败由 onError 统一返回 {error} 500
+  // 动态加载规则文件(含自定义节点执行：DecisionRuntime.graphAddons + customHandlerFunc)；执行失败由 onError 统一返回 {error} 500
   const body = c.req.valid('json');
-  const decision = zenRuleEngine.createDecision(body.content);
+  const decision = decisionRuntime.createDecision(body.content);
   const result = await runWithExecContext(execContextOf(c), () => decision.evaluate(body.context, { trace: true }));
   return c.json(result);
 });
 
 app.openapi(decisionRoute, async (c) => {
   // 线上规则推理时需要把通过content获得的decision规则对象缓存起来，
-  // 避免每次都重新创建规则对象(缓存由 ZenRule 内部维护)
+  // 避免每次都重新创建规则对象(缓存由 DecisionRuntime 内部维护)
   const body = c.req.valid('json');
-  const zr = zenRuleEngine;
+  const zr = decisionRuntime;
   const decisionId = body.decisionId;
   let decision: ZenDecision;
   if (decisionId) {
@@ -955,7 +1006,7 @@ app.openapi(customNodesSchemaRoute, (c) => {
 app.openapi(rostersRoute, (c) => {
   const q = c.req.query('q');
   const execCtx = execContextOf(c);
-  const rosters = listRosters(q, execCtx.userId).map((roster) => ({
+  const rosters = listRosters(q, rosterScopeOf(execCtx)).map((roster) => ({
     name: roster.name,
     description: roster.description,
     size: roster.items.length,
@@ -964,14 +1015,22 @@ app.openapi(rostersRoute, (c) => {
 });
 
 // 名单详情；他人私有一律 404(防名字探测)
-app.openapi(rosterDetailRoute, (c) => {
+app.openapi(rosterDetailRoute, async (c) => {
   const { name } = c.req.valid('param');
   const execCtx = execContextOf(c);
-  const roster = getRoster(name, execCtx.userId);
+  const roster = getRoster(name, rosterScopeOf(execCtx));
   if (!roster) {
     throw new HTTPException(404, { message: `roster '${name}' not found` });
   }
-  return c.json({ name: roster.name, description: roster.description, items: roster.items, owner: roster.owner }, 200);
+  return c.json(
+    {
+      name: roster.name,
+      description: roster.description,
+      items: roster.items,
+      owner: await readRosterOwner(name, execCtx.userId),
+    },
+    200,
+  );
 });
 
 // 名单保存(upsert)：owner 由服务端注入为会话用户(新建默认私有)，客户端传入的归属字段被 schema 剥离
@@ -987,7 +1046,11 @@ app.openapi(rosterCreateRoute, async (c) => {
   if (!roster.name) {
     throw new HTTPException(400, { message: 'name is required' });
   }
-  registerRoster(roster);
+  // U5 租户化：新建默认私有（actor = 会话用户）
+  registerRoster(
+    { name: roster.name, description: roster.description, items: roster.items },
+    { tenantId: TENANT_ID, actor: execCtx.userId },
+  );
   try {
     await writeRosterFile(roster);
   } catch (error) {
@@ -1001,17 +1064,22 @@ app.openapi(rosterUpdateRoute, async (c) => {
   const { name } = c.req.valid('param');
   const body = c.req.valid('json');
   const execCtx = execContextOf(c);
-  const existing = getRoster(name, execCtx.userId);
+  const existing = getRoster(name, rosterScopeOf(execCtx));
   if (!existing) {
     throw new HTTPException(404, { message: `roster '${name}' not found` });
   }
+  // U5 后内存 Roster 不携带归属，原 owner 从落盘文件推导（盘上保留 owner 字段）
+  const owner = await readRosterOwner(name, execCtx.userId);
   const roster: PersistableRoster = {
     name: existing.name,
     description: body.description?.trim() || undefined,
     items: body.items.map((item) => String(item)),
-    owner: existing.owner,
+    owner,
   };
-  registerRoster(roster);
+  registerRoster(
+    { name: roster.name, description: roster.description, items: roster.items },
+    owner ? { tenantId: TENANT_ID, actor: owner } : { tenantId: TENANT_ID },
+  );
   try {
     await writeRosterFile(roster);
   } catch (error) {
@@ -1024,11 +1092,11 @@ app.openapi(rosterUpdateRoute, async (c) => {
 app.openapi(rosterDeleteRoute, async (c) => {
   const { name } = c.req.valid('param');
   const execCtx = execContextOf(c);
-  const roster = getRoster(name, execCtx.userId);
-  if (!roster || !deleteRoster(name, execCtx.userId)) {
+  const roster = getRoster(name, rosterScopeOf(execCtx));
+  if (!roster || !deleteRoster(name, rosterScopeOf(execCtx))) {
     throw new HTTPException(404, { message: `roster '${name}' not found` });
   }
-  const filePath = await findRosterFile(name, roster.owner);
+  const filePath = await findRosterFile(name, await readRosterOwner(name, execCtx.userId));
   if (filePath) {
     try {
       await unlink(filePath);

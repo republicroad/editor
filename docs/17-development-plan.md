@@ -190,3 +190,11 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
 - **第七十八批（2026-09-13）**：内核语义更名消费（zen-rule→zen-udf，宿主依赖/imports/脚本/
   lockfile 跟随）+ 子模块工作区遗留比对（补回重构漏删的 15 个测试用例，内核 d2aaf896）+
   遗留拷贝清理，全门禁绿，详见 docs/03 §7.3。
+- **第七十九批（2026-09-13）**：内核 zen-udf 0.2.0 消费——第二波命名跟随（ZenRule→
+  DecisionRuntime、udfManager→globalUdfRegistry，命名依据 zen-udf docs/naming.md）+ U5
+  租户名单适配（RosterScope.tenantId 必填，宿主单租户 TENANT_ID 口径，HTTP owner 契约经
+  readRosterOwner 落盘推导保留）+ 夹具刷新（Y1 semantics + custom-list-query 回归，随
+  内核 e7824bf）。全门禁绿（zen-udf 套件 114），详见 docs/03 §7.3。
+- **宿主侧后续候选**：① Y7 runDecisionTests 接 CI（演示图回归）；② resultValidation
+  enforce 择机（内核 D5 缺省 warn）；③ RosterScope 包索引导出 libsuggest；④ S009
+  undo/redo 消费待 UI 需求；OTel 桥/Redis RateStore 归 verdict（D1）。

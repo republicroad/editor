@@ -1,12 +1,13 @@
-import { udfManager, type CustomFunctionTool, type CustomNodeNamespace } from '@republicroad/zen-udf';
+import { globalUdfRegistry, type CustomFunctionTool, type CustomNodeNamespace } from '@republicroad/zen-udf';
 
 export type { CustomFunctionTool, CustomNodeNamespace };
 
 /**
  * 自定义节点与自定义函数 JSON Schema(namespace/tools 格式)。
  *
- * 数据源为 udfManager 合并注册表(单一数据源)：zen-udf 内置 contrib/ 扩展 + 宿主 app 层 contrib/ 注册的客户函数融合。
+ * 数据源为 globalUdfRegistry 合并注册表(单一数据源)：zen-udf 内置 contrib/ 扩展 + 宿主 app 层 contrib/ 注册的客户函数融合。
  * 每请求实时聚合，宿主运行期注册不丢；schema 每个命名空间生成一个集合容器节点(kind = 命名空间名，
  * 函数限定集合内)；专属 UI 由宿主按函数名以专用 spec 接管。
+ * (0.1.x 单例名 udfManager，内核 2026-09 更名 globalUdfRegistry——见 zen-udf docs/naming.md)
  */
-export const getCustomNodeFunctionSchema = (): CustomNodeNamespace[] => udfManager.udfFunctionSchemaNamespaces();
+export const getCustomNodeFunctionSchema = (): CustomNodeNamespace[] => globalUdfRegistry.udfFunctionSchemaNamespaces();

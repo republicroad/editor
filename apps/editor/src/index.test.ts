@@ -258,7 +258,8 @@ describe('roster owner scoping', () => {
   test('存量无 owner 名单视为共享，任意用户可读可删', async () => {
     const name = `legacy-${Date.now()}`;
     const { registerRoster } = await import('@republicroad/zen-udf');
-    registerRoster({ name, items: ['s'] });
+    // U5 租户化：scope.tenantId 必填；无 actor = 租户共享
+    registerRoster({ name, items: ['s'] }, { tenantId: 'demo' });
     await writeFile(path.join(rostersDir, `${name}.json`), JSON.stringify({ name, items: ['s'] }), 'utf-8');
 
     const listed = await app.request(`/api/rosters?q=${encodeURIComponent(name)}`, { headers: asUser('user-b') });

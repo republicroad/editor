@@ -170,6 +170,7 @@
 - [x] 第七十五批(zen-engine 跨大版本升级)：catalog 0.51.5→2.0.2（新引擎线首稳定版）；API 逐点比对全部兼容，唯一适配为 getDecision loader 四形联合收窄；撞库仿真验收在 2.0.2 下全过（运行时风险点核销）——见 7.3 第七十五批
 - [x] 第七十七批(zen-rule 迁入内核)：apps/zen-rule 全量迁至 jdm-editor/packages/zen-rule(@republicroad/zen-rule，独立发布能力保留)；宿主引用重指向(workspace:* + imports + sync:schema)——记录并入 7.3 第七十八批
 - [x] 第七十八批(内核 zen-udf 更名消费 + 工作区清理)：内核并行会话语义更名 @republicroad/zen-rule→@republicroad/zen-udf(1beb9afc)；宿主消费面跟随(依赖/imports/脚本/lockfile)；子模块工作区遗留比对发现重构漏删 15 个测试用例→补回内核 d2aaf896(48/48)；遗留拷贝备份后删除——见 7.3 第七十八批
+- [x] 第七十九批(内核 zen-udf 0.2.0 消费)：gitlink → 10d3627+e7824bf(38 提交，U/V/W/X/Y 系列)；第二波命名跟随 ZenRule→DecisionRuntime、udfManager→globalUdfRegistry；U5 租户名单适配(RosterScope 必填 tenantId，宿主 TENANT_ID 单租户口径 + readRosterOwner 落盘推导)；夹具刷新(Y1 semantics + custom-list-query 回归)——见 7.3 第七十九批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -255,6 +256,33 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-13，第七十九批：内核 zen-udf 0.2.0 消费——DecisionRuntime 更名 + U5 租户名单)：**
+
+- **内核跟进**：gitlink → 10d3627(+e7824bf 夹具)，38 提交——U 系列(租户上下文/实例注入/
+  L1 缓存/UdfPack/端口面)、V 系列(0.2.0 发布就绪，去 private)、W/X 系列(probe/发布管线/
+  demo-server 修复)、Y 系列全量(语义三元组/审计事件/确定性回放/RateStore as-of/熔断/
+  OTel 桥/fixture runner)；宿主裁决 D1–D10 已全部 ✅ 确认（见内核 docs/design/zen-udf-plan-*.md）
+- **第二波命名跟随（20f529e，硬改无别名）**：`ZenRule` → `DecisionRuntime`、`udfManager` →
+  `globalUdfRegistry`（命名依据：zen-udf docs/naming.md）。宿主改动点：apps/editor/index.ts
+  (import + 构造 + 注释)、custom-node-schema.ts、sync-custom-node-schema.ts。方法面零变化
+  （createDecisionWithCacheKey/updateDecisionWithCacheKey/getDecisionCache/evaluateAsync/
+  funcBindParams/udfFunctionSchemaNamespaces 全部保留，新增可选 rev 参数）
+- **U5 租户名单适配（breaking）**：roster 访问器第二参 `owner?: string` → 必填
+  `RosterScope{tenantId, actor?}`，`Roster` 类型移除 owner 字段。宿主口径：演示栈单租户
+  `TENANT_ID`(env 可覆盖，默认 'demo')，`rosterScopeOf(execCtx)` 统一构造 scope；HTTP 契约
+  的 `owner` 字段(响应/落盘布局)保留为宿主自有概念——内存归属不可查后新增 `readRosterOwner`
+  从落盘文件权威推导（prefer 请求者目录优先，同名遮蔽场景归属正确）；boot 装载 owner→actor
+  私有域、无 owner→租户共享
+- **夹具刷新（宿主门禁捕获内核滞留）**：Y1 语义字段 `semantics` 下发 + custom-list-query 域
+  回归——8ns/10 tools；夹具归内核 appshell 所有，随 e7824bf 提交内核，gitlink 一并跟进
+- **已知绕行**：`RosterScope` 类型未从包索引导出——宿主以结构化字面量匹配（libsuggest 候选）
+- 门禁：typecheck(root+apps)/lint/主仓 80/组件 46/apps(editor) 48/zen-udf 114(内核套件经
+  workspace 直跑)/schema 8ns/build 全绿
+- **宿主侧后续候选**（按优先级）：① Y7 runDecisionTests 接入宿主 CI（演示图回归）；②
+  resultValidation `enforce` 择机切换（D5：缺省 warn 不破坏存量图）；③ RosterScope 导出
+  libsuggest；④ S009 undo/redo 消费（待真实 UI 需求）；OTel/Redis RateStore 消费归 verdict
+  （D1/轨道 C 口径）
 
 **最新变更(2026-09-13，第七十八批：内核 zen-udf 更名消费 + 子模块工作区清理)：**
 

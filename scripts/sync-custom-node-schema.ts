@@ -20,13 +20,37 @@ const namespaces = udfManager.udfFunctionSchemaNamespaces();
 const formatted = await format(JSON.stringify(namespaces), { parser: 'json', endOfLine: 'lf', printWidth: 120 });
 
 if (checkMode) {
-  const existing = await readFile(OUT_FILE, 'utf8');
-  if (existing !== formatted) {
+  // 语义比较（第七十八批）：解析后深比较而非逐字节——容忍内核/宿主两侧 prettier 口径差异，
+  // 只要 namespace/tool 契约一致即绿（背景：内核 HEAD fixture 曾为展开/混合格式）
+  const existingRaw = await readFile(OUT_FILE, 'utf8');
+  const existingParsed = JSON.parse(existingRaw) as unknown;
+  const semanticallyEqual =
+    JSON.stringify(sortKeysDeep(existingParsed)) === JSON.stringify(sortKeysDeep(namespaces));
+  if (!semanticallyEqual) {
     console.error('[sync:schema] 夹具与合并注册表不一致——请执行 bun run sync:schema 刷新后提交');
     process.exit(1);
   }
   console.log(`[sync:schema] fixture up to date (${namespaces.length} namespace(s))`);
   process.exit(0);
+}
+
+await mkdir(path.dirname(OUT_FILE), { recursive: true });
+await writeFile(OUT_FILE, formatted, 'utf8');
+
+/** 深比较辅助：对象键递归排序后序列化，消除键序与格式噪声 */
+function sortKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortKeysDeep);
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.keys(value as Record<string, unknown>)
+      .sort()
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = sortKeysDeep((value as Record<string, unknown>)[key]);
+        return acc;
+      }, {});
+  }
+  return value;
 }
 
 await mkdir(path.dirname(OUT_FILE), { recursive: true });

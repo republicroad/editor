@@ -24,7 +24,7 @@ GoRules Editor 采用三层架构设计：
 ├─────────────────────────────────────────────────────────┤
 │                    后端引擎 (Bun/Hono)                    │
 │  ┌───────────────────────────────────────────────────┐   │
-│  │ apps/editor · zen-rule(@gorules/zen-engine)       │   │
+│  │ apps/editor · zen-udf(@gorules/zen-engine)        │   │
 │  │ simulate / decision / graphs / lists / openapi    │   │
 │  └───────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
@@ -56,8 +56,8 @@ editor/
 │       └── decision-templates.ts # 决策模板
 ├── jdm-editor/                   # 核心组件库(git submodule)
 ├── apps/                         # 后端与应用
-│   ├── editor/                   # Bun/Hono 后端(唯一后端)
-│   └── zen-rule/                 # 规则执行工具
+│   └── editor/                   # Bun/Hono 后端(唯一后端)
+│                                  # UDF 运行时：jdm-editor/packages/zen-udf(workspace)
 ├── static/                       # 构建输出
 ├── vite.config.ts                # Vite 构建配置
 ├── tsconfig.json                 # TypeScript 配置
@@ -124,7 +124,7 @@ jdm-editor/
 | Bun      | 1.3+ | 后端运行时              |
 | Hono     | 4.12 | HTTP 框架               |
 | Zod      | 4    | 请求/响应校验(OpenAPI)  |
-| zen-rule | -    | GoRules 决策引擎(纯 TS) |
+| zen-udf  | 0.1  | UDF 运行时(@republicroad/zen-udf，内核包) |
 
 ### 3.3 WASM 技术栈
 

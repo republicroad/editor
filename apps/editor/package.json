@@ -11,7 +11,7 @@
     "@scalar/hono-api-reference": "^0.11.12",
     "hono": "^4.12.33",
     "zod": "catalog:",
-    "@republicroad/zen-rule": "workspace:*"
+    "@republicroad/zen-udf": "workspace:*"
   },
   "devDependencies": {
     "bun-types": "catalog:"

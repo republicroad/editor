@@ -168,6 +168,8 @@
 - [x] 第七十四批(持久化默认翻转 local-first)：无参数默认 IndexedDB 本地适配器(?storage=http 显式切服务端)；apps/editor + graphs-store 保留为后端集成示例——见 7.3 第七十四批
 - [x] 第七十六批(内核 0.7.0 消费)：gitlink → 33b8f2b；ShellHeader 恢复 ref 对象传参(内核 0ae6e74 修复 ref 接受)——见 7.3 第七十六批
 - [x] 第七十五批(zen-engine 跨大版本升级)：catalog 0.51.5→2.0.2（新引擎线首稳定版）；API 逐点比对全部兼容，唯一适配为 getDecision loader 四形联合收窄；撞库仿真验收在 2.0.2 下全过（运行时风险点核销）——见 7.3 第七十五批
+- [x] 第七十七批(zen-rule 迁入内核)：apps/zen-rule 全量迁至 jdm-editor/packages/zen-rule(@republicroad/zen-rule，独立发布能力保留)；宿主引用重指向(workspace:* + imports + sync:schema)——记录并入 7.3 第七十八批
+- [x] 第七十八批(内核 zen-udf 更名消费 + 工作区清理)：内核并行会话语义更名 @republicroad/zen-rule→@republicroad/zen-udf(1beb9afc)；宿主消费面跟随(依赖/imports/脚本/lockfile)；子模块工作区遗留比对发现重构漏删 15 个测试用例→补回内核 d2aaf896(48/48)；遗留拷贝备份后删除——见 7.3 第七十八批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -253,6 +255,28 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-13，第七十八批：内核 zen-udf 更名消费 + 子模块工作区清理)：**
+
+- **背景**：内核并行会话对 UDF 运行时做语义更名 `1beb9afc`：`@republicroad/zen-rule` →
+  `@republicroad/zen-udf`（多函数执行 spec + 多租户数据面定位，包名对齐 zen-udf-multi-tenant
+  设计），`packages/zen-rule` → `packages/zen-udf`。导出面零变化（ZenRule/udfManager/roster/
+  exec-context/defineContrib 全同名）——宿主仅需包名与路径跟随
+- **宿主消费面跟随**：apps/editor 依赖 `@republicroad/zen-udf: workspace:*`；import 三处
+  （index.ts / custom-node-schema.ts / index.test.ts 动态导入）；`scripts/sync-custom-node-schema.ts`
+  直连路径；根脚本 `test:zen-rule` → `test:zen-udf`（--cwd 新包路径）；bun.lock 重同步（Removed: 1）
+- **遗留比对（子模块工作区旧 packages/zen-rule vs 内核 reui HEAD）**：源文件 14+4 全部在位、
+  graph 夹具 4 件语义级一致（仅 prettier 排版差）、vitest 配置一致、http.test 已是修复后的
+  node:http 干净版。唯一遗漏＝重构丢掉 3 个根级测试文件共 **15 用例**（roster 存储/属主隔离 7 +
+  register 命名空间冲突警告 4 + exec-context 并发隔离 4；行为代码均在、纯测试覆盖缺失）——
+  已补回内核 zen-udf（bun:test→vitest 原样移植），**48/48 通过**（内核 `d2aaf896`）
+- **子模块**：gitlink 54033c4(detached) → d2aaf896(reui 跟踪分支)；陈旧 untracked zen-rule
+  拷贝备份至 %TEMP% 后删除（真源已在内核跟踪）；**push 顺序约束：先内核后宿主**
+- **现行指引文档同步**：README（质量门禁/apps 章节/API 表）、docs/02（架构图 + 技术栈表）、
+  docs/04 §3.4、docs/13 全文（apps/zen-rule → jdm-editor/packages/zen-udf 路径口径）；
+  历史批次记录不回写
+- 门禁：test:zen-udf 48 / typecheck(root+apps) / lint / 主仓 / 组件 / sync:schema:check(8ns) /
+  build 全绿（实测数见提交信息）
 
 **最新变更(2026-09-12，第七十五批：zen-engine 跨大版本升级 0.51.5 → 2.0.2)：**
 

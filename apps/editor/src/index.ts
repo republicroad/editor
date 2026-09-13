@@ -11,7 +11,7 @@ import {
   runWithExecContext,
   type ExecContext,
   ZenRule,
-} from '@republicroad/zen-rule';
+} from '@republicroad/zen-udf';
 import { cors } from 'hono/cors';
 import { getCookie, setCookie } from 'hono/cookie';
 import type { Context, Next } from 'hono';

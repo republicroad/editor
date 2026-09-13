@@ -82,8 +82,10 @@ bun run --cwd apps/editor dev
 
 ### 3.4 启动 Hono 规则仿真后端(apps/editor)
 
-`apps/editor` 与 `apps/zen-rule` 已纳入根 workspace(`workspaces: ["apps/*", "jdm-editor/packages/*"]`)，
-统一使用 bun 管理依赖，`zen-rule` 通过 `workspace:*` 协议被引用，无需 `bun link`。
+`apps/editor` 已纳入根 workspace(`workspaces: ["apps/*", "jdm-editor/packages/*"]`)；
+zen-engine 自定义 UDF 运行时位于内核包 `jdm-editor/packages/zen-udf`(`@republicroad/zen-udf`，2026-09
+自 apps/zen-rule 迁入内核并更名)，同样纳入根 workspace，统一使用 bun 管理依赖，
+通过 `workspace:*` 协议被引用，无需 `bun link`。
 
 ```bash
 # 根目录安装全部 workspace 依赖
@@ -92,8 +94,8 @@ bun i
 # 启动 apps/editor API 后端(监听 3000，admin 服务 3001)
 bun run dev:api
 
-# 可选：运行 zen-rule 冒烟测试 / 类型检查
-bun run test:zen-rule
+# 可选：运行 zen-udf 冒烟测试 / 类型检查
+bun run test:zen-udf
 bun run typecheck:apps
 ```
 

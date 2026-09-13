@@ -7,7 +7,7 @@
 ## 1. 总体架构
 
 ```
-apps/zen-rule/src/contrib/*.ts (自定义函数实现专属区，扁平；框架在外)
+jdm-editor/packages/zen-udf/src/contrib/*.ts (自定义函数实现专属区，扁平；框架在外；2026-09 自 apps/zen-rule 迁入内核包并更名 zen-udf)
   └─ registerUdf(name, namespace, { parametersSchema, returnsSchema })(func)
        └─ /api/custom-nodes/schema   ← 每请求 udfManager.udfFunctionSchemaNamespaces() 实时聚合(内置 contrib + 未来宿主 contrib 融合)
             └─ 前端 schemaToCustomNodes() 按命名空间生成集合容器节点(kind = 命名空间名)
@@ -17,7 +17,7 @@ apps/zen-rule/src/contrib/*.ts (自定义函数实现专属区，扁平；框架
 - **只加 UDF 不写编辑器**：在 `contrib/` 建域文件注册函数，schema 自动出现，用通用节点即可配置——最小成本路径
 - **需要富编辑器**：走本文全流程；`overriddenKinds` 里登记 kind，避免侧边栏重复
 
-## 2. 引擎层(apps/zen-rule)
+## 2. 引擎层(jdm-editor/packages/zen-udf)
 
 ### 2.1 注册 UDF(contrib/<域>.ts)
 
@@ -61,7 +61,7 @@ const call = async (...args: unknown[]) => {
 };
 ```
 
-必测：① 标准向量 ② 缺省参数回退(funcBindParams 键序断言)③ 非法值回退 ④ 边界(空串/null 槽位)。运行：`bun test apps/zen-rule`。
+必测：① 标准向量 ② 缺省参数回退(funcBindParams 键序断言)③ 非法值回退 ④ 边界(空串/null 槽位)。运行：`bun run test:zen-udf`。
 
 ## 3. 协议库(src/lib/\*-protocol.ts)
 
@@ -91,12 +91,12 @@ const call = async (...args: unknown[]) => {
 ## 5. 门禁与提交
 
 ```bash
-bun run lint && bun run typecheck && bun run typecheck:apps && bun run test && bun test apps/zen-rule && bun run build
+bun run lint && bun run typecheck && bun run typecheck:apps && bun run test && bun run test:zen-udf && bun run build
 ```
 
 提交拆分惯例：
 
-1. `feat(zen-rule): add xxx udf with tests`(引擎+依赖)
+1. `feat(zen-udf): add xxx udf with tests`(引擎+依赖)
 2. `feat(xxx): custom node with structured editor and protocol lib`(协议库+组件+接线+夹具)
 3. `docs:` changelog(docs/03 §7.3 批次条目 + §6.2 勾选)
 
@@ -156,7 +156,7 @@ scope 解析顺序（子模块 `resolveFunctionScope`）：`'UDF'`→legacy → 
 ### 8.1 结构与分工
 
 ```
-apps/zen-rule/src/
+jdm-editor/packages/zen-udf/src/
   contrib/              # 自定义函数实现专属区（扁平，一域一文件；文件名即 namespace）
     debug.ts            #   namespace 档集合容器：inout / func_without_args
     debugui.ts          #   单函数文件：current_date（专属 UI 预留）
@@ -166,7 +166,7 @@ apps/zen-rule/src/
     http.ts             #   namespace 档：http_request（专属 UI 由宿主 spec 接管）
     roster.ts           #   单函数文件：roster（原 query_list，专属 UI 由宿主 spec 接管）
     （示范：debugui.current_date 的专属 UI spec 见主仓 src/components/custom-node/current-date-node.tsx——两档模型「专属 UI 节点」最小模板）
-  register.ts / engine.ts / roster.ts / exec-context.ts   # zen-rule 框架，在 contrib 之外
+  register.ts / engine.ts / roster.ts / exec-context.ts   # zen-udf 框架，在 contrib 之外
 ```
 
 > 2026-09-01 平台重新设计：移除 8 个 stub/legacy 域（legacy_http/legacy_roster/aho-corasick/counter/ip/notification/phone/shared_counter）——基础 UI 模式已全覆盖，节点按需添加，历史图整体由迁移工具处理（§8.3）。
@@ -177,7 +177,7 @@ apps/zen-rule/src/
 
 ### 8.2 宿主融合（第二层，结构已留缝）
 
-- 宿主 app 未来提供应用层 `contrib/` 目录：`import { udfManager, registerUdf } from 'zen-rule'` 注册客户函数 → **同一注册表自然融合**，schema 端点无需感知两层来源
+- 宿主 app 未来提供应用层 `contrib/` 目录：`import { udfManager, registerUdf } from '@republicroad/zen-udf'` 注册客户函数 → **同一注册表自然融合**，schema 端点无需感知两层来源
 - `/api/custom-nodes/schema` 为**每请求实时聚合**（非模块加载快照），宿主运行期注册不丢
 - 镜像工具：`bun run sync:schema` 导出合并注册表 → `src/assets/custom-node-schema.json`（离线兜底 + LLM 工具调用契约）
 
@@ -193,7 +193,7 @@ apps/zen-rule/src/
   - `http_call`/`http_call_with_headers` **无需重建**：已被 `http_request`（http 域专属节点）替代
 
 - **per-tool `ui` 字段（独立节点形态强化，待需求拐点启动）**：在 UDF schema 的 tool 定义上增加可选
-  `ui` 字段，函数作者在 zen-rule 侧声明画布展示形态（如 `bodyPreview: 'fn(a,b)'`、`icon`、`form: single-line|card`），
+  `ui` 字段，函数作者在 zen-udf 侧声明画布展示形态（如 `bodyPreview: 'fn(a,b)'`、`icon`、`form: single-line|card`），
   随 schema 下发后前端按声明自动装配轻量专属展示——函数作者零前端代码。
   专属 UI 三层演进：① generic 表格(默认) → ② `ui` 声明装配(本提案) → ③ 宿主专用 spec(复杂交互)。
   启动拐点：无专属 UI 且需要独立画布形态的函数 ≥3~5 个。

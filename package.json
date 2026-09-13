@@ -35,7 +35,7 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "typecheck": "tsc --noEmit",
     "typecheck:apps": "tsc -p apps/editor --noEmit",
-    "test:zen-rule": "bun run --cwd jdm-editor/packages/zen-rule test",
+    "test:zen-udf": "bun run --cwd jdm-editor/packages/zen-udf test",
     "test": "bun test src --path-ignore-patterns '**/jdm-editor/**'",
     "sync:schema": "bun scripts/sync-custom-node-schema.ts",
     "preview": "vite preview --host",

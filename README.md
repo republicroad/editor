@@ -106,10 +106,10 @@ $ bun run build
 ```bash
 $ bun run lint             # eslint(含 prettier 规则)
 $ bun run typecheck        # 主应用类型检查
-$ bun run typecheck:apps   # apps/editor 与 apps/zen-rule 类型检查
+$ bun run typecheck:apps   # apps/editor 类型检查
 $ bun run test             # 主应用单元测试(bun test src，协议库等)
 $ bun run test:components  # 自定义节点组件交互测试(jsdom + RTL，独立进程)
-$ bun run test:zen-rule    # zen-rule 引擎单测(bun test)
+$ bun run test:zen-udf     # zen-udf 引擎单测(vitest，jdm-editor/packages/zen-udf)
 $ bun run sync:schema      # 从 udfManager 重新生成自定义节点 schema 夹具
 $ bun run storybook        # 组件文档(本地 :9009)
 $ bun run build:storybook  # 组件文档静态构建(输出 storybook-static/)
@@ -139,14 +139,15 @@ jdm-editor$ cd packages/jdm-editor && npm publish
 
 ## apps (Bun/Hono API 后端)
 
-`apps/editor`(Hono 规则仿真后端)与 `apps/zen-rule`(zen-engine 自定义处理函数库)已纳入根 workspace，
-统一使用 bun 管理依赖(单一 `bun.lock`)，`zen-rule` 通过 `workspace:*` 协议被 `apps/editor` 引用，
+`apps/editor`(Hono 规则仿真后端)纳入根 workspace；zen-engine 自定义 UDF 运行时位于内核包
+`jdm-editor/packages/zen-udf`(`@republicroad/zen-udf`，2026-09 自 apps/zen-rule 迁入内核并更名)，
+同样纳入根 workspace，统一使用 bun 管理依赖(单一 `bun.lock`)，通过 `workspace:*` 协议被 `apps/editor` 引用，
 无需再手动 `bun link`。
 
 ```bash
 $ bun i                # 根目录一次性安装所有 workspace 依赖
 $ bun run dev:api      # 启动 API 后端 (apps/editor)，默认 http://localhost:3000，可用 PORT 环境变量覆盖
-$ bun run test:zen-rule   # 运行 zen-rule 单元测试
+$ bun run test:zen-udf    # 运行 zen-udf 单元测试
 $ bun run typecheck:apps  # 类型检查 apps/*
 ```
 
@@ -169,7 +170,7 @@ $ tail -f logs/decision-requests-$(date -u +%F).jsonl
 | 方法   | 路径                       | 说明                                                     |
 | ------ | -------------------------- | -------------------------------------------------------- |
 | POST   | `/api/simulate`            | 决策图仿真执行(逐行落盘决策请求日志，见上节)             |
-| GET    | `/api/custom-nodes/schema` | 自定义节点 schema(由 zen-rule udfManager 运行时生成)     |
+| GET    | `/api/custom-nodes/schema` | 自定义节点 schema(由 zen-udf udfManager 运行时生成)      |
 | GET    | `/api/rosters?q=`          | 名单列表(大小写不敏感过滤)                               |
 | GET    | `/api/rosters/{name}`      | 名单详情                                                 |
 | POST   | `/api/rosters`             | 创建/覆盖名单(upsert，落盘 `apps/editor/rosters/*.json`) |
@@ -202,7 +203,7 @@ import { EditorShellProvider, createGraphsHttpAdapter, createDefaultSimulate } f
 
 ## 自定义节点(zrule)
 
-自定义节点 = **zen-rule 注册 UDF** + **前端手写 spec**。UDF 经 `/api/custom-nodes/schema` 自动下发；
+自定义节点 = **zen-udf 注册 UDF** + **前端手写 spec**。UDF 经 `/api/custom-nodes/schema` 自动下发；
 有富编辑器的节点在前端以 `createJdmNode` 覆盖(`useCustomNodes.ts` 的 `overriddenKinds`)。
 
 | kind           | 名称      | 表达式协议(位置参数)                                                                 | 富编辑器                             |

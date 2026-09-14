@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { decisionTemplates } from '../../assets/decision-templates';
 import { useSearchParams } from 'react-router-dom';
 import { DecisionGraphRef, DecisionGraphType, GraphSimulator, JdmUiMode, Simulation } from '@republicroad/jdm-editor';
+import { useGraphUndoRedo } from './use-graph-undo-redo';
 import {
   ShellHeader,
   SkinnedDecisionGraph,
@@ -71,6 +72,8 @@ export const DecisionSimplePage: React.FC = () => {
 
 const DecisionSimpleInner: React.FC = () => {
   const graphRef = React.useRef<DecisionGraphRef>(null);
+  // S009 消费（第八十二批）：undo/redo 快捷键 + 工具栏按钮（disabled 随 store 订阅）
+  const { toolbarItems: undoRedoToolbarItems } = useGraphUndoRedo(graphRef);
   // 隐藏 <input type=file>：无 File System Access API 的浏览器回退打开通道
   const fileInput = useRef<HTMLInputElement>(null);
   const { themePreference, setThemePreference, skins, skinId, setSkinId, activeSkin } = useTheme();
@@ -296,6 +299,7 @@ const DecisionSimpleInner: React.FC = () => {
               diffBaseline={diffBaseline}
               ref={graphRef}
               value={graph}
+              toolbarItems={undoRedoToolbarItems}
               onChange={(value) => {
                 // 编辑器内用户改动才标记 dirty——加载/恢复/模板等直接 setGraph 的路径不经过这里
                 autosave.markDirty();

@@ -173,6 +173,7 @@
 - [x] 第七十九批(内核 zen-udf 0.2.0 消费)：gitlink → 10d3627+e7824bf(38 提交，U/V/W/X/Y 系列)；第二波命名跟随 ZenRule→DecisionRuntime、udfManager→globalUdfRegistry；U5 租户名单适配(RosterScope 必填 tenantId，宿主 TENANT_ID 单租户口径 + readRosterOwner 落盘推导)；夹具刷新(Y1 semantics + custom-list-query 回归)——见 7.3 第七十九批
 - [x] 第八十批(内核 0.3.0 跟进)：gitlink → 795c92e(origin e0cb422 + 夹具变基)；e7824bf 核查非重复(内核夹具仍未刷新)变基保留；Z 系列宿主零代码影响——见 7.3 第八十批
 - [x] 第八十一批(演示图级回归)：Y7 runDecisionTests 接 CI(随 apps 测试自动执行)；三层回归(编译 11 图/空输入执行/撞库深执行)+D5 试跑(warn 违例 0 条，enforce 无阻塞)；图资产孤岛登记——见 7.3 第八十一批
+- [x] 第八十二批(S009 消费)：undo/redo 快捷键 + 工具栏按钮(GraphRef 直挂无内核缺口)+实机走查(按钮态翻转/MiniMap 实证；删节点视觉回退与 rename/diff/pin 遗留待真实浏览器)——见 7.3 第八十二批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -258,6 +259,27 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-13，第八十二批：S009 消费——undo/redo 入口 + 实机走查)：**
+
+- **内核交付形态确认**：undo/redo 为 store 内建（快照栈上限 100；结构变更/拖拽/500ms 防抖
+  编辑自动入栈），`undo`/`redo`/`commitUndo` 经 `GraphRef`（= store actions 直挂）对外可用
+  ——**宿主零内核缺口**；MiniMap（bottom-left）与 snapToGrid 画布内建，无需接线
+- **宿主接线**：① `use-graph-undo-redo.tsx` 键盘快捷键（Ctrl/Cmd+Z 撤销、Ctrl+Shift+Z /
+  Ctrl+Y 重做；焦点在 input/textarea/contentEditable 时不劫持，原生 undo 优先）；
+  ② `undo-redo-button.tsx` 工具栏按钮（S005 P1 槽位协议 `host:undo`/`host:redo`，disabled
+  实时订阅 ref.stateStore 的 canUndo/canRedo；react-hooks/refs 违规修正：渲染期读 ref 改
+  state 驱动）；③ 页面接入 SkinnedDecisionGraph `toolbarItems`
+- **组件测试**：快捷键语义 5 用例（undo/redo 触发、编辑态守卫、非目标键、isEditableTarget、
+  disabled 绑定）；测试修 dup——`ref` 为 React 保留 prop 不可作普通 prop 名；jsdom 不实现
+  `isContentEditable`（defineProperty 测分支）；fireEvent 直发 window 绕过焦点定位（按浏览
+  器语义在 input 上派发）
+- **实机走查（IAB，证据边界如实记录）**：✅ 页面加载 + undo/redo 按钮渲染且空栈态正确
+  [disabled]；✅ 拖入节点 → undo 按钮 disabled→enabled（store pushUndo + 宿主订阅链路
+  实证）；✅ MiniMap 渲染；✅ 画布 Ctrl+Z/Ctrl+Y 空栈安全；✅ 按钮 aria/disabled 真实 DOM
+  绑定。❌ 未完成：undo 点击删节点视觉回退、rename/diff/pin 走查——IAB 渲染器两次崩溃 +
+  头部点击拦截（与历次「IAB 不可用」记录一致），维持遗留待真实浏览器/部署环境
+- 门禁：lint/typecheck×2/主仓 86/组件 51(+5)/apps 54/build 全绿
 
 **最新变更(2026-09-13，第八十一批：演示图级回归——Y7 消费 + D5 试跑)：**
 

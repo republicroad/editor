@@ -216,6 +216,10 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
 - **宿主侧后续候选**：① Y7 runDecisionTests 接 CI（演示图回归）；② resultValidation
   enforce 择机（内核 D5 缺省 warn）；③ RosterScope 包索引导出 libsuggest；④ S009
   undo/redo 消费待 UI 需求；OTel 桥/Redis RateStore 归 verdict（D1）。
+- **第八十二批（✅ 2026-09-13）：S009 消费**——use-graph-undo-redo（Ctrl/Cmd+Z 撤销、
+  Ctrl+Shift+Z|Ctrl+Y 重做、编辑态守卫）+ undo-redo-button 工具栏按钮（S005 P1 槽位，
+  disabled 订阅 store canUndo/canRedo）。实机走查：按钮态翻转/MiniMap/空栈安全实证；
+  删节点视觉回退与 rename/diff/pin 因 IAB 崩溃遗留待真实浏览器。全门禁绿。
 - **第八十一批（✅ 2026-09-13）：演示图级回归（Y7 消费 + D5 试跑）**——graph-regression.test.ts
   三层回归（编译 11 图 / 空输入执行 / 撞库图深执行）+ Y7 predicate 夹具；D5 试跑：warn 违例
   0 条、enforce 全图不中断（缺省维持 warn）；图资产孤岛登记（72fab3c2 的 9 个 customNode

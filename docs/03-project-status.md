@@ -279,6 +279,12 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
   实证）；✅ MiniMap 渲染；✅ 画布 Ctrl+Z/Ctrl+Y 空栈安全；✅ 按钮 aria/disabled 真实 DOM
   绑定。❌ 未完成：undo 点击删节点视觉回退、rename/diff/pin 走查——IAB 渲染器两次崩溃 +
   头部点击拦截（与历次「IAB 不可用」记录一致），维持遗留待真实浏览器/部署环境
+- **方案一补充（undo 删节点语义闭环测试）**：`undo-redo-store.test.tsx` 3 用例——路径直通
+  真实内核 dg-store（不经 barrel mock），addNodes→removeNodes→undo 恢复→redo 重删 +
+  连删两节点栈序恢复 + undo 后新编辑清空 redo 栈；并断言 onChange 每步触发（宿主 autosave
+  链路）。测试基建备忘：referenceStore 的 nodesState/edgesState 引用需手动接线（真实画布
+  才回填）；useDecisionGraphRaw() 捕获须走 effect（react-hooks 禁渲染期写外部变量）。
+  语义闭环钉死后，IAB 未竟的「点击删节点视觉回退」降级为纯视觉确认
 - 门禁：lint/typecheck×2/主仓 86/组件 51(+5)/apps 54/build 全绿
 
 **最新变更(2026-09-13，第八十一批：演示图级回归——Y7 消费 + D5 试跑)：**

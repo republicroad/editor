@@ -218,6 +218,10 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
   undo/redo 消费待 UI 需求；OTel 桥/Redis RateStore 归 verdict（D1）。
 - **第八十二批（✅ 2026-09-13）：S009 消费**——use-graph-undo-redo（Ctrl/Cmd+Z 撤销、
   Ctrl+Shift+Z|Ctrl+Y 重做、编辑态守卫）+ undo-redo-button 工具栏按钮（S005 P1 槽位，
+- **第八十三批（✅ 2026-09-14）：内核 0.4.0 消费**——gitlink → a1ae321（AA 影子评估
+  /replay/输入护栏/evaluateMany + BB 缓存 TTL/maxBytes/metrics sink + DD 信任链页签，
+  19 提交纯增量零代码）；W4/D7 contextvars 对比材料内核已完成（宿主仅剩上游 issue 提交
+  拍板）；S010 维持。全门禁绿（zen-udf 126 用例）。
   disabled 订阅 store canUndo/canRedo）。实机走查：按钮态翻转/MiniMap/空栈安全实证；
   删节点视觉回退与 rename/diff/pin 因 IAB 崩溃遗留待真实浏览器。全门禁绿。
 - **第八十一批（✅ 2026-09-13）：演示图级回归（Y7 消费 + D5 试跑）**——graph-regression.test.ts

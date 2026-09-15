@@ -174,6 +174,8 @@
 - [x] 第八十批(内核 0.3.0 跟进)：gitlink → 795c92e(origin e0cb422 + 夹具变基)；e7824bf 核查非重复(内核夹具仍未刷新)变基保留；Z 系列宿主零代码影响——见 7.3 第八十批
 - [x] 第八十一批(演示图级回归)：Y7 runDecisionTests 接 CI(随 apps 测试自动执行)；三层回归(编译 11 图/空输入执行/撞库深执行)+D5 试跑(warn 违例 0 条，enforce 无阻塞)；图资产孤岛登记——见 7.3 第八十一批
 - [x] 第八十二批(S009 消费)：undo/redo 快捷键 + 工具栏按钮(GraphRef 直挂无内核缺口)+实机走查(按钮态翻转/MiniMap 实证；删节点视觉回退与 rename/diff/pin 遗留待真实浏览器)——见 7.3 第八十二批
+- [x] 第八十二批补(方案一)：undo 删节点语义闭环测试 3 用例(真实内核 store 直驱，onChange 链路断言)——见 7.3 第八十二批
+- [x] 第八十三批(内核 0.4.0 消费)：gitlink → a1ae321(AA/DD 系列 19 提交，纯增量零代码)；W4/D7 对比材料内核已完成(宿主仅剩提交动作)——见 7.3 第八十三批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -259,6 +261,23 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-14，第八十三批：内核 zen-udf 0.4.0 消费——AA/DD 系列纯增量跟进)：**
+
+- **内核跟进**：gitlink → a1ae321，19 提交——AA 系列（影子评估 evaluateShadow + 字段级
+  diff、/v1/replay 演示端点、输入预校验护栏、evaluateMany 批量、性能基线）、BB 系列
+  （决策缓存 idle TTL、http 响应 maxBytes 护栏、统一 metrics sink、0.4.0 发版）、CC 系列
+  （/v1/shadow 端点 + e2e 哨兵、指标命名规范）、DD 系列（playground Trust Chain 页签：
+  执行→审计→回放工作流 + 影子对比面板，D19/D20 裁决落地）
+- **宿主影响：零代码**——导出面纯增量（DecisionAuditEvent/ShadowEvaluation/
+  ShadowDiffEntry/MetricsEvent 类型等），无删除无签名变更；依赖零变化（仅版本号 0.4.0）；
+  schema 夹具零漂移（sync:schema:check 直接通过）
+- **W4/D7 进展核销**：contextvars 跨运行时对比材料内核已完成（python 绑定多实例探针 +
+  Node ALS × Python contextvars 实证矩阵 + 现成 issue 草稿 cbbf52c）——原排期宿主侧
+  「手动探索」已由内核会话代做，剩余动作仅为提交上游 issue（外部动作，宿主拍板即可）
+- **S010 维持**：RosterScope 仍未从包索引导出（0.4.0 未顺手解决）
+- 门禁：typecheck×2/lint/主仓 86/组件 54/apps 54/zen-udf 27 文件 126 用例(27f)/schema
+  8ns/build 全绿
 
 **最新变更(2026-09-13，第八十二批：S009 消费——undo/redo 入口 + 实机走查)：**
 

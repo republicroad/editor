@@ -268,7 +268,7 @@
     },
     "jdm-editor/packages/zen-udf": {
       "name": "@republicroad/zen-udf",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@gorules/zen-engine": "2.0.2",
       },

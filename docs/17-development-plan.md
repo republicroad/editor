@@ -226,6 +226,9 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
   /replay/输入护栏/evaluateMany + BB 缓存 TTL/maxBytes/metrics sink + DD 信任链页签，
   19 提交纯增量零代码）；W4/D7 contextvars 对比材料内核已完成（宿主仅剩上游 issue 提交
   拍板）；S010 维持。全门禁绿（zen-udf 126 用例）。
+- **第八十四批（✅ 2026-09-15）：S010 消费**——内核 0.4.1（525e45b 导出 + 540b08b 发版）
+  采纳；宿主 rosterScopeOf 补 RosterScope 显式标注、删结构化绕行注释，契约演进自此在
+  宿主 typecheck 即时暴露。全门禁绿。
 - **第八十一批（✅ 2026-09-13）：演示图级回归（Y7 消费 + D5 试跑）**——graph-regression.test.ts
   三层回归（编译 11 图 / 空输入执行 / 撞库图深执行）+ Y7 predicate 夹具；D5 试跑：warn 违例
   0 条、enforce 全图不中断（缺省维持 warn）；图资产孤岛登记（72fab3c2 的 9 个 customNode

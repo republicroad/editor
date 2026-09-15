@@ -10,6 +10,7 @@ import {
   listRosters,
   runWithExecContext,
   type ExecContext,
+  type RosterScope,
   DecisionRuntime,
 } from '@republicroad/zen-udf';
 import { cors } from 'hono/cors';
@@ -89,9 +90,9 @@ export const execContextOf = (c: IdentityCarrier): ExecContext => {
 
 // 名单租户域（zen-udf U5 租户化：scope.tenantId 必填，跨租户永不可见）。
 // 演示栈单租户，env TENANT_ID 可覆盖；actor = 会话用户（缺省 = 租户共享/管理员语义）。
-// 结构化匹配 RosterScope（内核暂未从包索引导出该类型——libsuggest 候选）。
+// RosterScope 类型自 0.4.1 起从包索引导出（S010 交付，第八十四批消费）。
 const TENANT_ID = process.env.TENANT_ID ?? 'demo';
-const rosterScopeOf = (execCtx: ExecContext) => ({ tenantId: TENANT_ID, actor: execCtx.userId });
+const rosterScopeOf = (execCtx: ExecContext): RosterScope => ({ tenantId: TENANT_ID, actor: execCtx.userId });
 
 const staticConfig = {
   assets: 'public', // Directory to serve static files from

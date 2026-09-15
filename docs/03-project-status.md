@@ -176,6 +176,7 @@
 - [x] 第八十二批(S009 消费)：undo/redo 快捷键 + 工具栏按钮(GraphRef 直挂无内核缺口)+实机走查(按钮态翻转/MiniMap 实证；删节点视觉回退与 rename/diff/pin 遗留待真实浏览器)——见 7.3 第八十二批
 - [x] 第八十二批补(方案一)：undo 删节点语义闭环测试 3 用例(真实内核 store 直驱，onChange 链路断言)——见 7.3 第八十二批
 - [x] 第八十三批(内核 0.4.0 消费)：gitlink → a1ae321(AA/DD 系列 19 提交，纯增量零代码)；W4/D7 对比材料内核已完成(宿主仅剩提交动作)——见 7.3 第八十三批
+- [x] 第八十四批(S010 消费)：gitlink → 540b08b(zen-udf 0.4.1)；rosterScopeOf 补 RosterScope 显式标注 + 删结构化绕行注释——见 7.3 第八十四批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -261,6 +262,17 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-15，第八十四批：S010 消费——RosterScope 类型导入)：**
+
+- **内核交付**：`525e45b` 补导出 + `540b08b` 发 zen-udf **0.4.1**（S010 全盘采纳：roster
+  导出行补 `type RosterScope`；同范围含 playground MPA 化、ADR/bp 文档体系等仓内重构，
+  不涉宿主消费面）
+- **宿主消费**（apps/editor/src/index.ts）：导入块加 `type RosterScope`；`rosterScopeOf`
+  补显式返回类型；删除「结构化匹配」绕行注释——此后内核对 `RosterScope` 的契约演进
+  即时在宿主 typecheck 暴露（S010 提案的验收目标达成）
+- gitlink → `540b08b`；libsuggest README 的 S010 状态翻转留内核会话操作
+- 门禁：typecheck×2/lint/主仓 86/组件 54/apps 54/zen-udf 126/schema 8ns/build 全绿
 
 **最新变更(2026-09-14，第八十三批：内核 zen-udf 0.4.0 消费——AA/DD 系列纯增量跟进)：**
 

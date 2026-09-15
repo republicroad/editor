@@ -1,6 +1,6 @@
 # S010 zen-udf：`RosterScope` 类型从包索引导出
 
-- 状态: proposed
+- 状态: done（内核 2026-09-16 交付：`@republicroad/zen-udf@0.4.1`，提交 525e45ba / release 540b08b5；npm smoke + 发布物 src/index.ts 导出行已验证）
 - 目标库: `@republicroad/zen-udf`（`src/index.ts` 导出面；类型本体已在 `src/roster.ts`）
 - 提出方: editor 会话（2026-09-14，第八十三批消费 0.4.0 时确认仍缺失）
 - 优先级: 低成本高正确性（一行 type 导出，零运行时影响）

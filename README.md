@@ -12,6 +12,13 @@ URL: https://editor.gorules.io
 > - 开发分支：`reui`（shadcn/ReUI 技术栈 + 独立内核 fork）；master 退役冻结于上游 1.16.1
 > - kernel 0.3.1 / appshell 0.1.0 已发布 npm；editor 为应用不发布 npm
 
+## 源码直通退役（2026-09-15 决策）
+
+> 本仓对 `@republicroad/jdm-editor` / `@republicroad/jdm-appshell` 的消费方式已决策：从 **submodule 源码直通**（submodule + bun workspace + tsconfig paths + vite alias 四层叠加）退役为 **npm semver 包消费**，对齐边界文档第 3 条「升级只消费公开 npm 包」。
+> standalone 开发验证职责由 jdm-editor 仓内的 playground 承接（源码直通 + HMR，`pnpm dev` 即完整验证面板）。
+> 背景与演变史、三条循环分工、逐文件操作清单与成功标准见 **[docs/19-standalone-dev-and-source-direct-removal.md](./docs/19-standalone-dev-and-source-direct-removal.md)**。
+> **退役执行前**，install 仍按下方 submodule 流程；执行后 clone 不再需要 `--recurse-submodules`。
+
 ## install
 
 注意以下点:

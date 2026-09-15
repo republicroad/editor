@@ -26,6 +26,7 @@
 | [11-antd vs shadcn+ReUI 对比](./11-antd-vs-shadcn-reui-comparison.md) | antd 与 shadcn+ReUI 组件能力对照                   |
 | [17-开发任务规划](./17-development-plan.md)                           | 三轨道任务规划(宿主自主/内核依赖/上线期)与执行状态 |
 | [18-历史规则图兼容](./18-legacy-graph-compatibility.md)               | 旧图兼容机制地图：normalize/兜底/运行时/存储治理四层 |
+| [19-standalone 开发与源码直通退役](./19-standalone-dev-and-source-direct-removal.md) | standalone 模式前因后果、四层直通演变史、npm 化操作清单与成功标准 |
 
 ---
 

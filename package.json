@@ -52,8 +52,8 @@
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@gorules/zen-engine-wasm": "^0.23.1",
-    "@republicroad/jdm-editor": "^0.8.0",
-    "@republicroad/jdm-appshell": "^0.9.0",
+    "@republicroad/jdm-editor": "^0.8.1",
+    "@republicroad/jdm-appshell": "^0.9.1",
     "@republicroad/zen-udf": "^0.4.1",
     "@monaco-editor/react": "4.7.0",
     "@radix-ui/react-alert-dialog": "^1.1.23",

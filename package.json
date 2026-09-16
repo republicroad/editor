@@ -36,7 +36,6 @@
     "typecheck:apps": "tsc -p apps/editor --noEmit",
     "test": "bun test src --path-ignore-patterns '**/jdm-editor/**'",
     "sync:schema": "bun scripts/sync-custom-node-schema.ts",
-    "postinstall": "bun scripts/patch-usese.mjs",
     "preview": "vite preview --host",
     "test:components": "bun test component-tests",
     "storybook": "storybook dev -p 9009",

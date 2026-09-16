@@ -7,8 +7,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
-      - zrule
+      - main
       - reui
 
 jobs:

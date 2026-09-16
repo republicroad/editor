@@ -180,18 +180,6 @@ import { EditorShellProvider, SkinnedDecisionGraph, createGraphsHttpAdapter } fr
 
 ## 参考资料
 
-### git submodule（退役执行前仍适用）
-
-子仓库以 commit 锁定；子仓变更需先在子仓提交，再回主仓记录 gitlink：
-
-```bash
-$ cd jdm-editor/
-jdm-editor$ git add xxxx && git commit -m 'xxxxx'
-jdm-editor$ cd ..
-$ git add jdm-editor/
-```
-
-子模块跟踪分支：`git submodule set-branch --branch reui jdm-editor`。
 
 ### Proxy Configuration (for network-restricted environments)
 

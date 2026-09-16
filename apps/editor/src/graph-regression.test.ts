@@ -31,7 +31,8 @@ const LEGACY_UNREGISTERED = new Set(['json_path', 'template']);
 const REGRESSION_TENANT = 'graph-regression';
 const REGRESSION_CTX = { userId: 'graph-regression', tenantId: REGRESSION_TENANT };
 
-const RICH_GRAPH = path.resolve(import.meta.dir, '../../../jdm-editor/packages/zen-udf/graph/撞库攻击防御.json');
+// npm 消费（docs/19 退役）：撞库图夹具落地宿主 test-assets/（原内核包 graph/ 目录随 submodule 退役不可达）
+const RICH_GRAPH = path.resolve(import.meta.dir, '../test-assets/撞库攻击防御.json');
 
 interface HostGraph {
   id: string;

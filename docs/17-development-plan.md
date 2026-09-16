@@ -226,6 +226,12 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
   /replay/输入护栏/evaluateMany + BB 缓存 TTL/maxBytes/metrics sink + DD 信任链页签，
   19 提交纯增量零代码）；W4/D7 contextvars 对比材料内核已完成（宿主仅剩上游 issue 提交
   拍板）；S010 维持。全门禁绿（zen-udf 126 用例）。
+- **第八十五批（✅ 2026-09-16，main 分支）：源码直通退役执行**——按 docs/19 完成 npm 化：
+  submodule 移除、workspace 收缩、deps semver 化（jdm-editor ^0.8.1 / appshell ^0.9.1 /
+  zen-udf ^0.4.1）、四层直通拆除、UI kit 落地宿主、深路径 13 处改 barrel、内核内部测试
+  6 文件归内核 CI。发布面 bug 三连兑付反馈回路（dts 泄漏→0.9.1、I18n 导出→0.8.1、UI kit
+  落宿主）。全门禁绿（registry+嫁接态验证）。
+
 - **第八十四批（✅ 2026-09-15）：S010 消费**——内核 0.4.1（525e45b 导出 + 540b08b 发版）
   采纳；宿主 rosterScopeOf 补 RosterScope 显式标注、删结构化绕行注释，契约演进自此在
   宿主 typecheck 即时暴露。全门禁绿。

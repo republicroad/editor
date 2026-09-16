@@ -1,4 +1,4 @@
-import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,8 +8,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@republicroad/jdm-appshell/src/components/ui/dropdown-menu';
-import { Separator } from '@republicroad/jdm-appshell/src/components/ui/separator';
+} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
 import { Stack } from '../../components/stack.tsx';
 import type { JdmUiMode } from '@republicroad/jdm-editor';
 import classes from './decision-simple.module.css';

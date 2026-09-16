@@ -263,6 +263,29 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
 
+**最新变更(2026-09-16，第八十五批：源码直通退役——main 分支 npm 集成演示化)：**
+
+- **执行 docs/19 决策**：基于 reui 创建 **main 分支**并完成四层源码直通退役——移除 git
+  submodule（gitlink + .gitmodules）、workspace 收缩为 `apps/*`、deps 全部 semver 化
+  （`@republicroad/jdm-editor ^0.8.1` / `jdm-appshell ^0.9.1` / `zen-udf ^0.4.1`，appshell
+  幽灵依赖转正）、tsconfig paths 三行 + vite alias + storybook alias 删除、内核测试
+  `test:zen-udf` 退场（归内核 CI）、CI/Dockerfile 去 submodule 化。本仓定位收敛为
+  **npm 集成演示示例应用**
+- **发布面 bug 三连（docs/19 §6 预言的宿主侧反馈回路首次兑付）**：
+  ① appshell 发布 d.ts 泄漏构建机路径（`pathsToAliases` 默认转写 tsconfig paths →
+  `../../../../jdm-editor/src/*`、`node_modules/@types/react`）→ 内核修复
+  `pathsToAliases: false` 发 **0.9.1**；
+  ② `I18nProvider`/`createT` 未进内核 barrel（68 批已知缺口）→ 内核补导出发 **jdm-editor
+  0.8.1**；
+  ③ UI kit（button/alert-dialog/dropdown-menu/separator）不在发布导出面 → 按 shadcn
+  惯例落地宿主 `src/components/ui/` + `src/lib/utils.ts cn`（组件属宿主，非库契约）
+- **宿主配套**：13 处深路径导入改 barrel/本地 UI；schema 同步脚本改 npm 导入 + 夹具落
+  `src/assets/`（宿主契约镜像，appshell 兜底夹具由发布包自带）；撞库图夹具落地
+  `apps/editor/test-assets/`；6 个内核内部组件测试移除（归内核 CI）；双包 style.css 显式导入
+- **push 编排**：内核先推（CI 自动发布 0.8.1/0.9.1）→ 宿主 CI 方可绿（当前本地验证经
+  临时嫁接 store dist 完成，验证后已还原 registry 安装）
+- 门禁（嫁接态全绿）：typecheck×2/lint/主仓 86/组件 5(+快捷键)/apps 54/schema 8ns/build
+
 **最新变更(2026-09-15，第八十四批：S010 消费——RosterScope 类型导入)：**
 
 - **内核交付**：`525e45b` 补导出 + `540b08b` 发 zen-udf **0.4.1**（S010 全盘采纳：roster

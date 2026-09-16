@@ -2,12 +2,8 @@
 // 有 GraphPersistenceAdapter → 走宿主存储；否则页面回退浏览器本地文件。
 // 后端不可达（网络错误，非 4xx 业务语义错误）时自动回退 IndexedDB 本地多版本适配器。
 import type { TabSnapshot } from '@republicroad/jdm-editor';
-import {
-  GraphPersistenceError,
-  type GraphPersistenceAdapter,
-  type GraphRecord,
-} from '@republicroad/jdm-appshell/src/shell/persistence';
-import { createIndexedDbAdapter } from '@republicroad/jdm-appshell/src/shell/indexed-db-adapter';
+import { GraphPersistenceError, type GraphPersistenceAdapter, type GraphRecord } from '@republicroad/jdm-appshell';
+import { createIndexedDbAdapter } from '@republicroad/jdm-appshell';
 
 /** 后端不可达后的本地回退适配器（模块级惰性单例） */
 let localFallback: GraphPersistenceAdapter | undefined;

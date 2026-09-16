@@ -7,8 +7,9 @@ import ReactDOM from 'react-dom/client';
 import './main.css';
 import './lib/monaco';
 
-// import '@republicroad/jdm-editor/dist/style.css';
-import '@republicroad/jdm-editor';
+// npm dist 消费：两个内核包的样式需显式导入（源码直通时代经源码链自动内联）
+import '@republicroad/jdm-editor/dist/style.css';
+import '@republicroad/jdm-appshell/dist/style.css';
 
 import 'react-ace';
 
@@ -23,7 +24,7 @@ import 'ace-builds/src-noconflict/theme-chrome';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Rocket } from 'lucide-react';
-import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { ThemeContextProvider, type SkinDefinition, type SkinSlotRender } from '@republicroad/jdm-appshell';
 import { OceanCurrentDateNode } from './components/skins/ocean-current-date-node';
 import { DecisionSimplePage } from './pages/decision-simple/index.tsx';

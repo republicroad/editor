@@ -20,8 +20,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          # workspace 包含 jdm-editor/packages/*，bun install 需要子模块源码
-          submodules: recursive
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -51,12 +49,9 @@ jobs:
       - name: 'Test (apps/editor)'
         run: bun test apps/editor
 
-      # zen-udf UDF 运行时为 workspace 成员(纯 node + vitest，无 react 混树问题)，宿主 CI 直跑
-      - name: 'Test (zen-udf via workspace)'
-        run: bun run test:zen-udf
-      # 内核其余测试归内核仓 CI（其 validate.yaml 在自家 pnpm 树下跑 vitest 全套）：
-      # reui 内核 devDep react 19 与宿主树混合会导致双 React 实例，宿主 CI 不可复现其门禁。
-      # 宿主对内核的消费假设（react 18 类型桥、源码直通编译）由上方 Typecheck + Build job 验证。
+      # 内核测试归内核仓 CI（其 validate.yaml 在自家 pnpm 树下跑 vitest 全套）：
+      # 内核 devDep react 19 与宿主树混合会导致双 React 实例，宿主 CI 不可复现其门禁。
+      # 宿主对内核的消费假设（npm dist 类型与运行时）由上方 Typecheck + Build job 验证。
       - name: 'Check custom-node schema fixture'
         run: bun run sync:schema:check
 
@@ -68,7 +63,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          submodules: recursive
 
       - uses: oven-sh/setup-bun@v2
         with:

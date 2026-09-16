@@ -1,5 +1,9 @@
 # jdm-editor 子仓库文档
 
+> **[已归档 2026-09-16]** 本文档为 submodule 源码直通时代的历史资料。main 分支已退役
+> submodule，改为 npm semver 消费三包（docs/19 决策与操作记录）；本文中 submodule
+> 工作流、paths/alias 直通等章节仅作历史参考，不再反映当前仓库形态。
+
 另：zrule 分支新增 `config.locked: true` 数据约定（专属 UI 节点标记，见主仓 docs/13 §7.2）。
 
 > 本文档详细描述 `jdm-editor` 子模块的架构、组件体系，以及 zrule(当前开发分支)/ opencode 分支与 master 分支的差异分析。

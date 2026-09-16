@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import type { DecisionGraphRef, DecisionGraphType, GraphDiff } from '@republicroad/jdm-editor';
 import { computeGraphDiff } from '@republicroad/jdm-editor';
 import { restoreVersion } from '@republicroad/jdm-appshell';
-import type { GraphPersistenceAdapter } from '@republicroad/jdm-appshell/src/shell/persistence';
+import type { GraphPersistenceAdapter } from '@republicroad/jdm-appshell';
 import { displayError } from '../../helpers/error-message.ts';
 import { DecisionEdge, DecisionNode, normalizeGraphNodes } from '../../helpers/graph.ts';
 import { assertAcyclic } from '../../lib/graph-cycle.ts';

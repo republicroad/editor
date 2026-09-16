@@ -24,20 +24,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@republicroad/jdm-appshell/src/components/ui/alert-dialog';
-import { Button } from '@republicroad/jdm-appshell/src/components/ui/button';
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@republicroad/jdm-appshell/src/components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import { match, P } from 'ts-pattern';
 
 import classes from './decision-simple.module.css';
 import { ThemePreference, useTheme } from '@republicroad/jdm-appshell';
-// I18nProvider 尚未进内核 barrel（libsuggest 跟进），源码直通相对导入
-import { I18nProvider } from '../../../jdm-editor/packages/jdm-editor/src/theming/i18n';
+
+import { I18nProvider } from '@republicroad/jdm-editor';
 import { PageToolbar } from './page-toolbar.tsx';
 import { useAutosave } from './use-autosave.ts';
 import { useConfirmDialog } from './use-confirm-dialog.ts';
@@ -300,7 +300,7 @@ const DecisionSimpleInner: React.FC = () => {
               ref={graphRef}
               value={graph}
               toolbarItems={undoRedoToolbarItems}
-              onChange={(value) => {
+              onChange={(value: DecisionGraphType) => {
                 // 编辑器内用户改动才标记 dirty——加载/恢复/模板等直接 setGraph 的路径不经过这里
                 autosave.markDirty();
                 // diffBaseline 是恢复时刻的差异标记：用户开始编辑即过期，立即清除

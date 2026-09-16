@@ -16,12 +16,8 @@ const config: StorybookConfig = {
   staticDirs: [{ from: join(repoRoot, 'static/monaco-editor@0.52.2'), to: '/monaco-editor@0.52.2' }],
   viteFinal: async (config) => {
     config.resolve = config.resolve ?? {};
-    config.resolve.alias = {
-      ...(config.resolve.alias ?? {}),
-      '@republicroad/jdm-editor': join(repoRoot, 'jdm-editor/packages/jdm-editor/src/index.ts'),
-    };
-    // Vite 8 内置 tsconfig paths（S008 消费后启用）：宿主 `@/*` 与内核 `#*`
-    // 按 importer 就近 tsconfig 各解析各的
+    // Vite 8 内置 tsconfig paths：宿主 `@/*` 走根 tsconfig；
+    // @republicroad/* 三包为 npm semver 消费（源码直通已退役，docs/19）
     config.resolve.tsconfigPaths = true;
     return config;
   },

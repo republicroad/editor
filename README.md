@@ -2,17 +2,17 @@
 
 URL: https://editor.gorules.io
 
-## 版本线（2026-09-15 更新）
+## 版本线（2026-09-16 更新，main 分支 = npm 集成演示）
 
 > 本仓为 GoRules editor 的**硬分叉**，独立维护、独立版本线：
 >
 > - editor fork 起点版本 **0.1.0**（继承自上游 1.16.1，不延续上游 1.x 版本号，避免误读）
-> - 内核子模块 `@republicroad/jdm-editor`（**0.8.0**，独立 0.x 硬分叉；S005 皮肤槽位 / S009 undo-redo 全量交付）
-> - 外壳包 `@republicroad/jdm-appshell`（**0.9.0**：P1 工具栏 / P2 右缘面板 / P3 ShellHeader 三期槽位齐备）
+> - 内核包 `@republicroad/jdm-editor`（**^0.8.1**，独立 0.x 硬分叉；S005 皮肤槽位 / S009 undo-redo / I18n 导出面全量交付）
+> - 外壳包 `@republicroad/jdm-appshell`（**^0.9.1**：三期槽位齐备；0.9.1 修复发布 d.ts 的 paths 转写泄漏）
 > - UDF 运行时 `@republicroad/zen-udf`（**0.4.1**，npm 公开发布；多租户名单 / 决策缓存 / 影子评估 / 审计回放）
 > - 引擎底座 `@gorules/zen-engine` **2.0.2**（新引擎线）；前端 wasm 0.23.1 独立版本线
 > - 工具链：Vite 8（Rolldown）+ TypeScript 6.0 + Storybook 10.6；bun ≥1.3 单锁管理
-> - 开发分支：`reui`（shadcn/ReUI 技术栈 + 独立内核 fork）；master 退役冻结于上游 1.16.1
+> - 开发主线：**main 分支**（npm 集成演示）；历史线 reui（submodule 源码直通时代）保留；master 退役冻结于上游 1.16.1
 > - editor 为应用不发布 npm；内核三包（jdm-editor / appshell / zen-udf）发布 npm
 
 ## 源码直通退役（2026-09-15 决策）
@@ -20,25 +20,19 @@ URL: https://editor.gorules.io
 > 本仓对 `@republicroad/jdm-editor` / `@republicroad/jdm-appshell` 的消费方式已决策：从 **submodule 源码直通**（submodule + bun workspace + tsconfig paths + vite alias 四层叠加）退役为 **npm semver 包消费**，对齐边界文档第 3 条「升级只消费公开 npm 包」。
 > standalone 开发验证职责由 jdm-editor 仓内的 playground 承接（源码直通 + HMR，`pnpm dev` 即完整验证面板）。
 > 背景与演变史、三条循环分工、逐文件操作清单与成功标准见 **[docs/19-standalone-dev-and-source-direct-removal.md](./docs/19-standalone-dev-and-source-direct-removal.md)**。
-> **退役执行前**，install 仍按下方 submodule 流程；执行后 clone 不再需要 `--recurse-submodules`。
+> **已执行（2026-09-16，main 分支）**：submodule 已移除，clone 无需 `--recurse-submodules`。
 
 ## install
 
-1. 本项目由 editor 主仓与 `jdm-editor` 子仓库（内核 + appshell + zen-udf）组成
-2. 前后端统一使用 bun（monorepo 单一 `bun.lock`），建议 bun ≥ 1.3
-3. 开发主线为 **reui 分支**（master 已退役冻结；standalone 分支已合并退役）
+1. 本项目为**纯 npm 消费**的集成演示应用：内核三包（jdm-editor / jdm-appshell / zen-udf）全部来自 npm registry
+2. 前后端统一使用 bun（monorepo 单一 `bun.lock`，workspace 仅 apps/*），建议 bun ≥ 1.3
+3. 开发主线为 **main 分支**（master 退役冻结；reui 为 submodule 时代历史线）
 
-克隆并递归拉取子模块：
+克隆并安装：
 
 ```bash
-git clone --recurse-submodules --branch reui https://github.com/republicroad/editor.git
+git clone --branch main https://github.com/republicroad/editor.git
 cd editor && bun i
-```
-
-若已直接 clone（未递归），补拉子模块：
-
-```bash
-git submodule update --init
 ```
 
 ## 快速开始
@@ -121,7 +115,6 @@ $ bun run typecheck:apps   # apps/editor 类型检查
 $ bun run test             # 主应用单元测试(bun test src，协议库等)
 $ bun test apps/editor     # 后端路由 + 图级回归(编译/执行/深执行三层)
 $ bun run test:components  # 组件交互测试(jsdom + RTL，含 undo/redo 语义闭环)
-$ bun run test:zen-udf     # zen-udf 套件(vitest，内核包经 workspace 直跑)
 $ bun run sync:schema      # 从 globalUdfRegistry 重新生成自定义节点 schema 夹具
 $ bun run sync:schema:check# 门禁检查(夹具漂移时非零退出)
 $ bun run check:single-instance  # 依赖单实例守卫

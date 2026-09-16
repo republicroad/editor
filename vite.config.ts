@@ -73,14 +73,9 @@ export default defineConfig({
     target: 'esnext',
   },
   resolve: {
-    // Vite 8 内置 tsconfig paths 解析（S008 消费后启用：内核 monaco 类型映射已删，
-    // monaco 全走 node_modules 解析）。按 importer 就近 tsconfig 各解析各的——
-    // 宿主 `@/*`、`@republicroad/jdm-appshell*` 走根 tsconfig，内核 `#*` 走内核 tsconfig。
-    // 内核 barrel(@republicroad/jdm-editor) 由下方 alias 显式直通 src（alias 优先于 paths）。
+    // Vite 8 内置 tsconfig paths 解析：宿主 `@/*` 走根 tsconfig。
+    // @republicroad/* 三包自 2026-09-15 起为 npm semver 消费（源码直通已退役，docs/19）。
     tsconfigPaths: true,
-    alias: {
-      '@republicroad/jdm-editor': path.join(rootDir, 'jdm-editor/packages/jdm-editor/src/index.ts'),
-    },
     dedupe: ['react', 'react-dom'],
   },
   server: {

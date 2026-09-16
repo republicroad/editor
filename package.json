@@ -24,8 +24,7 @@
     "zod": "4.3.6"
   },
   "workspaces": [
-    "apps/*",
-    "jdm-editor/packages/*"
+    "apps/*"
   ],
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"bun run dev:api\" \"vite --host\"",
@@ -35,7 +34,6 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "typecheck": "tsc --noEmit",
     "typecheck:apps": "tsc -p apps/editor --noEmit",
-    "test:zen-udf": "bun run --cwd jdm-editor/packages/zen-udf test",
     "test": "bun test src --path-ignore-patterns '**/jdm-editor/**'",
     "sync:schema": "bun scripts/sync-custom-node-schema.ts",
     "preview": "vite preview --host",
@@ -54,7 +52,9 @@
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@gorules/zen-engine-wasm": "^0.23.1",
-    "@republicroad/jdm-editor": "workspace:*",
+    "@republicroad/jdm-editor": "^0.8.0",
+    "@republicroad/jdm-appshell": "^0.9.0",
+    "@republicroad/zen-udf": "^0.4.1",
     "@monaco-editor/react": "4.7.0",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-avatar": "^1.2.6",

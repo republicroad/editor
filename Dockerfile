@@ -1,21 +1,16 @@
 # ---- 构建阶段：安装依赖 + 构建前端静态产物 ----
-# 第五十九批：bun 1.4.2（对齐 CI/本地）；补 appshell 成员清单（迁入后缺失会导致
-# frozen-lockfile 校验失败）；提前 COPY bunfig.toml 使 isolated linker 在镜像内生效。
+# bun 1.4.2（对齐 CI/本地）；提前 COPY bunfig.toml 使 isolated linker 在镜像内生效。
+# 2026-09-15 起 @republicroad/* 三包为 npm semver 消费（docs/19 源码直通退役），无子模块。
 FROM docker.io/oven/bun:1.4.2 AS builder
 
 WORKDIR /app
 
-# 先复制依赖清单以利用层缓存(workspace 含 apps/* 与 jdm-editor/packages/*；
-# zen-udf 自第七十八批起为内核包成员，原 apps/zen-rule 已删除)
+# 先复制依赖清单以利用层缓存(workspace 仅 apps/*)
 COPY package.json bun.lock bunfig.toml ./
 COPY apps/editor/package.json apps/editor/package.json
-COPY jdm-editor/package.json jdm-editor/package.json
-COPY jdm-editor/packages/jdm-editor/package.json jdm-editor/packages/jdm-editor/package.json
-COPY jdm-editor/packages/appshell/package.json jdm-editor/packages/appshell/package.json
-COPY jdm-editor/packages/zen-udf/package.json jdm-editor/packages/zen-udf/package.json
 RUN bun install --frozen-lockfile
 
-# 复制全部源码(含 jdm-editor 子模块)并构建前端(tsc && vite build → /app/static)
+# 复制全部源码并构建前端(tsc && vite build → /app/static)
 COPY . .
 RUN bun run build
 
@@ -26,7 +21,6 @@ WORKDIR /app
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps ./apps
-COPY --from=builder /app/jdm-editor ./jdm-editor
 COPY --from=builder /app/package.json ./package.json
 # 前端构建产物放到 Hono serveStatic 目录(apps/editor/public，见 src/index.ts staticConfig)
 COPY --from=builder /app/static ./apps/editor/public

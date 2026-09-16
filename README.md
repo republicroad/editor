@@ -22,6 +22,39 @@ URL: https://editor.gorules.io
 > 背景与演变史、三条循环分工、逐文件操作清单与成功标准见 **[docs/19-standalone-dev-and-source-direct-removal.md](./docs/19-standalone-dev-and-source-direct-removal.md)**。
 > **已执行（2026-09-16，main 分支）**：submodule 已移除，clone 无需 `--recurse-submodules`。
 
+## Reference —— 历史锚点 tag：monorepo / 库-应用协作 / 源码直通教学示例
+
+本仓与内核仓（`republicroad/jdm-editor`）各保留两个 tag，完整封存「库-应用协作」从初期源码直通到 npm 集成的两种形态，可直接用于演示与教学。
+
+### 1. `example-submodule-source-direct` —— git submodule 跨仓源码直通（初期开发模式）
+
+内核与应用双仓联动的完整形态：应用直接消费库源码，改库即时生效（standalone 开发模式）。取用：
+
+```bash
+git clone --recurse-submodules -b example-submodule-source-direct https://github.com/republicroad/editor.git
+```
+
+四层接线逐层看（讲解动线）：
+
+| 层 | 文件 | 作用 |
+| -- | ---- | ---- |
+| ① | `.gitmodules` | submodule 跟踪内核 reui 分支（本 tag 钉住内核 `a1ae321d`，plan-dd 时代） |
+| ② | `package.json` | workspaces 含 `jdm-editor/packages/*` + 依赖 `workspace:*` 协议 |
+| ③ | `tsconfig.json` | paths 把包名直指子仓 `src/index.ts`（类型面同源） |
+| ④ | `vite.config.ts` | alias 直通 barrel（alias 优先于 paths，构建面生效） |
+
+### 2. `reui-archive-20260916` —— npm 消费时代见证（当前模式）
+
+source-direct 退役后，宿主只按 semver 消费 npm 包（jdm-editor 0.8.1 / appshell 0.9.1 / zen-udf 0.4.1）。本仓 tag 与内核仓 `republicroad/jdm-editor` 的同名 tag **互为配对锚点**（内核侧 = 0.9.0 发布树）——从任一 tag 进入都能追溯到当时配对的另一半。
+
+### 对比讲解要点
+
+| 维度 | 源码直通（示例 1） | npm 消费（示例 2 / 当前） |
+| ---- | ------------------ | -------------------------- |
+| 改库生效 | 即时（HMR），需同步两仓 | 发版 + 升版本号 |
+| 契约校验 | 无强制（类型漂移静默） | semver + 发布面完整 |
+| 适用阶段 | 库的快速演进期（standalone 开发） | 库稳定后的宿主集成期 |
+
 ## install
 
 1. 本项目为**纯 npm 消费**的集成演示应用：内核三包（jdm-editor / jdm-appshell / zen-udf）全部来自 npm registry

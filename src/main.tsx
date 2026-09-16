@@ -10,6 +10,8 @@ import './lib/monaco';
 // npm dist 消费：两个内核包的样式需显式导入（源码直通时代经源码链自动内联）
 import '@republicroad/jdm-editor/dist/style.css';
 import '@republicroad/jdm-appshell/dist/style.css';
+// xyflow 基础样式由应用侧导入（lib 构建剥离依赖 css；内核 dist 只含自研覆写）
+import '@xyflow/react/dist/style.css';
 
 import 'react-ace';
 

@@ -8,6 +8,11 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.__errs = [];
+      window.addEventListener('error', (e) => window.__errs.push(String(e.message).slice(0, 200) + ' @ ' + (e.filename||'') + ':' + (e.lineno||0)));
+      window.addEventListener('unhandledrejection', (e) => window.__errs.push('rej: ' + String(e.reason).slice(0, 300)));
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

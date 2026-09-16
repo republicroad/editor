@@ -25,6 +25,7 @@
         "@republicroad/jdm-editor": "^0.8.1",
         "@republicroad/zen-udf": "^0.4.1",
         "@tanstack/react-virtual": "catalog:",
+        "@xyflow/react": "^12.3.0",
         "ace-builds": "^1.43.6",
         "axios": "^1.13.5",
         "better-auth": "^1.6.25",

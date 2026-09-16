@@ -74,7 +74,9 @@ export default defineConfig({
   },
   resolve: {
     // Vite 8 内置 tsconfig paths 解析：宿主 `@/*` 走根 tsconfig。
-    // @republicroad/* 三包自 2026-09-15 起为 npm semver 消费（源码直通已退役，docs/19）。
+    // @republicroad/* 三包为 npm semver 消费（源码直通已退役，docs/19）。
+    // usese（use-sync-external-store）的 CJS 由 scripts/patch-usese.mjs（root postinstall）
+    // 覆写为 ESM 直通实现——rolldown 预打包器对深层 CJS 的惰性 require 垫片浏览器必炸。
     tsconfigPaths: true,
     dedupe: ['react', 'react-dom'],
   },

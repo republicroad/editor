@@ -8,14 +8,14 @@
  * 故直接覆写包文件：React 18 已内建 useSyncExternalStore，shim 层直通即可。
  * 幂等；bun install（含 CI --frozen-lockfile 与 Docker）后自动执行（root postinstall）。
  */
-import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readdirSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 const storeRoots = [path.resolve('node_modules/.bun'), path.resolve('node_modules')];
 
 const SHIM_INDEX_ESM = `import * as React from 'react';
 export const useSyncExternalStore = React.useSyncExternalStore;
-export default useSyncExternalStore;
+export default { useSyncExternalStore };
 `;
 
 const WITH_SELECTOR_ESM = `import * as React from 'react';
@@ -74,7 +74,7 @@ export function useSyncExternalStoreWithSelector(subscribe, getSnapshot, getServ
   React.useDebugValue(value);
   return value;
 }
-export default useSyncExternalStoreWithSelector;
+export default { useSyncExternalStoreWithSelector };
 `;
 
 let patched = 0;
@@ -94,7 +94,7 @@ const patchDir = (pkgDir) => {
 
 for (const root of storeRoots) {
   if (!existsSync(root)) continue;
-  let entries = [];
+  let entries;
   try {
     entries = readdirSync(root);
   } catch {

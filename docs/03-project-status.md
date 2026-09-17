@@ -177,6 +177,7 @@
 - [x] 第八十二批补(方案一)：undo 删节点语义闭环测试 3 用例(真实内核 store 直驱，onChange 链路断言)——见 7.3 第八十二批
 - [x] 第八十三批(内核 0.4.0 消费)：gitlink → a1ae321(AA/DD 系列 19 提交，纯增量零代码)；W4/D7 对比材料内核已完成(宿主仅剩提交动作)——见 7.3 第八十三批
 - [x] 第八十四批(S010 消费)：gitlink → 540b08b(zen-udf 0.4.1)；rosterScopeOf 补 RosterScope 显式标注 + 删结构化绕行注释——见 7.3 第八十四批
+- [x] 第八十六批(内核 base-ui 0.10.0 消费)：deps 升 jdm-editor/appshell 0.10.0 + @base-ui/react 1.8.0；宿主零代码改动，dev 实测零报错——见 7.3 第八十六批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -262,6 +263,20 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-17，第八十六批：内核 base-ui 迁移版 0.10.0 消费)：**
+
+- **内核交付**：base-ui 全量迁移四批执行完毕合入 reui（批 0 df98b6c5 / 批 1 6a54ff8c /
+  批 2 cfc97628 / 批 3 4baf7f25 / 批 4 c065cf8b；验收 kernel 447/447、appshell 154/154、
+  三包 tsc 清零、全仓 dist 零 radix 引用），并已发版：**jdm-editor 0.10.0 / jdm-appshell
+  0.10.0**（radix 依赖归零，@base-ui/react ^1.8.0 转正为运行时依赖，zustand ^5 声明补齐）
+- **宿主消费（零代码改动）**：deps 升 `jdm-editor ^0.10.0` / `jdm-appshell ^0.10.0` /
+  `@base-ui/react ^1.8.0`（宿主与内核对齐，避免双实例）。宿主 vendored ui（button/
+  alert-dialog/dropdown-menu/separator）仍为 radix 实现——功能不受影响（依赖仍在）、
+  样式自足；后续可按需以迁移后 appshell 版本重新 vendor（base-ui 化）
+- **运行时实测**：dev 首屏零报错、画布 + MiniMap + undo 空栈态全部就位（root 64k）。
+  usese 链（base-ui → usese CJS）在宿主 dev 预打包下转换正常，无需恢复 postinstall 补丁
+- 门禁：typecheck×2/lint/主仓 86/组件 5/apps 54/schema 8ns/build 全绿
 
 **最新变更(2026-09-16，第八十五批：源码直通退役——main 分支 npm 集成演示化)：**
 

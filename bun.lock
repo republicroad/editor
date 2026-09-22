@@ -22,8 +22,8 @@
         "@radix-ui/react-toggle-group": "^1.1.19",
         "@radix-ui/react-tooltip": "^1.2.16",
         "@republicroad/jdm-appshell": "^0.10.1",
-        "@republicroad/jdm-editor": "^0.10.1",
-        "@republicroad/zen-udf": "^0.4.1",
+        "@republicroad/jdm-editor": "^0.11.0",
+        "@republicroad/zen-udf": "^0.6.0",
         "@tanstack/react-virtual": "catalog:",
         "@xyflow/react": "^12.3.0",
         "ace-builds": "^1.43.6",
@@ -558,9 +558,9 @@
 
     "@republicroad/jdm-appshell": ["@republicroad/jdm-appshell@0.10.1", "", { "dependencies": { "@base-ui/react": "^1.8.0", "@tanstack/react-virtual": "^3.14.10", "axios": "^1.13.5", "better-auth": "^1.6.25", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "lucide-react": "^0.488.0", "sonner": "^2.0.8", "tailwind-merge": "^3.6.0", "ts-pattern": "^5.9.0", "zustand": "^5.0.15" }, "peerDependencies": { "@republicroad/jdm-editor": "^0.10.0", "monaco-editor": "^0.52.2", "react": ">=18", "react-dom": ">=18" } }, "sha512-DeqhXLHNU18nv6+vOSiZ/k7MP7Wqij/LvpfQj5tmQ1aOIDSrYQ+RNhYGWP3Vt74frUK+Zgs9k7ige2qkGyfipg=="],
 
-    "@republicroad/jdm-editor": ["@republicroad/jdm-editor@0.10.1", "", { "dependencies": { "@base-ui/react": "^1.8.0", "@codemirror/autocomplete": "^6.20.3", "@codemirror/commands": "^6.11.0", "@codemirror/language": "^6.12.4", "@codemirror/lint": "^6.9.7", "@codemirror/state": "^6.7.1", "@codemirror/view": "^6.43.9", "@dnd-kit/core": "^6.3.1", "@dnd-kit/sortable": "^10.0.0", "@gorules/lezer-zen": "^0.8.1", "@gorules/lezer-zen-template": "^0.4.0", "@gorules/zen-engine-wasm": "0.23.1", "@hookform/resolvers": "^5.9.1", "@lezer/common": "^1.5.2", "@lezer/highlight": "^1.2.1", "@lezer/lr": "^1.4.2", "@monaco-editor/react": "^4.7.0", "@tanstack/react-table": "8.21.3", "@tanstack/react-virtual": "^3.14.10", "@xyflow/react": "^12.3.0", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "dnd-core": "^16.0.1", "exceljs": "^4.4.0", "fast-deep-equal": "^3.1.3", "immer": "10.1.1", "json-stringify-pretty-compact": "^4.0.0", "json5": "^2.2.3", "lodash": "^4.17.21", "lucide-react": "^0.488.0", "next-themes": "^0.4.6", "re-resizable": "^6.11.2", "react-hook-form": "^7.86.0", "react-intersection-observer": "^9.16.0", "react-json-tree": "^0.20.0", "react-resizable-panels": "^2.1.7", "sonner": "^2.0.8", "tailwind-merge": "^3.6.0", "to-json-schema": "^0.2.5", "ts-pattern": "^5.9.0", "use-debounce": "^10.0.4", "zod": "4.3.6", "zustand": "^5.0.15" }, "peerDependencies": { "monaco-editor": "^0.52.2", "react": ">= 18", "react-dom": ">= 18" } }, "sha512-4wIZuyW9Op1vU6oHRmJHSjNaAItPvZrMB46RPe1pTC0ikrd6pi6c1+8S19/ulLnIleIDENW6dH3NfHEmcstGLg=="],
+    "@republicroad/jdm-editor": ["@republicroad/jdm-editor@0.11.0", "", { "dependencies": { "@base-ui/react": "^1.8.0", "@codemirror/autocomplete": "^6.20.3", "@codemirror/commands": "^6.11.0", "@codemirror/language": "^6.12.4", "@codemirror/lint": "^6.9.7", "@codemirror/state": "^6.7.1", "@codemirror/view": "^6.43.9", "@dnd-kit/core": "^6.3.1", "@dnd-kit/sortable": "^10.0.0", "@gorules/lezer-zen": "^0.8.1", "@gorules/lezer-zen-template": "^0.4.0", "@gorules/zen-engine-wasm": "0.23.1", "@hookform/resolvers": "^5.9.1", "@lezer/common": "^1.5.2", "@lezer/highlight": "^1.2.1", "@lezer/lr": "^1.4.2", "@monaco-editor/react": "^4.7.0", "@tanstack/react-table": "8.21.3", "@tanstack/react-virtual": "^3.14.10", "@xyflow/react": "^12.3.0", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "dnd-core": "^16.0.1", "exceljs": "^4.4.0", "fast-deep-equal": "^3.1.3", "immer": "10.1.1", "json-stringify-pretty-compact": "^4.0.0", "json5": "^2.2.3", "lodash": "^4.17.21", "lucide-react": "^0.488.0", "next-themes": "^0.4.6", "re-resizable": "^6.11.2", "react-hook-form": "^7.86.0", "react-intersection-observer": "^9.16.0", "react-json-tree": "^0.20.0", "react-resizable-panels": "^2.1.7", "sonner": "^2.0.8", "tailwind-merge": "^3.6.0", "to-json-schema": "^0.2.5", "ts-pattern": "^5.9.0", "use-debounce": "^10.0.4", "zod": "4.3.6", "zustand": "^5.0.15" }, "peerDependencies": { "monaco-editor": "^0.52.2", "react": ">= 18", "react-dom": ">= 18" } }, "sha512-Hc9HcXd9h0NchN0vogkwjXVMCctPH9V6a/p8zTZGiSfi959ZSMhATKMfoTiJs8VSRVEJZTyKCYcdZyNIwmFXRg=="],
 
-    "@republicroad/zen-udf": ["@republicroad/zen-udf@0.4.1", "", { "dependencies": { "@gorules/zen-engine": "2.0.2" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-ZIekFnMq4Ioac+OA9cjK7hJFRkPJ3Z6kXM/3p3mvAH/h+3ZUfJ66lnFxuN3Hvzz0Q6mjsKnWJt35vSzXCMCX7Q=="],
+    "@republicroad/zen-udf": ["@republicroad/zen-udf@0.6.0", "", { "dependencies": { "@gorules/zen-engine": "2.0.2" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-A/ydznzz7mrC2bob3TXznz4Wn7bKdJO9pelQbsv0wykWNlhFYRRP3IzRQwz8mB1SoUzDE86YXskr8rntIcYNyA=="],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.7", "", { "os": "android", "cpu": "arm" }, "sha512-EypzgnYCwyVY4NDHKzGmNJT5b+XaQEBniHxsMdeIQLB/tcCzZnhqrzHpZFbX9iaxx+5RiB8caATBtfvZP7zVxQ=="],
 
@@ -1749,6 +1749,8 @@
     "data-urls/whatwg-url": ["whatwg-url@16.0.1", "", { "dependencies": { "@exodus/bytes": "^1.11.0", "tr46": "^6.0.0", "webidl-conversions": "^8.0.1" } }, "sha512-1to4zXBxmXHV3IiSSEInrreIlu02vUOvrhxJJH5vcxYTBDAx51cqZiKdyTxlecdKNSjj8EcxGBxNf6Vg+945gw=="],
 
     "duplexer2/readable-stream": ["readable-stream@2.3.8", "", { "dependencies": { "core-util-is": "~1.0.0", "inherits": "~2.0.3", "isarray": "~1.0.0", "process-nextick-args": "~2.0.0", "safe-buffer": "~5.1.1", "string_decoder": "~1.1.1", "util-deprecate": "~1.0.1" } }, "sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA=="],
+
+    "editor/@republicroad/zen-udf": ["@republicroad/zen-udf@0.4.1", "", { "dependencies": { "@gorules/zen-engine": "2.0.2" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-ZIekFnMq4Ioac+OA9cjK7hJFRkPJ3Z6kXM/3p3mvAH/h+3ZUfJ66lnFxuN3Hvzz0Q6mjsKnWJt35vSzXCMCX7Q=="],
 
     "eslint/espree": ["espree@11.2.0", "", { "dependencies": { "acorn": "^8.16.0", "acorn-jsx": "^5.3.2", "eslint-visitor-keys": "^5.0.1" } }, "sha512-7p3DrVEIopW1B1avAGLuCSh1jubc01H2JHc8B4qqGblmg5gI9yumBgACjWo4JlIc04ufug4xJ3SQI8HkS/Rgzw=="],
 

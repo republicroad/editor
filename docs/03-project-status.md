@@ -264,6 +264,18 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
 
+**最新变更(2026-09-17，第八十七批：内核最新线消费——appshell 0.11.0 / seal-editor 1.4.2 / zen-udf 0.6.0)：**
+
+- **版本面**：appshell ^0.11.0、zen-udf ^0.6.0、seal-editor ^1.4.2（内核会话在 package.json
+  预置的新编辑器包线，宿主补齐至最新；jdm-editor 0.11.0 由 appshell peer 自动解析兜底
+  宿主 src 的既有导入——seal-editor 导入迁移属内核会话在途工作，宿主不抢跑）
+- **registry 大增长**：zen-udf 0.6.0 场景域落地——命名空间 8 → **14**（新增 ab-bucket/
+  datetime/geo/notify/template 回归/validate-cn），工具 10 → 22；宿主契约镜像
+  src/assets/custom-node-schema.json 同步刷新
+- **运行时实测**：dev 零报错、画布 + MiniMap 正常、新域进侧栏（datetime/template 可见，
+  其余在折叠区）
+- 门禁：typecheck×2/lint/主仓 86/组件 5/apps 54/schema 14ns/build 全绿
+
 **最新变更(2026-09-17，第八十六批：内核 base-ui 迁移版 0.10.0 消费)：**
 
 - **内核交付**：base-ui 全量迁移四批执行完毕合入 reui（批 0 df98b6c5 / 批 1 6a54ff8c /

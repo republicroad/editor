@@ -67,6 +67,7 @@
     "@radix-ui/react-toggle-group": "^1.1.19",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@republicroad/jdm-appshell": "^0.11.0",
+    "@republicroad/jdm-editor": "^0.11.0",
     "@republicroad/zen-udf": "^0.6.0",
     "@tanstack/react-virtual": "catalog:",
     "@xyflow/react": "^12.3.0",
@@ -88,8 +89,7 @@
     "tailwind-merge": "catalog:",
     "ts-pattern": "catalog:",
     "vite-plugin-wasm": "^3.6.0",
-    "zod": "4.3.6",
-    "@republicroad/seal-editor": "^1.4.2"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.2",

@@ -1,6 +1,6 @@
 # S012 zen-udf：tool()/pack() 参数类型的 ctx 变型缺陷（宿主 strict tsconfig 必报）
 
-- 状态: proposed
+- 状态: implemented（2026-09-30，zen-udf 0.11.2，jdm-editor 7d678e89/58130c51——案 1+2 组合：register() 入参复用 UdfTool + ctx 改可选；宿主侧 strictFunctionTypes 豁免可撤，seal-editor 仓会话升级 zen-udf ^0.11.2 后执行）
 - 目标库: `@republicroad/zen-udf`（`src/tool.ts` + `src/reference.ts`/registry 参数类型）
 - 提出方: editor 会话（2026-09-17，宿主消费 0.11.1 首爆；HEAD 复测仍在）
 - 优先级: 高（TS 源发布模式下，任意 strict 宿主的 typecheck 必红）

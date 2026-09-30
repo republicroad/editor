@@ -23,7 +23,7 @@
         "@radix-ui/react-tooltip": "^1.2.16",
         "@republicroad/jdm-appshell": "^0.14.0",
         "@republicroad/jdm-editor": "^2.4.0",
-        "@republicroad/zen-udf": "^0.11.1",
+        "@republicroad/zen-udf": "^0.12.1",
         "@tanstack/react-virtual": "catalog:",
         "@xyflow/react": "^12.3.0",
         "ace-builds": "^1.43.6",
@@ -88,7 +88,7 @@
       "dependencies": {
         "@gorules/zen-engine": "catalog:",
         "@hono/zod-openapi": "^1.5.1",
-        "@republicroad/zen-udf": "^0.11.1",
+        "@republicroad/zen-udf": "^0.12.1",
         "@scalar/hono-api-reference": "^0.11.12",
         "hono": "^4.12.33",
         "zod": "catalog:",
@@ -566,7 +566,7 @@
 
     "@republicroad/jdm-editor": ["@republicroad/jdm-editor@2.4.0", "", { "dependencies": { "@base-ui/react": "^1.8.0", "@codemirror/autocomplete": "^6.20.3", "@codemirror/commands": "^6.11.0", "@codemirror/language": "^6.12.4", "@codemirror/lint": "^6.9.7", "@codemirror/state": "^6.7.1", "@codemirror/view": "^6.43.9", "@dagrejs/dagre": "^3.1.1", "@dnd-kit/core": "^6.3.1", "@dnd-kit/modifiers": "^9.0.0", "@dnd-kit/sortable": "^10.0.0", "@dnd-kit/utilities": "^3.2.2", "@gorules/lezer-zen": "^0.8.1", "@gorules/lezer-zen-template": "^0.4.0", "@gorules/zen-engine-wasm": "0.23.1", "@hookform/resolvers": "^5.9.1", "@lezer/common": "^1.5.2", "@lezer/highlight": "^1.2.1", "@lezer/lr": "^1.4.2", "@monaco-editor/react": "^4.7.0", "@tanstack/react-table": "^9.2.4", "@tanstack/react-virtual": "^3.14.10", "@xyflow/react": "^12.3.0", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "dnd-core": "^16.0.1", "exceljs": "^4.4.0", "fast-deep-equal": "^3.1.3", "immer": "10.1.1", "json-stringify-pretty-compact": "^4.0.0", "json5": "^2.2.3", "lodash": "^4.17.21", "lucide-react": "^0.488.0", "next-themes": "^0.4.6", "re-resizable": "^6.11.2", "react-hook-form": "^7.86.0", "react-intersection-observer": "^9.16.0", "react-json-tree": "^0.20.0", "react-resizable-panels": "^2.1.7", "sonner": "^2.0.8", "tailwind-merge": "^3.6.0", "to-json-schema": "^0.2.5", "ts-pattern": "^5.9.0", "use-debounce": "^10.0.4", "zod": "4.3.6", "zustand": "^5.0.15" }, "peerDependencies": { "monaco-editor": "^0.52.2", "react": ">= 18", "react-dom": ">= 18" } }, "sha512-lC8Ujny/dUl/THIDzRj2M3Tv2cfrFr9UCPBRzv9lqdKg4jGfNRiJKAWac4KMBtAFdYzBzmePbwUGrrTlXjPtjg=="],
 
-    "@republicroad/zen-udf": ["@republicroad/zen-udf@0.11.1", "", { "dependencies": { "@gorules/zen-engine": "2.1.0", "@sinclair/typebox": "0.34.38" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-6ocO8SCywQAa/+U+evE/mM+GG/3TGQR3aKkwol8I4gpJXs7O4pWGc0ne9uVc1SIndgVhATgdKdxh8yHbGD6WMQ=="],
+    "@republicroad/zen-udf": ["@republicroad/zen-udf@0.12.1", "", { "dependencies": { "@gorules/zen-engine": "2.1.0", "@sinclair/typebox": "0.34.38" }, "peerDependencies": { "@opentelemetry/api": "^1.0.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-ThTtxMIEOwwNR8w5Y69b0iZtaAHyJfhdAcNLmgodYaWImPlU9ztjX4+FglVpvIE6hdCALyJcKy0SkxtGpQD9ag=="],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.7", "", { "os": "android", "cpu": "arm" }, "sha512-EypzgnYCwyVY4NDHKzGmNJT5b+XaQEBniHxsMdeIQLB/tcCzZnhqrzHpZFbX9iaxx+5RiB8caATBtfvZP7zVxQ=="],
 

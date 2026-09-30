@@ -32,3 +32,12 @@ reference.ts(58,42): TS2322: UdfTool<any, any>[] 同类
 - apps/editor tsconfig 暂设 `strictFunctionTypes: false` 作用域豁免（S012 交付后移除
   恢复全严格）；运行时无影响（纯类型层，54/54 测试与 dev 实测全绿）。
 - 关联: S011（同属 TS 源发布模式对宿主消费面提出的要求）；ADR-011 理想态迁移。
+
+## 追记（2026-09-17，宿主复测 0.12.1）
+
+- 原 2 处 ctx 变型错误（ab-bucket.ts(55) / reference.ts(58)）已在 0.12.1 **消失**——
+  reference.ts 单轨收敛移除了手写内联类型，与本提案选项 1 的修复方向一致。
+- **残留 1 处新同类**：`contrib/notify.ts(198,16) TS2339: Property 'fn' does not exist on
+  type 'UdfTool<...>'`——notify 域访问 UdfTool 上不存在的 `fn` 成员（tool() 重构后运行成员
+  已改名 run，notify 域的旧访问未同步）。仍属「包源码未过消费者严格检查」同类，修复点：
+  notify.ts 改用 `run` 成员。宿主豁免（strictFunctionTypes: false）维持至该处修复发版。

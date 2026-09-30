@@ -68,7 +68,7 @@
     "@radix-ui/react-tooltip": "^1.2.16",
     "@republicroad/jdm-appshell": "^0.14.0",
     "@republicroad/jdm-editor": "^2.4.0",
-    "@republicroad/zen-udf": "^0.11.1",
+    "@republicroad/zen-udf": "^0.12.1",
     "@tanstack/react-virtual": "catalog:",
     "@xyflow/react": "^12.3.0",
     "ace-builds": "^1.43.6",

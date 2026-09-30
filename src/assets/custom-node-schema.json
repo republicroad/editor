@@ -11,20 +11,20 @@
         "type": "function",
         "description": "将 key 稳定哈希到 [0, buckets) 的整数桶号（FNV-1a，同 key 恒同桶，无状态无出网）。用于 A/B 分桶、灰度放量、按标识抽查。buckets 支持 1–1000，非法值回退 2。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "key": { "type": "string", "title": "Key", "description": "分桶键（如 userId / deviceId）" },
-            "buckets": { "type": "integer", "title": "Buckets", "description": "桶数(1–1000)，默认 2", "default": 2 }
+            "key": { "title": "Key", "description": "分桶键（如 userId / deviceId）", "type": "string" },
+            "buckets": { "title": "Buckets", "description": "桶数(1–1000)，默认 2", "default": 2, "type": "integer" }
           },
-          "required": ["key"],
-          "title": "ab_bucket",
-          "type": "object"
+          "required": ["key"]
         },
-        "returns": { "type": "integer", "title": "桶号", "description": "[0, buckets) 内的整数" },
+        "returns": { "title": "桶号", "description": "[0, buckets) 内的整数", "type": "integer" },
         "namespace": "ab-bucket",
         "kind": "ab-bucket",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -74,7 +74,8 @@
         "kind": "crypto",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -106,7 +107,8 @@
         "kind": "custom-list-query",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -191,7 +193,8 @@
         "kind": "datetime",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -230,7 +233,8 @@
         "kind": "debug",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -249,7 +253,8 @@
         "kind": "debugui",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -307,7 +312,8 @@
         "kind": "geo",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -375,7 +381,8 @@
         "kind": "http",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -407,7 +414,8 @@
         "kind": "ip-location",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -471,7 +479,8 @@
         "kind": "notify",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -530,7 +539,8 @@
         "kind": "rate-window",
         "semantics": "observe"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -557,7 +567,8 @@
         "kind": "roster",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -588,7 +599,8 @@
         "kind": "template",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   },
   {
     "type": "namespace",
@@ -660,6 +672,7 @@
         "kind": "validate-cn",
         "semantics": "query"
       }
-    ]
+    ],
+    "meta": { "origin": "reference", "version": "0.11.0" }
   }
 ]

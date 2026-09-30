@@ -67,3 +67,4 @@ proposed（宿主写入）
 | S009 | flow UI 增强：编辑撤销栈（undo/redo，kernel dg-store 命令栈）+ MiniMap/网格吸附 | 高     | done |
 | S010 | zen-udf：`RosterScope` 类型从包索引导出（U5 租户化欠账；参数类型公开而类型面未公开，宿主结构化字面量绕行中） | 低 | done（内核 0.4.1 已发布；宿主侧消费随批执行） |
 | S011 | appshell lib 构建外置 zustand/usese 并声明依赖（0.9.1 dist 内联 zustand4+usese CJS，宿主 dev 必白屏） | 高 | proposed |
+| S012 | zen-udf tool()/pack() 参数类型 ctx 变型缺陷（TS 源发布模式下宿主 strict typecheck 必红；附最小修复配方） | 高 | proposed |

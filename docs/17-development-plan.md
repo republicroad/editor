@@ -246,3 +246,32 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
   jdm-editor/appshell 0.10.0 + @base-ui/react 1.8.0，radix 归零；宿主零代码改动，
   dev 实测零报错（usese CJS 链由 base-ui 直依赖层正常转换，postinstall 补丁维持移除）。
   全门禁绿。
+
+## 4. zen-engine 2.1.x 调研与消费规划（2026-09-17 调研，批次待排）
+
+> 上游 2026-09-29 发布 zen-engine 2.1.0/2.1.1（宿主现 2.0.2；wasm 线仍 0.23.1 休眠）。
+> 内核侧：zen-udf HEAD 已 pin 2.1.0（未发版）；宿主 catalog 2.0.2（exact）。
+
+### 新功能面（上游 release notes + issue 实证）
+
+| 特性 | 内容 | 消费价值 |
+| --- | --- | --- |
+| **date input**（#529） | 图输入属性声明 `format: date/date-time` 即转为真实日期值参与下游（原文本保留，string()/模板行为不变），日期比较与方法免 `d()`；policy 数据模型同理 | 演示图的日期语义升级 + **兼容点**：存量图日期比较行为变化 |
+| **slots 取代 nl**（#527） | 引擎自有**槽位补全**：游标处分类（操作数/操作符/字面量/成员访问）+ 类型化选项 + 字面量事实 + 期望类型，图与 policy 双支持；lenient lexer（不完整输入）；typed diagnostics；rename/references（跨导入 policy）；UTF-16 位置 | **编辑器智能化机会**：表达式补全/悬停/重命名语言服务 |
+| 策略硬化三连（#524/525/528） | memory loader/v1 函数返回错误而非 panic；policy 求值限定导入闭包；容忍 null 输入 + 强制必填 policy 输入 | verdict 相关；演示仓不用 policy，登记即可 |
+| 小数序列化修复（zen-types #530） | 非任意精度下保留小数尾零 | 决策输出兼容测试点 |
+
+### 已知约束
+
+- **wasm 0.23.1 不含 2.1 语义**：浏览器 wasm 仿真与后端执行对 date-input 行为**不对称**
+  （上游 wasm 线休眠，无 2.1 对齐迹象）——登记为已知约束；演示图避免依赖日期语义直至对齐。
+- zen-udf HEAD 已 pin zen-engine 2.1.0 未发版——宿主 catalog 升级与内核 zen-udf 发版建议同批。
+
+### 批次规划
+
+| 批 | 主题 | 内容 | 风险 |
+| --- | --- | --- | --- |
+| **90**（低） | zen-engine 2.0.2 → 2.1.1 | catalog 升级（宿主）+ 催内核 zen-udf 发 2.1.x pin 版；图级回归（撞库等）+ **日期格式输入语义回归**（#529 行为变化点）+ 小数序列化断言（#530）+ 策略硬化登记（不用即登记） | 低（同 major；2.0.2→2.0.2 先例） |
+| **91**（中，机会项） | 表达式槽位补全 | 消费 #527 slots API。架构决策点：A 后端端点（引擎原生能力全、延迟网络往返、需防抖）vs B 等 wasm 暴露（零延迟、上游休眠遥遥无期）；建议 A 起步（/api/expression/slot，防抖 + 缓存），内核 jdm-editor 表达式编辑器接补全面板 | 需内核编辑器侧配合（libsuggest） |
+| **92**（低，机会项） | date-input 作者支持 | inputNode 属性编辑器支持 `format: date/date-time` 声明（依赖 wasm 对齐前仅后端语义生效的备案）；演示图一张走日期语义 | 低 |
+| 跟踪 | wasm 对齐 | 上游 wasm 线休眠；date/slots 不进 wasm 前，浏览器仿真语义落后后端——已知约束登记（docs/18 或本文件） | 外部 |

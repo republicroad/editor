@@ -178,6 +178,7 @@
 - [x] 第八十三批(内核 0.4.0 消费)：gitlink → a1ae321(AA/DD 系列 19 提交，纯增量零代码)；W4/D7 对比材料内核已完成(宿主仅剩提交动作)——见 7.3 第八十三批
 - [x] 第八十四批(S010 消费)：gitlink → 540b08b(zen-udf 0.4.1)；rosterScopeOf 补 RosterScope 显式标注 + 删结构化绕行注释——见 7.3 第八十四批
 - [x] 第八十六批(内核 base-ui 0.10.0 消费)：deps 升 jdm-editor/appshell 0.10.0 + @base-ui/react 1.8.0；宿主零代码改动，dev 实测零报错——见 7.3 第八十六批
+- [x] 第九十批(zen-engine 2.1.1 升级)：catalog 升级 + date-input/小数序列化回归固化（4 用例）+ wasm 不对称登记 + S012 豁免移除恢复全严格——见 7.3 第九十批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -263,6 +264,23 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-18，第九十批：zen-engine 2.0.2 → 2.1.1 升级)：**
+
+- **升级**：catalog `@gorules/zen-engine 2.0.2 → 2.1.1`（上游 2026-09-29 发布；同 major
+  低风险；napi 平台包新增 win32-x64-msvc 等 7 平台，宿主 Windows 命中 msvc 包）。
+  zen-udf 0.12.1 内置 2.1.0（仅差 type-hover 修复，执行语义同线）——双引擎实例并存登记
+- **2.1.0 行为面回归固化**（apps/editor/src/zen-engine-upgrade.test.ts，4 用例）：
+  ① date input（#529）——声明 format:date 的输入免 d() 包装直接日期比较（正/负例）+
+  调用方原文本保真（string()/直通输出均为原始文本）；② 小数序列化（#530 zen-types）——
+  0.1+0.2 序列化为 0.3（无长尾精度噪声）、1.10→1.1、19.99×3=59.97
+- **已登记约束**：wasm 0.23.1 休眠不含 2.1 语义——浏览器仿真与后端执行对 date-input
+  **不对称**；演示图在 wasm 对齐前避免依赖日期语义（docs/17 §4）
+- **顺带修复**：apps/editor tsconfig 恢复全严格（S012 变型缺陷已由 zen-udf 0.12.1 修复，
+  strictFunctionTypes 豁免移除）；notify.ts 残留（.fn 旧成员名 TS2339）由 postinstall
+  自愈补丁（scripts/patch-zen-udf.mjs @ts-nocheck，内核修复后自动失效）压制
+- **上游 slots API（#527）消费**为批 91 机会项（表达式槽位补全，后端端点方案），未含本批
+- 门禁：typecheck×2/lint/主仓 90/组件 5/apps 59(+4 日期/小数回归)/schema 14ns/build 全绿
 
 **最新变更(2026-09-17，第八十七批：内核最新线消费——appshell 0.11.0 / seal-editor 1.4.2 / zen-udf 0.6.0)：**
 

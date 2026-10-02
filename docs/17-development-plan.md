@@ -275,3 +275,7 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
 | **91**（中，机会项） | 表达式槽位补全 | 消费 #527 slots API。架构决策点：A 后端端点（引擎原生能力全、延迟网络往返、需防抖）vs B 等 wasm 暴露（零延迟、上游休眠遥遥无期）；建议 A 起步（/api/expression/slot，防抖 + 缓存），内核 jdm-editor 表达式编辑器接补全面板 | 需内核编辑器侧配合（libsuggest） |
 | **92**（低，机会项） | date-input 作者支持 | inputNode 属性编辑器支持 `format: date/date-time` 声明（依赖 wasm 对齐前仅后端语义生效的备案）；演示图一张走日期语义 | 低 |
 | 跟踪 | wasm 对齐 | 上游 wasm 线休眠；date/slots 不进 wasm 前，浏览器仿真语义落后后端——已知约束登记（docs/18 或本文件） | 外部 |
+- **第九十批（✅ 2026-09-18）：zen-engine 2.0.2 → 2.1.1 升级**——catalog 升级 +
+  date-input（#529）/小数序列化（#530）回归固化 4 用例；wasm 不对称登记；
+  S012 变型已随 zen-udf 0.12.1 修复（apps/editor 恢复全严格，notify.ts 残留由
+  postinstall 自愈补丁压制）。批 91（slots 槽位补全，后端端点方案 A）待排。

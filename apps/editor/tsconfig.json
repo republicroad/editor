@@ -3,12 +3,7 @@
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "types": ["bun-types"],
-    // zen-udf 以 TS 源发布（ADR: ESM source publish），其 src 进入本编译程序；
-    // 0.11.1 的 tool()/pack() 参数类型存在 ctx 必选/可选漂移（UdfTool required vs
-    // 注册参数 optional），strictFunctionTypes 逆变检查必报——属依赖源码缺陷
-    // （docs/libsuggest/S012，内核修复发版后移除本豁免恢复全严格）。
-    "strictFunctionTypes": false
+    "types": ["bun-types"],    // S012 变型缺陷已由 zen-udf 0.12.1 修复，全严格恢复；notify.ts 残留由 postinstall 补丁压制
   },
   "include": ["src/**/*.ts"]
 }

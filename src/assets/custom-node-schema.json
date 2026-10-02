@@ -24,7 +24,7 @@
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -38,44 +38,43 @@
         "type": "function",
         "description": "计算字符串摘要或 HMAC 签名，返回摘要字符串. algorithm 支持 md5/sha1/sha256/sha512(非法值回退 sha256)，secret 非空时启用 HMAC 模式，encoding 支持 hex/base64/base64url(非法值回退 hex)，upper 仅对 hex 生效(大写输出).",
         "parameters": {
+          "type": "object",
           "properties": {
-            "input": { "type": "string", "title": "Input", "description": "待摘要内容" },
+            "input": { "title": "Input", "description": "待摘要内容", "type": "string" },
             "algorithm": {
-              "type": "string",
               "title": "Algorithm",
               "description": "摘要算法(md5/sha1/sha256/sha512)，默认 sha256，非法值回退 sha256",
-              "default": "sha256"
+              "default": "sha256",
+              "type": "string"
             },
             "secret": {
-              "type": "string",
               "title": "Secret",
               "description": "HMAC 密钥，非空启用 HMAC 模式，留空则为普通摘要",
-              "default": ""
+              "default": "",
+              "type": "string"
             },
             "encoding": {
-              "type": "string",
               "title": "Encoding",
               "description": "输出编码(hex/base64/base64url)，默认 hex，非法值回退 hex",
-              "default": "hex"
+              "default": "hex",
+              "type": "string"
             },
             "upper": {
-              "type": "boolean",
               "title": "Upper",
               "description": "hex 输出转大写(仅 encoding=hex 时生效)，默认 false",
-              "default": false
+              "default": false,
+              "type": "boolean"
             }
           },
-          "required": ["input"],
-          "title": "crypto",
-          "type": "object"
+          "required": ["input"]
         },
-        "returns": { "type": "string", "title": "crypto 函数返回", "properties": {} },
+        "returns": { "title": "crypto 函数返回", "type": "string" },
         "namespace": "crypto",
         "kind": "crypto",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -89,18 +88,16 @@
         "type": "function",
         "description": "旧域重建·名单查询：在服务端指定名单中查询某个值是否存在，返回 {result}。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "list_name": { "type": "string", "title": "名单名称", "description": "服务端名单名称" },
-            "value": { "type": "string", "title": "查询值", "description": "待查询的值" }
+            "list_name": { "title": "名单名称", "description": "服务端名单名称", "type": "string" },
+            "value": { "title": "查询值", "description": "待查询的值", "type": "string" }
           },
-          "required": ["list_name", "value"],
-          "title": "custom_list_query",
-          "type": "object"
+          "required": ["list_name", "value"]
         },
         "returns": {
           "type": "object",
-          "title": "custom_list_query_result",
-          "properties": { "result": { "type": "boolean", "title": "Result" } },
+          "properties": { "result": { "title": "Result", "type": "boolean" } },
           "required": ["result"]
         },
         "namespace": "custom-list-query",
@@ -108,12 +105,12 @@
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
-    "title": "datetime",
-    "name": "datetime",
+    "title": "dt",
+    "name": "dt",
     "description": "",
     "tools": [
       {
@@ -122,17 +119,16 @@
         "type": "function",
         "description": "将 ISO 8601 瞬时转换为目标 IANA 时区的挂钟表示（Intl，DST 正确）。非法时区返回结构化错误。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "datetime": { "type": "string", "title": "Datetime", "description": "ISO 8601 瞬时（含偏移或 Z）" },
-            "to": { "type": "string", "title": "To", "description": "IANA 时区（如 Asia/Shanghai）" }
+            "datetime": { "title": "Datetime", "description": "ISO 8601 瞬时（含偏移或 Z）", "type": "string" },
+            "to": { "title": "To", "description": "IANA 时区（如 Asia/Shanghai）", "type": "string" }
           },
-          "required": ["datetime", "to"],
-          "title": "dt_convert",
-          "type": "object"
+          "required": ["datetime", "to"]
         },
-        "returns": { "type": "object", "title": "dt_convert 函数返回", "properties": {} },
-        "namespace": "datetime",
-        "kind": "datetime",
+        "returns": { "type": "null", "title": "", "properties": {} },
+        "namespace": "dt",
+        "kind": "dt",
         "semantics": "query"
       },
       {
@@ -141,29 +137,36 @@
         "type": "function",
         "description": "营业日推算：op=is_business_day/add_business_days/business_days_between/next_business_day。calendar={holidays[],workdays[],weekend?[0,6]} 为数据参数（判定优先级 假日>补班>周末）；不传 calendar = 纯周末模式（中国调休场景必须传）。区间上限 3 年。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "date": { "type": "string", "title": "Date", "description": "YYYY-MM-DD" },
+            "date": { "title": "Date", "description": "YYYY-MM-DD", "type": "string" },
             "op": {
-              "type": "string",
               "title": "Op",
-              "description": "is_business_day / add_business_days / business_days_between / next_business_day"
+              "description": "is_business_day / add_business_days / business_days_between / next_business_day",
+              "type": "string"
             },
-            "days": { "type": "integer", "title": "Days", "description": "add/between 的天数" },
-            "to": { "type": "string", "title": "To", "description": "between 的结束日期 YYYY-MM-DD" },
+            "days": { "title": "Days", "description": "add/between 的天数", "type": "integer" },
+            "to": { "title": "To", "description": "between 的结束日期 YYYY-MM-DD", "type": "string" },
             "calendar": {
-              "type": "object",
               "title": "Calendar",
               "description": "{ holidays[], workdays[], weekend?[0,6] }——节假日表是数据，随国务院安排每年更新",
-              "default": null
+              "type": "object",
+              "properties": {
+                "holidays": { "description": "节假日", "type": "array", "items": { "type": "string" } },
+                "workdays": { "description": "补班日", "type": "array", "items": { "type": "string" } },
+                "weekend": {
+                  "description": "周末（UTC day 编号，默认 [0,6]）",
+                  "type": "array",
+                  "items": { "type": "number" }
+                }
+              }
             }
           },
-          "required": ["date", "op"],
-          "title": "dt_business_day",
-          "type": "object"
+          "required": ["date", "op"]
         },
-        "returns": { "type": "object", "title": "dt_business_day 函数返回", "properties": {} },
-        "namespace": "datetime",
-        "kind": "datetime",
+        "returns": { "type": "null", "title": "", "properties": {} },
+        "namespace": "dt",
+        "kind": "dt",
         "semantics": "query"
       },
       {
@@ -172,29 +175,41 @@
         "type": "function",
         "description": "日期差：unit=days（日历日）/ business_days（需 calendar）/ months（月末日钳制）。inclusive 缺省 false。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "from": { "type": "string", "title": "From", "description": "YYYY-MM-DD" },
-            "to": { "type": "string", "title": "To", "description": "YYYY-MM-DD" },
+            "from": { "title": "From", "description": "YYYY-MM-DD", "type": "string" },
+            "to": { "title": "To", "description": "YYYY-MM-DD", "type": "string" },
             "unit": {
-              "type": "string",
               "title": "Unit",
               "description": "days / business_days / months",
-              "default": "days"
+              "default": "days",
+              "type": "string"
             },
-            "calendar": { "type": "object", "title": "Calendar", "default": null },
-            "inclusive": { "type": "boolean", "title": "Inclusive", "default": false }
+            "calendar": {
+              "title": "Calendar",
+              "description": "{ holidays[], workdays[], weekend?[0,6] }——节假日表是数据，随国务院安排每年更新",
+              "type": "object",
+              "properties": {
+                "holidays": { "description": "节假日", "type": "array", "items": { "type": "string" } },
+                "workdays": { "description": "补班日", "type": "array", "items": { "type": "string" } },
+                "weekend": {
+                  "description": "周末（UTC day 编号，默认 [0,6]）",
+                  "type": "array",
+                  "items": { "type": "number" }
+                }
+              }
+            },
+            "inclusive": { "title": "Inclusive", "default": false, "type": "boolean" }
           },
-          "required": ["from", "to"],
-          "title": "dt_diff",
-          "type": "object"
+          "required": ["from", "to"]
         },
-        "returns": { "type": "object", "title": "dt_diff 函数返回", "properties": {} },
-        "namespace": "datetime",
-        "kind": "datetime",
+        "returns": { "type": "null", "title": "", "properties": {} },
+        "namespace": "dt",
+        "kind": "dt",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -208,16 +223,15 @@
         "type": "function",
         "description": "Docstring for inout\n自定义函数测试, 返回值返回入参, 用于调试.",
         "parameters": {
+          "type": "object",
           "properties": {
             "b": { "description": "参数 b", "title": "B", "type": "integer" },
-            "a": { "anyOf": [{ "type": "string" }, { "type": "integer" }], "description": "参数 a", "title": "A" },
+            "a": { "description": "参数 a", "title": "A", "anyOf": [{ "type": "string" }, { "type": "integer" }] },
             "c": { "description": "参数 c", "title": "C", "type": "null" }
           },
-          "required": ["b", "a", "c"],
-          "title": "inout",
-          "type": "object"
+          "required": ["b", "a", "c"]
         },
-        "returns": { "type": "string", "title": "inout 函数返回", "properties": {} },
+        "returns": { "type": "null", "title": "", "properties": {} },
         "namespace": "debug",
         "kind": "debug",
         "semantics": "query"
@@ -227,14 +241,14 @@
         "title": "func_without_args",
         "type": "function",
         "description": "Docstring for func_without_args\n无参数函数, 用于自定义函数测试",
-        "parameters": { "properties": {}, "title": "func_without_args", "type": "object" },
-        "returns": { "type": "string", "title": "func_without_args 函数返回", "properties": {} },
+        "parameters": { "type": "object", "properties": {} },
+        "returns": { "type": "null", "title": "", "properties": {} },
         "namespace": "debug",
         "kind": "debug",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -247,14 +261,14 @@
         "title": "current_date",
         "type": "function",
         "description": "返回服务器当前日期(本地时区，YYYY-MM-DD 格式)，无参数.",
-        "parameters": { "properties": {}, "title": "current_date", "type": "object" },
-        "returns": { "type": "string", "title": "current_date 函数返回", "properties": {} },
+        "parameters": { "type": "object", "properties": {} },
+        "returns": { "title": "current_date 函数返回", "type": "string" },
         "namespace": "debugui",
         "kind": "debugui",
-        "semantics": "query"
+        "semantics": "observe"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -268,18 +282,25 @@
         "type": "function",
         "description": "计算两经纬度点的 Haversine 大圆距离（球面近似，误差约 0.5%，决策场景够用）。unit 支持 km/m；坐标需同 datum（GCJ-02/WGS-84 混用会差 100–700m）。非法坐标返回结构化错误。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "lat1": { "type": "number", "title": "Lat1", "description": "起点纬度 [-90, 90]" },
-            "lon1": { "type": "number", "title": "Lon1", "description": "起点经度 [-180, 180]" },
-            "lat2": { "type": "number", "title": "Lat2", "description": "终点纬度" },
-            "lon2": { "type": "number", "title": "Lon2", "description": "终点经度" },
-            "unit": { "type": "string", "title": "Unit", "description": "距离单位 km/m，默认 km", "default": "km" }
+            "lat1": { "title": "Lat1", "description": "起点纬度 [-90, 90]", "type": "number" },
+            "lon1": { "title": "Lon1", "description": "起点经度 [-180, 180]", "type": "number" },
+            "lat2": { "title": "Lat2", "description": "终点纬度", "type": "number" },
+            "lon2": { "title": "Lon2", "description": "终点经度", "type": "number" },
+            "unit": { "title": "Unit", "description": "距离单位 km/m，默认 km", "default": "km", "type": "string" }
           },
-          "required": ["lat1", "lon1", "lat2", "lon2"],
-          "title": "geo_distance",
-          "type": "object"
+          "required": ["lat1", "lon1", "lat2", "lon2"]
         },
-        "returns": { "type": "number", "title": "距离" },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "distance": { "title": "距离", "anyOf": [{ "type": "number" }, { "type": "null" }] },
+            "unit": { "title": "Unit", "type": "string" },
+            "error": { "title": "Error", "type": "string" }
+          },
+          "required": ["distance"]
+        },
         "namespace": "geo",
         "kind": "geo",
         "semantics": "query"
@@ -290,30 +311,62 @@
         "type": "function",
         "description": "围栏判定：圆形（circle: {lat, lon, radius km}）或多边形（polygon: [[lat,lon],...]，射线法）。返回 { inside, distance }——distance 为点到圆心/多边形的最近大圆距离(km)。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "point": { "type": "object", "title": "Point", "description": "{ lat, lon }" },
-            "circle": { "type": "object", "title": "Circle", "description": "{ lat, lon, radius(km) }" },
-            "polygon": { "type": "array", "title": "Polygon", "description": "[[lat,lon],...] 顶点序列，自动闭合" }
+            "point": {
+              "title": "Point",
+              "description": "{ lat, lon }",
+              "type": "object",
+              "properties": {
+                "lat": { "description": "纬度", "type": "number" },
+                "lon": { "description": "经度", "type": "number" }
+              },
+              "required": ["lat", "lon"]
+            },
+            "circle": {
+              "title": "Circle",
+              "description": "{ lat, lon, radius(km)",
+              "type": "object",
+              "properties": {
+                "lat": { "description": "圆心纬度", "type": "number" },
+                "lon": { "description": "圆心经度", "type": "number" },
+                "radius": { "description": "半径(km)", "type": "number" }
+              },
+              "required": ["lat", "lon", "radius"]
+            },
+            "polygon": {
+              "title": "Polygon",
+              "description": "[[lat,lon],...] 顶点序列，自动闭合",
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  { "type": "array", "items": { "type": "number" } },
+                  {
+                    "type": "object",
+                    "properties": { "lat": { "type": "number" }, "lon": { "type": "number" } },
+                    "required": ["lat", "lon"]
+                  }
+                ]
+              }
+            }
           },
-          "required": ["point"],
-          "title": "geo_fence",
-          "type": "object"
+          "required": ["point"]
         },
         "returns": {
           "type": "object",
-          "title": "geo_fence 函数返回",
           "properties": {
-            "inside": { "type": "boolean" },
-            "distance": { "type": "number", "description": "到圆心或围栏的公里数" },
+            "inside": { "anyOf": [{ "type": "boolean" }, { "type": "null" }] },
+            "distance": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
             "error": { "type": "string" }
-          }
+          },
+          "required": ["inside", "distance"]
         },
         "namespace": "geo",
         "kind": "geo",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -327,62 +380,72 @@
         "type": "function",
         "description": "发起 HTTP 请求, 返回响应结果 { status, headers, body }. 支持 params 查询参数合并、timeout 单次超时(默认 10s, 上限 60s)、retry 重试(仅网络异常/超时/5xx/429, 指数退避)与 auth 认证({ type: \"basic\", username, password } 或 { type: \"bearer\", token }, headers 显式 Authorization 优先). 失败返回结构化错误 { status: 0, error }, 不抛出异常.",
         "parameters": {
+          "type": "object",
           "properties": {
-            "url": { "type": "string", "title": "URL", "description": "请求地址" },
+            "url": { "title": "URL", "description": "请求地址", "type": "string" },
             "method": {
-              "type": "string",
               "title": "Method",
               "description": "HTTP 方法(GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS)，默认 GET",
-              "default": "GET"
+              "default": "GET",
+              "type": "string"
             },
             "headers": {
-              "type": "object",
               "title": "Headers",
               "description": "请求头键值对对象，默认无",
-              "default": null
+              "type": "object",
+              "properties": {}
             },
             "body": {
-              "type": "object",
               "title": "Body",
-              "description": "请求体对象(自动 JSON 序列化并补充 content-type: application/json)，GET/HEAD 忽略，空对象视为无请求体",
-              "default": null
+              "description": "请求体对象(自动 JSON 序列化并补充 content-type: application/json)，GET/HEAD 忽略",
+              "type": "object",
+              "properties": {}
             },
             "params": {
-              "type": "object",
               "title": "Params",
               "description": "查询参数键值对对象，合并到 URL 查询串(URL 已有同名参数时覆盖)，默认无",
-              "default": null
+              "type": "object",
+              "properties": {}
             },
             "timeout": {
-              "type": "integer",
               "title": "Timeout",
               "description": "单次请求超时毫秒数(100–60000)，默认 10000",
-              "default": 10000
+              "default": 10000,
+              "type": "integer"
             },
             "retry": {
-              "type": "integer",
               "title": "Retry",
               "description": "失败重试次数(0–5)，仅网络异常/超时/5xx/429 触发，指数退避，默认 0",
-              "default": 0
+              "default": 0,
+              "type": "integer"
             },
             "auth": {
-              "type": "object",
               "title": "Auth",
-              "description": "认证配置。Basic: { type: 'basic', username, password }；Bearer: { type: 'bearer', token }。headers 显式 Authorization 优先，默认无",
-              "default": null
+              "description": "Basic: { type: 'basic', username, password }；Bearer: { type: 'bearer', token }",
+              "type": "object",
+              "properties": {
+                "type": { "description": "Basic: 'basic', Bearer: 'bearer'", "type": "string" },
+                "username": { "description": "Basic 用户名", "type": "string" },
+                "password": { "description": "Basic 密码", "type": "string" },
+                "token": { "description": "Bearer token", "type": "string" }
+              },
+              "required": ["type"]
+            },
+            "maxBytes": {
+              "title": "MaxBytes",
+              "description": "响应体积上限(字节)，默认 1MB，硬上限 64MiB",
+              "type": "integer"
             }
           },
-          "required": ["url"],
-          "title": "http_request",
-          "type": "object"
+          "required": ["url"]
         },
-        "returns": { "type": "object", "title": "http_request 函数返回", "properties": {} },
+        "returns": { "type": "null", "title": "", "properties": {} },
         "namespace": "http",
         "kind": "http",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -396,17 +459,18 @@
         "type": "function",
         "description": "旧域重建·IP 属地解析：按最长前缀匹配数据集（env IP_LOCATION_DATASET 指向 JSON）返回 country/province/city/isp；未命中返回空字段。",
         "parameters": {
-          "properties": { "ip": { "type": "string", "title": "IP", "description": "待解析的 IP 地址" } }
+          "type": "object",
+          "properties": { "ip": { "title": "IP", "description": "待解析的 IP 地址", "type": "string" } },
+          "required": ["ip"]
         },
         "returns": {
           "type": "object",
-          "title": "ip_location_result",
           "properties": {
-            "country": { "type": "string", "title": "Country" },
-            "province": { "type": "string", "title": "Province" },
-            "city": { "type": "string", "title": "City" },
-            "isp": { "type": "string", "title": "Isp" },
-            "ip": { "type": "string", "title": "Ip" }
+            "country": { "title": "Country", "type": "string" },
+            "province": { "title": "Province", "type": "string" },
+            "city": { "title": "City", "type": "string" },
+            "isp": { "title": "Isp", "type": "string" },
+            "ip": { "title": "Ip", "type": "string" }
           },
           "required": ["country", "province", "city", "isp", "ip"]
         },
@@ -415,7 +479,7 @@
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -429,58 +493,57 @@
         "type": "function",
         "description": "向 IM 机器人 webhook 发送文本通知, 返回 { ok, status, body }. channel 支持 feishu/dingtalk/wecom/slack;带 title 时按渠道转 markdown 形态. webhook 地址支持 `${secret:名称}` 引用(按租户解析, 群机器人地址含凭证, 推荐走密钥),timeout/retry 语义与 http_request 一致(仅网络异常/超时/5xx/429 重试, 指数退避). ok 仅表示 HTTP 2xx;部分平台(如钉钉)限流/错参仍回 200, 业务错误码在 body.errcode, 规则可按需检查. 失败返回结构化错误, 不抛出异常.",
         "parameters": {
+          "type": "object",
           "properties": {
             "channel": {
-              "type": "string",
               "title": "Channel",
               "description": "通知渠道(feishu/dingtalk/wecom/slack), 决定 payload 形状, 默认 feishu",
-              "default": "feishu"
+              "default": "feishu",
+              "type": "string"
             },
             "webhook": {
-              "type": "string",
               "title": "Webhook URL",
-              "description": "机器人 webhook 地址, 支持 `${secret:名称}` 引用(推荐, 地址含凭证不应落图)"
+              "description": "机器人 webhook 地址, 支持 `${secret:名称}` 引用(推荐, 地址含凭证不应落图)",
+              "type": "string"
             },
-            "message": { "type": "string", "title": "Message", "description": "通知正文(纯文本/markdown, ≤16KB)" },
+            "message": { "title": "Message", "description": "通知正文(纯文本/markdown, ≤16KB)", "type": "string" },
             "title": {
-              "type": "string",
               "title": "Title",
               "description": "可选标题; 提供时 feishu 拼接首行, dingtalk/wecom/slack 转对应 markdown 形态",
-              "default": null
+              "default": null,
+              "type": "string"
             },
             "timeout": {
-              "type": "integer",
               "title": "Timeout",
               "description": "单次请求超时毫秒数(100–60000), 默认 10000",
-              "default": 10000
+              "default": 10000,
+              "type": "integer"
             },
             "retry": {
-              "type": "integer",
               "title": "Retry",
               "description": "失败重试次数(0–5), 仅网络异常/超时/5xx/429 触发, 指数退避, 默认 0",
-              "default": 0
+              "default": 0,
+              "type": "integer"
             }
           },
-          "required": ["webhook", "message"],
-          "title": "notify_webhook",
-          "type": "object"
+          "required": ["webhook", "message"]
         },
         "returns": {
           "type": "object",
-          "title": "notify_webhook 函数返回",
           "properties": {
-            "ok": { "type": "boolean", "description": "HTTP 2xx 即 true; 平台业务错误码见 body" },
+            "ok": { "description": "HTTP 2xx 即 true; 平台业务错误码见 body", "type": "boolean" },
             "status": { "type": "integer" },
             "body": { "description": "平台响应体(如钉钉 { errcode, errmsg })" },
-            "error": { "type": "string", "description": "失败原因(ok=false 时存在)" }
-          }
+            "error": { "description": "失败原因(ok=false 时存在)", "type": "string" }
+          },
+          "required": ["ok", "status", "body"]
         },
         "namespace": "notify",
         "kind": "notify",
-        "semantics": "query"
+        "semantics": "act"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -494,17 +557,19 @@
         "type": "function",
         "description": "旧域重建·频次统计：记录实体事件并返回其 1 小时滑动窗口内的事件计数。",
         "parameters": {
-          "properties": { "entity": { "type": "string", "title": "实体", "description": "计数实体（如 ip、phone）" } }
+          "type": "object",
+          "properties": { "entity": { "title": "实体", "description": "计数实体（如 ip、phone）", "type": "string" } },
+          "required": ["entity"]
         },
         "returns": {
           "type": "object",
-          "title": "RateCommonResult",
           "properties": {
-            "counter": { "type": "integer", "title": "Counter", "default": 0 },
-            "v": { "type": "string", "title": "V", "default": "" },
-            "idle": { "type": "integer", "title": "Idle", "default": 0 },
-            "timestamp": { "type": "string", "title": "Timestamp", "default": "" }
-          }
+            "counter": { "title": "Counter", "default": 0, "type": "integer" },
+            "v": { "title": "V", "default": "", "type": "string" },
+            "idle": { "title": "Idle", "default": 0, "type": "integer" },
+            "timestamp": { "title": "Timestamp", "default": "", "type": "string" }
+          },
+          "required": ["counter", "v", "idle", "timestamp"]
         },
         "namespace": "rate-window",
         "kind": "rate-window",
@@ -516,31 +581,33 @@
         "type": "function",
         "description": "旧域重建·组去重统计：记录 (组, 值) 事件并返回 1 小时滑动窗口内组事件数(pv)与去重值数(uv)。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "group": { "type": "string", "title": "组", "description": "分组键（如 ip）" },
-            "value": { "type": "string", "title": "值", "description": "组内观测值（如 phone）" }
-          }
+            "group": { "title": "组", "description": "分组键（如 ip）", "type": "string" },
+            "value": { "title": "值", "description": "组内观测值（如 phone）", "type": "string" }
+          },
+          "required": ["group", "value"]
         },
         "returns": {
           "type": "object",
-          "title": "GroupDistinctCommonResult",
           "properties": {
-            "idle": { "type": "integer", "title": "Idle", "default": 0 },
-            "pv": { "type": "integer", "title": "Pv", "default": 0 },
-            "uv": { "type": "integer", "title": "Uv", "default": 0 },
-            "gidle": { "type": "integer", "title": "Gidle", "default": 0 },
-            "vidle": { "type": "integer", "title": "Vidle", "default": 0 },
-            "group": { "type": "string", "title": "Group", "default": "" },
-            "v": { "type": "string", "title": "V", "default": "" },
-            "timestamp": { "type": "string", "title": "Timestamp", "default": "" }
-          }
+            "idle": { "title": "Idle", "default": 0, "type": "integer" },
+            "pv": { "title": "Pv", "default": 0, "type": "integer" },
+            "uv": { "title": "Uv", "default": 0, "type": "integer" },
+            "gidle": { "title": "Gidle", "default": 0, "type": "integer" },
+            "vidle": { "title": "Vidle", "default": 0, "type": "integer" },
+            "group": { "title": "Group", "default": "", "type": "string" },
+            "v": { "title": "V", "default": "", "type": "string" },
+            "timestamp": { "title": "Timestamp", "default": "", "type": "string" }
+          },
+          "required": ["idle", "pv", "uv", "gidle", "vidle", "group", "v", "timestamp"]
         },
         "namespace": "rate-window",
         "kind": "rate-window",
         "semantics": "observe"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -554,21 +621,20 @@
         "type": "function",
         "description": "查询名单：在服务端指定名单中查询某个值是否存在，返回命中结果.",
         "parameters": {
+          "type": "object",
           "properties": {
-            "roster": { "type": "string", "title": "名单", "description": "服务端名单名称(从名单下拉中动态选择)" },
-            "value": { "type": "string", "title": "查询值", "description": "待查询的值" }
+            "roster": { "title": "名单", "description": "服务端名单名称(从名单下拉中动态选择)", "type": "string" },
+            "value": { "title": "查询值", "description": "待查询的值", "type": "string" }
           },
-          "required": ["roster", "value"],
-          "title": "roster",
-          "type": "object"
+          "required": ["roster", "value"]
         },
-        "returns": { "type": "object", "title": "roster 函数返回", "properties": {} },
+        "returns": { "title": "roster 函数返回", "type": "object", "properties": {} },
         "namespace": "roster",
         "kind": "roster",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
@@ -582,30 +648,37 @@
         "type": "function",
         "description": "Mustache 无逻辑子集渲染：{{name}}（HTML 转义）、{{{raw}}}（不转义）、{{#sec}}...{{/sec}}（列表/真值）、{{^inv}}（反转）、{{!注释}}。缺 key 输出空串。禁 partials。模板 ≤16KB、输出 ≤64KB，结构化错误（TEMPLATE_TOO_LARGE / OUTPUT_OVERFLOW / RENDER_ERROR）。渲染文本不渲染 JSON——结构化 payload 请在图内构造对象。",
         "parameters": {
+          "type": "object",
           "properties": {
-            "template": { "type": "string", "title": "Template", "description": "Mustache 模板（≤16KB）" },
-            "context": { "type": "object", "title": "Context", "description": "渲染数据对象" }
+            "template": { "title": "Template", "description": "Mustache 模板（≤16KB）", "type": "string" },
+            "context": {
+              "title": "Context",
+              "description": "渲染数据对象",
+              "type": "object",
+              "patternProperties": { "^(.*)$": {} }
+            }
           },
-          "required": ["template", "context"],
-          "title": "template_render",
-          "type": "object"
+          "required": ["template", "context"]
         },
         "returns": {
           "type": "object",
-          "title": "template_render 函数返回",
-          "properties": { "rendered": { "type": "string" }, "error": { "type": "string" } }
+          "properties": {
+            "rendered": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+            "error": { "type": "string" }
+          },
+          "required": ["rendered"]
         },
         "namespace": "template",
         "kind": "template",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   },
   {
     "type": "namespace",
-    "title": "validate-cn",
-    "name": "validate-cn",
+    "title": "validate",
+    "name": "validate",
     "description": "",
     "tools": [
       {
@@ -614,14 +687,13 @@
         "type": "function",
         "description": "校验 18 位中国居民身份证：格式、省级行政区码、出生日期合法性、MOD 11-2 校验码。返回 { valid, fields: { province, birth, sex }, normalized }；失败返回 { valid: false, code }。",
         "parameters": {
-          "properties": { "value": { "type": "string", "title": "身份证号" } },
-          "required": ["value"],
-          "title": "validate_id_card",
-          "type": "object"
+          "type": "object",
+          "properties": { "value": { "description": "待校验值", "type": "string" } },
+          "required": ["value"]
         },
-        "returns": { "type": "object", "title": "校验结果" },
-        "namespace": "validate-cn",
-        "kind": "validate-cn",
+        "returns": { "type": "null", "title": "", "properties": {} },
+        "namespace": "validate",
+        "kind": "validate",
         "semantics": "query"
       },
       {
@@ -630,14 +702,13 @@
         "type": "function",
         "description": "校验中国大陆手机号格式（^1[3-9]\\d{9}$）。返回 { valid, normalized }。",
         "parameters": {
-          "properties": { "value": { "type": "string", "title": "手机号" } },
-          "required": ["value"],
-          "title": "validate_mobile",
-          "type": "object"
+          "type": "object",
+          "properties": { "value": { "description": "待校验值", "type": "string" } },
+          "required": ["value"]
         },
-        "returns": { "type": "object", "title": "校验结果" },
-        "namespace": "validate-cn",
-        "kind": "validate-cn",
+        "returns": { "type": "null", "title": "", "properties": {} },
+        "namespace": "validate",
+        "kind": "validate",
         "semantics": "query"
       },
       {
@@ -646,14 +717,13 @@
         "type": "function",
         "description": "校验 18 位统一社会信用代码（GB 32100-2015 base-31 加权校验）。返回 { valid, code? }。",
         "parameters": {
-          "properties": { "value": { "type": "string", "title": "信用代码" } },
-          "required": ["value"],
-          "title": "validate_uscc",
-          "type": "object"
+          "type": "object",
+          "properties": { "value": { "description": "待校验值", "type": "string" } },
+          "required": ["value"]
         },
-        "returns": { "type": "object", "title": "校验结果" },
-        "namespace": "validate-cn",
-        "kind": "validate-cn",
+        "returns": { "type": "null", "title": "", "properties": {} },
+        "namespace": "validate",
+        "kind": "validate",
         "semantics": "query"
       },
       {
@@ -662,17 +732,16 @@
         "type": "function",
         "description": "校验银行卡号（Luhn 算法，13–19 位，自动去空格/连字符）。返回 { valid, normalized, code? }。",
         "parameters": {
-          "properties": { "value": { "type": "string", "title": "银行卡号" } },
-          "required": ["value"],
-          "title": "validate_bank_card",
-          "type": "object"
+          "type": "object",
+          "properties": { "value": { "description": "待校验值", "type": "string" } },
+          "required": ["value"]
         },
-        "returns": { "type": "object", "title": "校验结果" },
-        "namespace": "validate-cn",
-        "kind": "validate-cn",
+        "returns": { "type": "null", "title": "", "properties": {} },
+        "namespace": "validate",
+        "kind": "validate",
         "semantics": "query"
       }
     ],
-    "meta": { "origin": "reference", "version": "0.11.0" }
+    "meta": { "origin": "reference", "version": "0.12.0" }
   }
 ]

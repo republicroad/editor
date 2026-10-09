@@ -311,3 +311,7 @@ adapter 并在页面注入。集成验收：决策表单元格键入出现补全
   date-input（#529）/小数序列化（#530）回归固化 4 用例；wasm 不对称登记；
   S012 变型已随 zen-udf 0.12.1 修复（apps/editor 恢复全严格，notify.ts 残留由
   postinstall 自愈补丁压制）。批 91（slots 槽位补全，后端端点方案 A）待排。
+- **第九十一批（✅ 2026-09-18）：表达式槽位补全端点（宿主侧交付）**——POST
+  /api/expression/slot 双模式落地（slotBatch 直通 + Workspace 图上下文，内容哈希 LRU）；
+  policyPath 对齐要点实证（cursor.policyPath 必须与 setDocument 路径一致，否则引擎静默
+  null）；7 端点用例全绿。编辑器侧消费等内核 S013 交付（provider 接口 + 补全 UI）。

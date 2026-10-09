@@ -179,6 +179,7 @@
 - [x] 第八十四批(S010 消费)：gitlink → 540b08b(zen-udf 0.4.1)；rosterScopeOf 补 RosterScope 显式标注 + 删结构化绕行注释——见 7.3 第八十四批
 - [x] 第八十六批(内核 base-ui 0.10.0 消费)：deps 升 jdm-editor/appshell 0.10.0 + @base-ui/react 1.8.0；宿主零代码改动，dev 实测零报错——见 7.3 第八十六批
 - [x] 第九十批(zen-engine 2.1.1 升级)：catalog 升级 + date-input/小数序列化回归固化（4 用例）+ wasm 不对称登记 + S012 豁免移除恢复全严格——见 7.3 第九十批
+- [x] 第九十一批(表达式槽位补全端点)：/api/expression/slot 双模式（slotBatch 直通 + Workspace 图上下文 LRU）+ policyPath 对齐修复 + 7 端点用例——见 7.3 第九十一批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
 - [x] 第十七批(应用层去 antd 收尾)：`theme.provider.tsx` 冗余 antd ConfigProvider 删除(JdmConfigProvider 已内置同款主题算法)；根依赖移除 `antd`/`@ant-design/icons`——主仓 src/ 零 antd 引用，antd 仅存于 jdm-editor 核心库
@@ -264,6 +265,24 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-18，第九十一批：表达式槽位补全端点——zen-engine 2.1 slots API 消费)：**
+
+- **端点**：`POST /api/expression/slot`（apps/editor/src/expression-slot.ts）——zen-engine
+  2.1 slots API（#527）宿主直通层，双模式：
+  ① batch：slotBatch 直通（无图上下文，表格列/独立表达式）；
+  ② workspace：Workspace.setDocument(图) + slot/completions（节点输出作操作数、
+  枚举入补全项）。响应引擎原样透传（零语义加工，引擎 = 单一事实来源）
+- **Workspace LRU**：按 content sha1 键控（上限 8，命中触底重序）——图内容不变即复用
+  增量构建；**cursor.policyPath 与 setDocument 路径严格一致**（引擎按路径定位文档，
+  不一致静默返回 null——实测抓到的集成要点）
+- **实机验证**：batch 模式返回完整槽位响应（含日期字面量事实 kind:date/valid、autoOpen、
+  expected:bool）；workspace 模式 start 槽 + replaceSpan 正常；无效图 400 透传引擎校验文案
+- **错误语义**：400（模式/参数/图文档）与 422（该游标无槽位）经全局 onError 统一渲染
+  {error}；OpenAPI 声明仅 200（错误经 onError，不进响应声明）
+- **已知上游行为**：表达式块空作用域（无输入 schema/无边）时 slot 返回 null——端点如实
+  422 透传（测试用例登记该行为）
+- 门禁：typecheck×2/lint/主仓 97/组件 5/apps 65(+7 slot 端点)/schema 14ns/build 全绿
 
 **最新变更(2026-09-18，第九十批：zen-engine 2.0.2 → 2.1.1 升级)：**
 

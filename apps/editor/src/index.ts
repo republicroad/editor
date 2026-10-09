@@ -21,6 +21,7 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { serveStatic } from 'hono/bun';
 import { getCustomNodeFunctionSchema } from './custom-node-schema';
+import { expressionSlotRoute, handleExpressionSlot } from './expression-slot';
 import {
   deleteGraph,
   GRAPHS_DIR,
@@ -1001,6 +1002,11 @@ app.openapi(getSessionRoute, (c) => {
 // 自定义节点/自定义函数 JSON Schema 下发(每请求实时聚合合并注册表)
 app.openapi(customNodesSchemaRoute, (c) => {
   return c.json(getCustomNodeFunctionSchema());
+});
+
+// 表达式槽位补全(zen-engine 2.1 slots API 直通，第九十一批)
+app.openapi(expressionSlotRoute, (c) => {
+  return c.json(handleExpressionSlot(c.req.valid('json')) as Record<string, unknown>);
 });
 
 // 名单名称列表下发(查询名单节点下拉数据源)；按会话用户过滤: 自有私有 + 共享

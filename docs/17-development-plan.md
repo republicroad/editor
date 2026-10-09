@@ -275,6 +275,38 @@ S001/S002 对齐验证、S003 回填确认（内核第六十批已修复，待�
 | **91**（中，机会项） | 表达式槽位补全 | 消费 #527 slots API。架构决策点：A 后端端点（引擎原生能力全、延迟网络往返、需防抖）vs B 等 wasm 暴露（零延迟、上游休眠遥遥无期）；建议 A 起步（/api/expression/slot，防抖 + 缓存），内核 jdm-editor 表达式编辑器接补全面板 | 需内核编辑器侧配合（libsuggest） |
 | **92**（低，机会项） | date-input 作者支持 | inputNode 属性编辑器支持 `format: date/date-time` 声明（依赖 wasm 对齐前仅后端语义生效的备案）；演示图一张走日期语义 | 低 |
 | 跟踪 | wasm 对齐 | 上游 wasm 线休眠；date/slots 不进 wasm 前，浏览器仿真语义落后后端——已知约束登记（docs/18 或本文件） | 外部 |
+
+### 批 91 细化设计（2026-09-18）
+
+**上游 API 实证（zen-engine 2.1.1 napi index.d.ts）**：
+
+- `Workspace` 类 = 图/policy 双支持的语言服务：`setDocument` 后提供 `slot(cursor, text)`
+  （槽位分类 + 枚举表 + 可拼接字面量 + replaceSpan）、`completions(cursor)`（LSP 风格
+  items）、`inspect`（悬停）、`prepareRename/rename/references/search/diagnostics`；
+- 免上下文通道 `slotBatch(SlotRequest[])`：text + pos + unary + role + scope/expected/
+  labels 即可（无图文档依赖）；
+- 关键类型：`PolicySlotResponse { complete, role, subjectType, expectedType, slot { state,
+  options(枚举值含可拼接 ZEN 字面量), operators, replaceSpan(UTF-16), autoOpen, locals },
+  literals(枚举/日期/布尔事实) }`——**编辑器就绪度极高：替换区、自动弹出标志、枚举拼接
+  源全部引擎侧给出**。
+
+**宿主端点契约（批 91 宿主侧交付）**：
+
+`POST /api/expression/slot`
+
+- 模式一（轻量直通）：`{ mode: 'batch', requests: SlotRequest[] }` → `slotBatch`
+  （无图上下文，够表格列/独立表达式场景）；
+- 模式二（图上下文）：`{ mode: 'workspace', content: graphJSON, cursor: { blockId, pos,
+  target } }` → Workspace.setDocument + slot/completions（节点输出作操作数、决策表枚举
+  入补全项）；
+- Workspace 按 content 哈希 LRU 缓存（图保存即失效）；响应为引擎原样透传（零语义加工，
+  引擎 = 单一事实来源）；无鉴权依赖（同 /api/simulate 口径）。
+
+**分工与顺序**：S013（内核：provider 接口 + CM/expression-builder 装配点，仅接口不做
+HTTP）与宿主端点**并行施工**；合拢点 = S013 的 provider 接口。宿主随后交付默认 fetch
+adapter 并在页面注入。集成验收：决策表单元格键入出现补全浮层（枚举/操作符/字段）、
+接受后 replaceSpan 正确拼接、防抖取消生效。
+
 - **第九十批（✅ 2026-09-18）：zen-engine 2.0.2 → 2.1.1 升级**——catalog 升级 +
   date-input（#529）/小数序列化（#530）回归固化 4 用例；wasm 不对称登记；
   S012 变型已随 zen-udf 0.12.1 修复（apps/editor 恢复全严格，notify.ts 残留由

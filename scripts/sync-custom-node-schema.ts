@@ -12,6 +12,8 @@ import path from 'node:path';
 import { format } from 'prettier';
 
 import { globalUdfRegistry } from '@republicroad/zen-udf';
+// 2.x 分域模型：参考域在 zen-udf-contrib，import 副作用注册进 globalUdfRegistry
+import '@republicroad/zen-udf-contrib';
 
 // 夹具落宿主仓（第八十五批 npm 化：原内核 appshell 资产路径随 submodule 退役不可达）
 const OUT_FILE = path.resolve(import.meta.dir, '../src/assets/custom-node-schema.json');

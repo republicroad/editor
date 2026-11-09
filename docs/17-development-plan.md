@@ -315,3 +315,7 @@ adapter 并在页面注入。集成验收：决策表单元格键入出现补全
   /api/expression/slot 双模式落地（slotBatch 直通 + Workspace 图上下文，内容哈希 LRU）；
   policyPath 对齐要点实证（cursor.policyPath 必须与 setDocument 路径一致，否则引擎静默
   null）；7 端点用例全绿。编辑器侧消费等内核 S013 交付（provider 接口 + 补全 UI）。
+- **第九十二批（✅ 2026-09-18）：zen-udf 0.12.1 → 2.1.1 升级消费**——独立仓接管 +
+  参考域拆包（zen-udf-contrib ^1.3.2，root+apps 双 manifest 声明）；value_list 双名
+  跟随（roster 名零迁移）；setPorts EgressGuard 迁移；Y7 夹具 runner executor 反转
+  适配；users/ 图目录健壮性修复。全门禁绿（schema 15ns）。

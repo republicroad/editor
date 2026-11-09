@@ -173,7 +173,7 @@
         "name": "diff",
         "title": "diff",
         "type": "function",
-        "description": "日期差：unit=days（日历日）/ business_days（需 calendar）/ months（月末日钳制）。inclusive 缺省 false。",
+        "description": "日期差：unit=days（日历日）/ business_days（需 calendar）/ months（anniversary 完整月数，月末钳制视为满月）。inclusive 缺省 false。",
         "parameters": {
           "type": "object",
           "properties": {
@@ -547,15 +547,15 @@
   },
   {
     "type": "namespace",
-    "title": "rate-window",
-    "name": "rate-window",
+    "title": "trailing-window",
+    "name": "trailing-window",
     "description": "",
     "tools": [
       {
-        "name": "rate_1h",
-        "title": "rate_1h",
+        "name": "trailing_count_1h",
+        "title": "trailing_count_1h",
         "type": "function",
-        "description": "旧域重建·频次统计：记录实体事件并返回其 1 小时滑动窗口内的事件计数。",
+        "description": "频次统计：记录实体事件并返回其 1 小时 trailing 窗口内的事件计数。",
         "parameters": {
           "type": "object",
           "properties": { "entity": { "title": "实体", "description": "计数实体（如 ip、phone）", "type": "string" } },
@@ -571,15 +571,15 @@
           },
           "required": ["counter", "v", "idle", "timestamp"]
         },
-        "namespace": "rate-window",
-        "kind": "rate-window",
+        "namespace": "trailing-window",
+        "kind": "trailing-window",
         "semantics": "observe"
       },
       {
-        "name": "group_distinct_1h",
-        "title": "group_distinct_1h",
+        "name": "trailing_distinct_1h",
+        "title": "trailing_distinct_1h",
         "type": "function",
-        "description": "旧域重建·组去重统计：记录 (组, 值) 事件并返回 1 小时滑动窗口内组事件数(pv)与去重值数(uv)。",
+        "description": "组去重统计：记录 (组, 值) 事件并返回 1 小时 trailing 窗口内组事件数(pv)与去重值数(uv)。",
         "parameters": {
           "type": "object",
           "properties": {
@@ -602,36 +602,72 @@
           },
           "required": ["idle", "pv", "uv", "gidle", "vidle", "group", "v", "timestamp"]
         },
-        "namespace": "rate-window",
-        "kind": "rate-window",
+        "namespace": "trailing-window",
+        "kind": "trailing-window",
         "semantics": "observe"
-      }
-    ],
-    "meta": { "origin": "reference", "version": "0.12.0" }
-  },
-  {
-    "type": "namespace",
-    "title": "roster",
-    "name": "roster",
-    "description": "",
-    "tools": [
+      },
       {
-        "name": "roster",
-        "title": "roster",
+        "name": "rate_1h",
+        "title": "rate_1h",
         "type": "function",
-        "description": "查询名单：在服务端指定名单中查询某个值是否存在，返回命中结果.",
+        "description": "频次统计：记录实体事件并返回其 1 小时 trailing 窗口内的事件计数。",
+        "parameters": {
+          "type": "object",
+          "properties": { "entity": { "title": "实体", "description": "计数实体（如 ip、phone）", "type": "string" } },
+          "required": ["entity"]
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "counter": { "title": "Counter", "default": 0, "type": "integer" },
+            "v": { "title": "V", "default": "", "type": "string" },
+            "idle": { "title": "Idle", "default": 0, "type": "integer" },
+            "timestamp": { "title": "Timestamp", "default": "", "type": "string" }
+          },
+          "required": ["counter", "v", "idle", "timestamp"]
+        },
+        "namespace": "trailing-window",
+        "kind": "trailing-window",
+        "semantics": "observe",
+        "deprecated": {
+          "since": "1.7.0",
+          "note": "ADR-021 改名 → trailing_count_1h（本名即同一函数的 alias）；过渡期后按 ADR-009 治理退役"
+        }
+      },
+      {
+        "name": "group_distinct_1h",
+        "title": "group_distinct_1h",
+        "type": "function",
+        "description": "组去重统计：记录 (组, 值) 事件并返回 1 小时 trailing 窗口内组事件数(pv)与去重值数(uv)。",
         "parameters": {
           "type": "object",
           "properties": {
-            "roster": { "title": "名单", "description": "服务端名单名称(从名单下拉中动态选择)", "type": "string" },
-            "value": { "title": "查询值", "description": "待查询的值", "type": "string" }
+            "group": { "title": "组", "description": "分组键（如 ip）", "type": "string" },
+            "value": { "title": "值", "description": "组内观测值（如 phone）", "type": "string" }
           },
-          "required": ["roster", "value"]
+          "required": ["group", "value"]
         },
-        "returns": { "title": "roster 函数返回", "type": "object", "properties": {} },
-        "namespace": "roster",
-        "kind": "roster",
-        "semantics": "query"
+        "returns": {
+          "type": "object",
+          "properties": {
+            "idle": { "title": "Idle", "default": 0, "type": "integer" },
+            "pv": { "title": "Pv", "default": 0, "type": "integer" },
+            "uv": { "title": "Uv", "default": 0, "type": "integer" },
+            "gidle": { "title": "Gidle", "default": 0, "type": "integer" },
+            "vidle": { "title": "Vidle", "default": 0, "type": "integer" },
+            "group": { "title": "Group", "default": "", "type": "string" },
+            "v": { "title": "V", "default": "", "type": "string" },
+            "timestamp": { "title": "Timestamp", "default": "", "type": "string" }
+          },
+          "required": ["idle", "pv", "uv", "gidle", "vidle", "group", "v", "timestamp"]
+        },
+        "namespace": "trailing-window",
+        "kind": "trailing-window",
+        "semantics": "observe",
+        "deprecated": {
+          "since": "1.7.0",
+          "note": "ADR-021 改名 → trailing_distinct_1h（本名即同一函数的 alias）；过渡期后按 ADR-009 治理退役"
+        }
       }
     ],
     "meta": { "origin": "reference", "version": "0.12.0" }
@@ -743,5 +779,82 @@
       }
     ],
     "meta": { "origin": "reference", "version": "0.12.0" }
+  },
+  {
+    "type": "namespace",
+    "title": "value_list",
+    "name": "value_list",
+    "description": "",
+    "tools": [
+      {
+        "name": "value_list",
+        "title": "value_list",
+        "type": "function",
+        "description": "查询名单：在服务端指定名单（value list）中查询某个值是否存在，返回命中结果。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "list": { "title": "名单", "description": "服务端名单名称(从名单下拉中动态选择)", "type": "string" },
+            "value": { "title": "查询值", "description": "待查询的值", "type": "string" }
+          },
+          "required": ["list", "value"]
+        },
+        "returns": {
+          "title": "value_list 函数返回",
+          "type": "object",
+          "properties": {
+            "hit": { "title": "Hit", "default": false, "type": "boolean" },
+            "list": { "title": "List", "default": "", "type": "string" },
+            "value": { "title": "Value" },
+            "version": { "title": "Version", "type": "number" }
+          },
+          "required": ["hit", "list", "value"]
+        },
+        "namespace": "value_list",
+        "kind": "value_list",
+        "semantics": "query"
+      }
+    ],
+    "meta": { "origin": "reference", "version": "0.12.0" }
+  },
+  {
+    "type": "namespace",
+    "title": "roster",
+    "name": "roster",
+    "description": "",
+    "tools": [
+      {
+        "name": "roster",
+        "title": "roster",
+        "type": "function",
+        "description": "查询名单：在服务端指定名单（value list）中查询某个值是否存在，返回命中结果。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "roster": { "title": "名单", "description": "服务端名单名称(从名单下拉中动态选择)", "type": "string" },
+            "value": { "title": "查询值", "description": "待查询的值", "type": "string" }
+          },
+          "required": ["roster", "value"]
+        },
+        "returns": {
+          "title": "value_list 函数返回",
+          "type": "object",
+          "properties": {
+            "hit": { "title": "Hit", "default": false, "type": "boolean" },
+            "list": { "title": "List", "default": "", "type": "string" },
+            "value": { "title": "Value" },
+            "version": { "title": "Version", "type": "number" }
+          },
+          "required": ["hit", "list", "value"]
+        },
+        "namespace": "roster",
+        "kind": "roster",
+        "semantics": "query",
+        "deprecated": {
+          "since": "1.8.0",
+          "note": "ADR verdict-009 D2 改名 → value_list（参数 roster→list）；本名即同一查询的 alias，过渡期（建议 2-3 个版本）后按 ADR-009 治理退役"
+        }
+      }
+    ]
   }
 ]

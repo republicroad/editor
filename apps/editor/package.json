@@ -8,10 +8,12 @@
   "dependencies": {
     "@gorules/zen-engine": "catalog:",
     "@hono/zod-openapi": "^1.5.1",
+    "@republicroad/zen-udf": "^2.1.1",
+    "@republicroad/zen-udf-contrib": "^1.3.2",
+    "@republicroad/zen-udf-contrib": "1.3.2",
     "@scalar/hono-api-reference": "^0.11.12",
     "hono": "^4.12.33",
-    "zod": "catalog:",
-    "@republicroad/zen-udf": "^0.12.1"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "bun-types": "catalog:"

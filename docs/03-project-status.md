@@ -179,6 +179,7 @@
 - [x] 第八十四批(S010 消费)：gitlink → 540b08b(zen-udf 0.4.1)；rosterScopeOf 补 RosterScope 显式标注 + 删结构化绕行注释——见 7.3 第八十四批
 - [x] 第八十六批(内核 base-ui 0.10.0 消费)：deps 升 jdm-editor/appshell 0.10.0 + @base-ui/react 1.8.0；宿主零代码改动，dev 实测零报错——见 7.3 第八十六批
 - [x] 第九十批(zen-engine 2.1.1 升级)：catalog 升级 + date-input/小数序列化回归固化（4 用例）+ wasm 不对称登记 + S012 豁免移除恢复全严格——见 7.3 第九十批
+- [x] 第九十二批(zen-udf 2.1.1 升级)：独立仓接管 + 参考域拆包(zen-udf-contrib) + value_list 双名跟随 + setPorts 迁移 + Y7 executor 反转适配 + users 目录健壮性修复——见 7.3 第九十二批
 - [x] 第九十一批(表达式槽位补全端点)：/api/expression/slot 双模式（slotBatch 直通 + Workspace 图上下文 LRU）+ policyPath 对齐修复 + 7 端点用例——见 7.3 第九十一批
 - [x] 开发任务规划落档 `docs/17-development-plan.md`(三轨道：宿主自主/内核依赖/上线期，随批次回填执行状态)
 - [~] Hono 后端生产化(当前为实验状态)：已移除 :3001 admin 存根、名单 API 升级为持久化 CRUD(见 7.3)；env 配置化(PORT/CORS_ORIGINS/LISTS_DIR)、统一 HTTPException 错误处理、调试端点清理、路由单测已完成(第七批)；剩余：真实部署配置
@@ -265,6 +266,26 @@ f716ea7 feat: replace TabJsonSchema with TabRequest for input node
 - **B4 快照验证(登记归档，宿主零改动)**：链路闭合确认——内核 `tab-request.tsx:154` 注册 `useRequestSessionDraftSerializer`(700ms 防抖捕获 schema 草稿/活动源/活动示例 JSON/描述四类在途编辑)→ `GraphRef.serialize()` 聚合 → 宿主 `persistToRemote` 写入 `GraphRecord.session` → 双适配器往返(内核 57106d3 修复)→ `restore(loaded.session)` 恢复(第五十七批已通)。结论：input 在途编辑已进历史快照，内核 0.3.2 交付 + 宿主通道既有，无需新代码
 - **诚实标注**：本批未做浏览器手工冒烟——rename/diff 链路由内核组件测试(version-history-panel 8 例)+ http 适配器测试(12 例)+ 宿主保留策略集成测试覆盖，UI 实机验证随下次部署冒烟(A4 固化后一并)
 - 门禁：typecheck(root+apps)/lint 0-0/主仓 117/组件 46/apps 92/build/storybook/sync:schema:check/单实例守卫 全绿；S007(Pin 半边)提案已交付待内核会话消费
+
+**最新变更(2026-09-18，第九十二批：zen-udf 0.12.1 → 2.1.1 升级——独立仓接管 + value_list 双名)：**
+
+- **架构漂移确认**：内核会话将 zen-udf **源码从 jdm-editor 移出、独立仓接管**（jdm-editor 依赖切
+  npm `zen-udf ^2.1.1`），版本线与内核号重对齐（0.12.x → 2.1.x，跳过 1.x 过渡段）；
+  ADR-011 理想态迁移完成（全部 21 域 tool()/pack() 化）
+- **参考域拆包**：2.x 核心不再内置参考域——名单/velocity/http/号码/IP/identity 等 21 域迁至
+  新包 `@republicroad/zen-udf-contrib ^1.3.2`，经 import 副作用注册进 globalUdfRegistry。
+  宿主双 manifest 补声明（root 供 sync:schema 夹具派生；apps/editor 供 API 进程装域）
+- **宿主导入面迁移**：roster 五函数 + RosterScope 从 '@republicroad/zen-udf' 改
+  '@republicroad/zen-udf-contrib'（双名：roster/value_list 并存，宿主沿用 roster 名零迁移）；
+  **apps/editor 的 zen-udf 漏钉 ^0.4.1 同根修复**（批 88 遗留，见下）
+- **configureHttpUdf 移除**（1.0 起）：出口防护改经 `setPorts({ egressGuard })`
+  （UdfPorts 单例，getPorts 读取）——graph-regression 的 CI 安全闸同步迁移
+- **Y7 夹具 runner 签名重构（executor 反转）**：runner 只迭代/断言/装配报告，模型注册与
+  执行由 executor 侧负责——宿主 multi2 predicate 夹具适配新形态
+- **连带修复**：graph-regression 的 users/ 图目录缺失时优雅跳过（运行时数据目录，
+  不应硬依赖——本次演示数据清理暴露的健壮性缺口）；夹具刷新后 schema:check 恢复 14ns
+- 门禁：typecheck×2/lint/主仓 97/组件 5/apps 65/schema 15ns/build 全绿；
+  dev 实测槽位端点双模式正常（expectedType/autoOpen 正确）
 
 **最新变更(2026-09-18，第九十一批：表达式槽位补全端点——zen-engine 2.1 slots API 消费)：**
 

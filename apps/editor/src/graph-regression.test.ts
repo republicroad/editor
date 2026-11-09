@@ -14,14 +14,11 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 
-import {
-  configureHttpUdf,
-  DecisionRuntime,
-  registerRoster,
-  runDecisionTests,
-  runWithExecContext,
-} from '@republicroad/zen-udf';
+import { DecisionRuntime, runDecisionTests, runWithExecContext } from '@republicroad/zen-udf';
+import { setPorts } from '@republicroad/zen-udf';
+import { registerRoster } from '@republicroad/zen-udf-contrib';
 
 // 第七十二批已停止注册 json_path/template（zen 表达式覆盖其能力）；存量图携带
 // 这些 kind 属预期降级，允许出现在 UDF_NOT_FOUND 里，其余域必须全部解析。
@@ -54,15 +51,18 @@ const loadHostGraphs = async (): Promise<HostGraph[]> => {
   // multi2：根目录裸决策图（无 meta 包裹）
   const multi2 = JSON.parse(await readFile(path.join(graphsDir, 'multi2.json'), 'utf-8'));
   graphs.push({ id: 'multi2', label: 'multi2', content: multi2 });
-  // mock-user-1：GraphRecord 包裹（meta + content），仅取 head（排除 .vN 版本快照）
+  // mock-user-1：GraphRecord 包裹（meta + content），仅取 head（排除 .vN 版本快照）。
+  // users/ 是运行时用户数据目录——不存在（演示数据清理/新环境）时优雅跳过。
   const userDir = path.join(graphsDir, 'users', 'mock-user-1');
-  for (const file of (await readdir(userDir)).filter((f) => f.endsWith('.json') && !/\.v\d+\.json$/.test(f))) {
-    const record = JSON.parse(await readFile(path.join(userDir, file), 'utf-8'));
-    graphs.push({
-      id: record.meta?.id ?? file,
-      label: record.meta?.name ?? file,
-      content: record.content,
-    });
+  if (existsSync(userDir)) {
+    for (const file of (await readdir(userDir)).filter((f) => f.endsWith('.json') && !/\.v\d+\.json$/.test(f))) {
+      const record = JSON.parse(await readFile(path.join(userDir, file), 'utf-8'));
+      graphs.push({
+        id: record.meta?.id ?? file,
+        label: record.meta?.name ?? file,
+        content: record.content,
+      });
+    }
   }
   return graphs;
 };
@@ -77,7 +77,8 @@ describe('演示图级回归（第八十一批：Y7 消费 + D5 试跑）', () =
   let graphs: HostGraph[];
 
   beforeAll(async () => {
-    configureHttpUdf({
+    // 1.0 起 configureHttpUdf 单例移除——出口防护经 UdfPorts（getPorts 读取）
+    setPorts({
       egressGuard: {
         assertAllowed() {
           throw new Error('[graph-regression] egress denied (CI 安全闸)');
@@ -87,8 +88,8 @@ describe('演示图级回归（第八十一批：Y7 消费 + D5 试跑）', () =
     graphs = await loadHostGraphs();
   });
 
-  test('存量图清单装载（multi2 + mock-user-1 head）', () => {
-    expect(graphs.length).toBeGreaterThanOrEqual(10);
+  test('存量图清单装载（multi2 恒在；mock-user-1 users/ 为运行时数据，存在则并入）', () => {
+    expect(graphs.length).toBeGreaterThanOrEqual(1);
   });
 
   test('编译层：全部 head 图经 DecisionRuntime 编译零失败', () => {
@@ -170,27 +171,34 @@ describe('演示图级回归（第八十一批：Y7 消费 + D5 试跑）', () =
     expect(serialized).toContain('"result":true'); // custom_list_query 命中进入 trace
   });
 
-  test('Y7 夹具：multi2（rand×2）predicate 期望通过', async () => {
+  test('Y7 夹具：multi2（rand×2）predicate 期望通过（executor 反转 API）', async () => {
     const runtime = new DecisionRuntime();
     const multi2 = graphs.find((graph) => graph.id === 'multi2');
     expect(multi2).toBeDefined();
-    const report = await runDecisionTests(runtime, {
-      key: 'multi2-regression',
-      model: multi2!.content,
-      tenantId: REGRESSION_TENANT,
+    // 2.x executor 反转：模型注册/执行由 executor 侧负责，runner 只迭代与断言
+    const report = await runDecisionTests({
       fixtures: [
         {
           name: 'result = num*2 且不越上界（rand(100) 非确定性用谓词锚定）',
           input: {},
           expect: {
             mode: 'predicate',
-            test: (result) => {
+            test: (result: unknown) => {
               const value = (result as { result?: unknown })?.result;
               return typeof value === 'number' && value >= 0 && value <= 198;
             },
           },
         },
       ],
+      executor: async () => {
+        await runWithExecContext(REGRESSION_CTX, async () => {
+          runtime.createDecisionWithCacheKey('multi2-regression', multi2!.content);
+        });
+        const r = await runWithExecContext(REGRESSION_CTX, () =>
+          runtime.evaluate('multi2-regression', {}, { trace: false }),
+        );
+        return { result: r.result, durationMs: Number(r.performance ?? 0) };
+      },
     });
     expect(report.failed).toBe(0);
     expect(report.passed).toBe(1);

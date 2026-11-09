@@ -3,16 +3,8 @@ import path from 'path';
 import { join } from 'path';
 import { debug } from 'console';
 import type { ZenDecision } from '@gorules/zen-engine';
-import {
-  deleteRoster,
-  getRoster,
-  registerRoster,
-  listRosters,
-  runWithExecContext,
-  type ExecContext,
-  type RosterScope,
-  DecisionRuntime,
-} from '@republicroad/zen-udf';
+import { runWithExecContext, type ExecContext, DecisionRuntime } from '@republicroad/zen-udf';
+import { deleteRoster, getRoster, registerRoster, listRosters, type RosterScope } from '@republicroad/zen-udf-contrib';
 import { cors } from 'hono/cors';
 import { getCookie, setCookie } from 'hono/cookie';
 import type { Context, Next } from 'hono';
